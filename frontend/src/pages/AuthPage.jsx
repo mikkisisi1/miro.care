@@ -3,6 +3,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Mail, Lock, User, ArrowRight, Heart } from 'lucide-react';
 
+const MIRON_HERO = 'https://customer-assets.emergentagent.com/job_xicon-preview-3/artifacts/da8jruwh_bbSt44ErT9oMjoxUeM0T1pEHQxCQwYb0Q9QsI9mn.webp';
+
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -36,6 +38,7 @@ export default function AuthPage() {
   return (
     <div className="auth-page" data-testid="auth-page">
       <div className="auth-ambient" />
+      <img src={MIRON_HERO} alt="" className="auth-hero-photo" />
       <div className="auth-container">
         <div className="auth-logo-section">
           <div className="auth-logo-icon">
