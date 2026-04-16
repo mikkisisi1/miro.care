@@ -250,7 +250,7 @@ async def get_ai_response(session_id: str, user_message: str, problem: Optional[
 
     try:
         response = await openrouter_client.chat.completions.create(
-            model="mistralai/mistral-small-3.1-24b-instruct:free",
+            model="mistralai/mistral-small-3.1-24b-instruct",
             messages=messages,
             max_tokens=1500,
             temperature=0.7,
