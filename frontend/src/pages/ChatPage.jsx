@@ -61,6 +61,10 @@ export default function ChatPage() {
     }
   };
 
+  // Handle sending - stable reference for startListening
+  const handleSendRef = useRef(handleSend);
+  handleSendRef.current = handleSend;
+
   // Speech recognition with running text (xicon style)
   const startListening = useCallback(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
@@ -101,7 +105,7 @@ export default function ChatPage() {
       if (finalText && finalText.trim()) {
         setRunningText(finalText);
         setShowRunningText(true);
-        handleSend(finalText);
+        handleSendRef.current(finalText);
         // Hide running text after marquee animation
         setTimeout(() => {
           setShowRunningText(false);
@@ -121,7 +125,7 @@ export default function ChatPage() {
     recognition.start();
     recognitionRef.current = recognition;
     setIsListening(true);
-  }, [lang, loading]);
+  }, [lang]);
 
   const stopListening = useCallback(() => {
     recognitionRef.current?.stop();

@@ -20,10 +20,10 @@ MIRO.CARE — гибридная платформа психологическо
 ## Design System
 - **Theme**: Dark Glassmorphism (#1C1C1E → #262629 gradient)
 - **Glass panels**: backdrop-filter blur(20px), rgba(255,255,255,0.05), border rgba(255,255,255,0.15)
-- **Accent**: #FF453A (warm red), #FFB800 (gold)
+- **Accent**: #3C8CFF (blue)
 - **Typography**: Outfit (headings), Manrope (body)
-- **Hero**: Miron Shakira photo with radial gradient red glow
-- **Buttons**: White fill (#FFF) with dark text, pill-shaped (50px radius)
+- **Hero**: Miron Shakira photo with gradient
+- **Buttons**: Pill-shaped with blue accent borders
 
 ## What's Been Implemented
 
@@ -49,15 +49,30 @@ MIRO.CARE — гибридная платформа психологическо
 ### Phase 3.1 — UI Polish (2026-04-16)
 - Thin blue border (0.5px, #3C8CFF) on glass panel and CTA button
 - Bold font-weight (800) for "MIRO CARE" brand title
-- Hidden "Made with Emergent" badge
+- Background gradient on bottom 2/3 of pages
+
+### Phase 3.2 — Xicon-Style Chat Dialog (2026-04-17)
+- **Complete chat page redesign** based on Xicon.online dialog window:
+  - Full-screen black background chat modal
+  - Header with round avatar (M letter) + green online dot + agent name
+  - User messages: right-aligned, glassmorphism backdrop, blue border
+  - AI messages: left-aligned, dark background, blue border, speaker button for TTS
+  - Typing indicator with animated dots
+  - Input area: round mic button + input field with blue border + round send button
+  - Wave visualizer SVG animation for voice recording
+  - Running text (marquee) for speech recognition feedback
+  - All CSS prefixed with xc- to avoid conflicts
 
 ## Prioritized Backlog
 
+### P0 (Critical)
+- [ ] Implement actual Stripe Webhooks for payment verification
+
 ### P1 (Next)
-- [ ] Female voice TTS (needs Fish Audio voice ID)
+- [ ] Real-time timer countdown in chat
 - [ ] Google Sign-In integration
-- [ ] Real-time timer countdown
 - [ ] Chat history persistence across sessions
+- [ ] Female voice TTS (needs Fish Audio voice ID)
 
 ### P2 (Upcoming)
 - [ ] Live specialist booking calendar
@@ -66,3 +81,6 @@ MIRO.CARE — гибридная платформа психологическо
 
 ### P3 (Future)
 - [ ] Mobile PWA, WebSocket chat, Admin dashboard, Analytics
+
+## Refactoring Needed
+- [ ] Split server.py (~750 lines) into: auth.py, chat.py, tts.py, payments.py
