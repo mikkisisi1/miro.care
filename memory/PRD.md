@@ -57,10 +57,11 @@ MIRO.CARE — гибридная платформа психологическо
   - Header with 2 real photo avatars (Miron + Oksana) + green online dots + names
   - User messages: right-aligned, glassmorphism backdrop, blue border
   - AI messages: left-aligned, dark background, blue border, speaker button for TTS
-  - Typing indicator with animated dots
-  - Input area: round mic button + input field with blue border + round send button
+  - **Exact xicon input area**: mic button (left) | input field with camera icon inside (center) | send button (right)
   - Wave visualizer SVG animation for voice recording
   - Running text (marquee) for speech recognition feedback
+  - **Image upload**: Camera/Gallery picker modal, image preview, send to AI
+  - **Backend /api/chat/image**: Claude Sonnet 4.5 vision analyzes user photos
   - All CSS prefixed with xc- to avoid conflicts
 
 ## Prioritized Backlog
