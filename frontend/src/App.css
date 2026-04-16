@@ -93,7 +93,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   text-shadow: 0 4px 40px rgba(0,0,0,0.5);
 }
 @media (max-width: 768px) {
-  .landing-brand { left: 20px; top: 30%; }
+  .landing-brand { left: 20px; top: auto; bottom: 210px; transform: none; }
 }
 
 /* Burger */
