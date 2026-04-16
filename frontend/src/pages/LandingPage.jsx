@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Menu, ArrowRight } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import BurgerMenu from '@/components/BurgerMenu';
 
 const MIRON_PHOTO = 'https://customer-assets.emergentagent.com/job_bd32a9d2-c016-4ed0-a4c8-df57dec03eb4/artifacts/pxuxfsm4_a2ceHzRs7mSOhk3UJsLG4RwEWT4PfMmLizx1oiZo.webp';
@@ -32,8 +32,8 @@ export default function LandingPage() {
           onClick={() => navigate('/problems')}
           className="landing-glass-cta"
         >
-          {t('startChat')}
-          <ArrowRight size={16} />
+          <span className="landing-cta-glow" />
+          ПСИХОЛОГ
         </button>
       </div>
 
