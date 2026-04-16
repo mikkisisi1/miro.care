@@ -15,6 +15,11 @@ const SPEECH_LANGS = {
   ar: 'ar-SA', fr: 'fr-FR', de: 'de-DE', hi: 'hi-IN',
 };
 
+const GREETINGS = {
+  male: 'Здравствуйте, я Мирон — ваш личный консультант.\nРасскажите в двух словах, что вас беспокоит, и мы вместе попробуем разобраться.\nКак мне к вам обращаться?',
+  female: 'Здравствуйте, я Оксана — ваш личный консультант.\nРасскажите в двух словах, что вас беспокоит, и мы вместе попробуем разобраться.\nКак мне к вам обращаться?',
+};
+
 export default function ChatPage() {
   const { user, refreshUser } = useAuth();
   const { t, lang } = useLanguage();
@@ -26,6 +31,8 @@ export default function ChatPage() {
   const [runningText, setRunningText] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
+  const [voiceChosen, setVoiceChosen] = useState(false);
+  const [activeVoice, setActiveVoice] = useState(null);
   const recognitionRef = useRef(null);
   const silenceTimerRef = useRef(null);
   const lastTranscriptRef = useRef('');
@@ -33,6 +40,8 @@ export default function ChatPage() {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
+  const greetingCacheRef = useRef({ male: null, female: null });
+  const greetingAudioRef = useRef(null);
 
   const { playTTS, stopTTS, playingTTS, ttsEnabled, toggleTTS } = useAudioStream(user);
 
@@ -44,6 +53,33 @@ export default function ChatPage() {
 
   const { messages, sendMessage, loading, sessionId, setMessages } = useChat(user, lang, refreshUser, handleAIMessage);
 
+  // Pre-cache greeting TTS audio for both voices
+  useEffect(() => {
+    if (voiceChosen) return;
+    const preloadGreeting = async (voice) => {
+      try {
+        const token = localStorage.getItem('access_token');
+        const response = await fetch(`${API}/tts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          credentials: 'include',
+          body: JSON.stringify({ text: GREETINGS[voice], voice }),
+        });
+        if (response.ok) {
+          const blob = await response.blob();
+          greetingCacheRef.current[voice] = URL.createObjectURL(blob);
+        }
+      } catch (e) {
+        // Cache miss is ok — will fallback to streaming
+      }
+    };
+    preloadGreeting('male');
+    preloadGreeting('female');
+  }, [voiceChosen]);
+
   // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -52,6 +88,44 @@ export default function ChatPage() {
     }, 300);
     return () => clearTimeout(timer);
   }, [messages, loading]);
+
+  // Handle voice selection from avatar click
+  const handleVoiceSelect = async (voice) => {
+    if (voiceChosen) return;
+    setActiveVoice(voice);
+    setVoiceChosen(true);
+
+    // Save voice to backend
+    try {
+      const token = localStorage.getItem('access_token');
+      await axios.put(`${API}/user/voice`, { voice }, {
+        withCredentials: true,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      await refreshUser();
+    } catch {
+      // Silently continue — greeting still works
+    }
+
+    // Add greeting message to chat
+    const greetingMsg = {
+      role: 'ai',
+      content: GREETINGS[voice],
+      id: `greeting_${Date.now()}`,
+    };
+    setMessages([greetingMsg]);
+
+    // Play cached greeting audio or fallback to streaming
+    const cachedUrl = greetingCacheRef.current[voice];
+    if (cachedUrl) {
+      const audio = new Audio(cachedUrl);
+      greetingAudioRef.current = audio;
+      audio.onended = () => { greetingAudioRef.current = null; };
+      audio.play().catch(() => {});
+    } else if (ttsEnabled) {
+      setTimeout(() => playTTS(GREETINGS[voice], 0), 100);
+    }
+  };
 
   // Handle text sending
   const handleSend = (text) => {
@@ -68,11 +142,10 @@ export default function ChatPage() {
     }
   };
 
-  // Stable ref for startListening
   const handleSendRef = useRef(handleSend);
   handleSendRef.current = handleSend;
 
-  // Speech recognition (xicon style)
+  // Speech recognition
   const startListening = useCallback(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -144,15 +217,12 @@ export default function ChatPage() {
       };
       reader.readAsDataURL(file);
     }
-    // Reset input so same file can be selected again
     e.target.value = '';
   };
 
   const sendImageMessage = async () => {
     if (!selectedImage || loading) return;
     const msgId = `img_${Date.now()}`;
-
-    // Add user message with image preview
     setMessages(prev => [...prev, { role: 'user', content: '', id: msgId, image: selectedImage.preview }]);
     const imageBase64 = selectedImage.base64;
     setSelectedImage(null);
@@ -178,21 +248,20 @@ export default function ChatPage() {
       setMessages(prev => [...prev, aiMsg]);
 
       if (!aiMsg.isTariffPrompt && ttsEnabled) {
-        const idx = messages.length + 2; // approximate
+        const idx = messages.length + 2;
         setTimeout(() => playTTS(data.response, idx), 100);
       }
       await refreshUser();
     } catch (err) {
-      const errMsg = err.response?.data?.detail || 'Ошибка при анализе изображения';
+      const errMsg = err.response?.data?.detail || 'Error analyzing image';
       setMessages(prev => [...prev, {
         role: 'ai',
-        content: typeof errMsg === 'string' ? errMsg : 'Ошибка при анализе изображения',
+        content: typeof errMsg === 'string' ? errMsg : 'Error analyzing image',
         id: `err_img_${Date.now()}`,
       }]);
     }
   };
 
-  // Badge
   const minutesLeft = user?.minutes_left || 0;
   const isFreePhase = (user?.free_messages_count || 0) < 12;
   const hasMinutes = minutesLeft > 0;
@@ -212,20 +281,30 @@ export default function ChatPage() {
             <ArrowLeft size={20} strokeWidth={1.5} />
           </button>
           <div className="xc-chat-avatars-row">
-            <div className="xc-chat-avatar-item">
+            <button
+              className={`xc-chat-avatar-item ${!voiceChosen ? 'xc-avatar-selectable' : ''} ${activeVoice === 'male' ? 'xc-avatar-active' : ''} ${voiceChosen && activeVoice !== 'male' ? 'xc-avatar-dim' : ''}`}
+              onClick={() => handleVoiceSelect('male')}
+              disabled={voiceChosen}
+              data-testid="avatar-miron-btn"
+            >
               <div className="xc-chat-avatar-wrapper">
                 <img src="/miron-avatar.jpg" alt="Miron" className="xc-chat-avatar-img" />
                 <span className="xc-chat-online-dot" />
               </div>
               <span className="xc-avatar-name">Miron</span>
-            </div>
-            <div className="xc-chat-avatar-item">
+            </button>
+            <button
+              className={`xc-chat-avatar-item ${!voiceChosen ? 'xc-avatar-selectable' : ''} ${activeVoice === 'female' ? 'xc-avatar-active' : ''} ${voiceChosen && activeVoice !== 'female' ? 'xc-avatar-dim' : ''}`}
+              onClick={() => handleVoiceSelect('female')}
+              disabled={voiceChosen}
+              data-testid="avatar-oksana-btn"
+            >
               <div className="xc-chat-avatar-wrapper">
                 <img src="/oksana-avatar.jpg" alt="Oksana" className="xc-chat-avatar-img" />
                 <span className="xc-chat-online-dot" />
               </div>
               <span className="xc-avatar-name">Oksana</span>
-            </div>
+            </button>
           </div>
           <div>
             <h3 className="xc-chat-agent-name">MIRO.CARE</h3>
@@ -248,8 +327,25 @@ export default function ChatPage() {
 
       {/* Messages */}
       <div className="xc-chat-messages" data-testid="chat-messages">
-        {messages.length === 0 && (
-          <div className="xc-chat-empty"><p>{t('subtitle')}</p></div>
+        {/* Voice selection prompt — shown before choosing */}
+        {!voiceChosen && messages.length === 0 && (
+          <div className="xc-voice-select-prompt" data-testid="voice-select-prompt">
+            <div className="xc-voice-select-avatars">
+              <button className="xc-voice-avatar-card" onClick={() => handleVoiceSelect('male')} data-testid="voice-pick-miron">
+                <div className="xc-voice-avatar-circle">
+                  <img src="/miron-avatar.jpg" alt="Miron" />
+                </div>
+                <span className="xc-voice-avatar-label">Miron</span>
+              </button>
+              <button className="xc-voice-avatar-card" onClick={() => handleVoiceSelect('female')} data-testid="voice-pick-oksana">
+                <div className="xc-voice-avatar-circle">
+                  <img src="/oksana-avatar.jpg" alt="Oksana" />
+                </div>
+                <span className="xc-voice-avatar-label">Oksana</span>
+              </button>
+            </div>
+            <p className="xc-voice-select-hint">{t('chooseVoice') || 'Choose your consultant'}</p>
+          </div>
         )}
         {messages.map((msg, i) => (
           <React.Fragment key={msg.id || `msg-${i}`}>
@@ -302,15 +398,14 @@ export default function ChatPage() {
       <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} style={{ display: 'none' }} />
       <input type="file" ref={cameraInputRef} accept="image/*" capture="environment" onChange={handleImageSelect} style={{ display: 'none' }} />
 
-      {/* Input Area — exact xicon layout */}
+      {/* Input Area */}
       <div className="xc-chat-input-area" data-testid="chat-input-form">
-        {/* Mic button */}
         <button data-testid="mic-btn" onClick={handleMicClick}
-          className={`xc-mic-btn ${isListening ? 'recording' : ''}`}>
+          className={`xc-mic-btn ${isListening ? 'recording' : ''}`}
+          disabled={!voiceChosen}>
           {isListening ? <MicOff size={20} strokeWidth={1.5} /> : <Mic size={20} strokeWidth={1.5} />}
         </button>
 
-        {/* Input container — text/wave/running text + camera inside */}
         <div className="xc-input-container">
           {showRunningText && runningText ? (
             <span className="xc-running-text-inner">{runningText}</span>
@@ -325,20 +420,19 @@ export default function ChatPage() {
             <>
               <input data-testid="chat-input" type="text" value={input}
                 onChange={e => setInput(e.target.value)} onKeyDown={handleKeyPress}
-                placeholder={t('sendMessage')} className="xc-chat-text-input-inner" disabled={loading} />
-              {/* Camera button inside input */}
+                placeholder={t('sendMessage')} className="xc-chat-text-input-inner"
+                disabled={loading || !voiceChosen} />
               <button className="xc-camera-inline-btn" data-testid="camera-inline-btn"
-                onClick={() => setShowImagePicker(true)} disabled={loading}>
+                onClick={() => setShowImagePicker(true)} disabled={loading || !voiceChosen}>
                 <Camera size={18} strokeWidth={1.5} />
               </button>
             </>
           )}
         </div>
 
-        {/* Send button */}
         {!isListening && !showRunningText && (
           <button data-testid="send-btn" onClick={() => handleSend()}
-            disabled={!input.trim() || loading} className="xc-send-btn">
+            disabled={!input.trim() || loading || !voiceChosen} className="xc-send-btn">
             <Send size={18} strokeWidth={1.5} />
           </button>
         )}

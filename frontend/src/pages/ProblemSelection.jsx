@@ -38,7 +38,7 @@ export default function ProblemSelection() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       await refreshUser();
-      navigate('/voice-select');
+      navigate('/chat');
     } catch {
       // Problem selection update failed silently — user can retry
     }
