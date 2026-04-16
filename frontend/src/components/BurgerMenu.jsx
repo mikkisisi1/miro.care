@@ -5,11 +5,11 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import {
   X, User, Mic, Globe, Palette, Radio, Users, Phone,
-  Link2, Info, Calendar, LogOut, Sun, Moon, Monitor, ChevronRight
+  Link2, Info, Calendar, LogOut, LogIn, Sun, Moon, Monitor, ChevronRight
 } from 'lucide-react';
 
 export default function BurgerMenu({ open, onClose }) {
-  const { user, logout } = useAuth();
+  const { user, logout, isGuest } = useAuth();
   const { t, lang, setLang, languages } = useLanguage();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
@@ -26,6 +26,7 @@ export default function BurgerMenu({ open, onClose }) {
   const handleLogout = async () => {
     onClose();
     await logout();
+    navigate('/problems');
   };
 
   return (
@@ -38,15 +39,23 @@ export default function BurgerMenu({ open, onClose }) {
         <div className="menu-user-section">
           <div className="menu-user-avatar"><User size={24} /></div>
           <div>
-            <p className="menu-user-name">{user?.name || user?.email?.split('@')[0]}</p>
-            <p className="menu-user-email">{user?.email}</p>
+            <p className="menu-user-name">{isGuest ? 'Demo' : (user?.name || user?.email?.split('@')[0])}</p>
+            <p className="menu-user-email">{isGuest ? 'Guest mode' : user?.email}</p>
           </div>
         </div>
 
         <nav className="menu-nav">
-          <button data-testid="menu-profile" onClick={() => goTo('/profile')} className="menu-item">
-            <User size={20} /> <span>{t('profile')}</span> <ChevronRight size={16} />
-          </button>
+          {isGuest && (
+            <button data-testid="menu-auth" onClick={() => goTo('/auth')} className="menu-item menu-item-highlight">
+              <LogIn size={20} /> <span>{t('login')} / {t('register')}</span> <ChevronRight size={16} />
+            </button>
+          )}
+
+          {!isGuest && (
+            <button data-testid="menu-profile" onClick={() => goTo('/profile')} className="menu-item">
+              <User size={20} /> <span>{t('profile')}</span> <ChevronRight size={16} />
+            </button>
+          )}
 
           <button data-testid="menu-voice" onClick={() => goTo('/voice-select')} className="menu-item">
             <Mic size={20} /> <span>{t('chooseVoice')}</span> <ChevronRight size={16} />
@@ -110,9 +119,11 @@ export default function BurgerMenu({ open, onClose }) {
           </button>
         </nav>
 
-        <button data-testid="menu-logout" onClick={handleLogout} className="menu-logout">
-          <LogOut size={20} /> <span>{t('logout')}</span>
-        </button>
+        {!isGuest && (
+          <button data-testid="menu-logout" onClick={handleLogout} className="menu-logout">
+            <LogOut size={20} /> <span>{t('logout')}</span>
+          </button>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Mail, Lock, User, ArrowRight, Heart } from 'lucide-react';
@@ -14,6 +15,7 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const { login, register } = useAuth();
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,6 +27,7 @@ export default function AuthPage() {
       } else {
         await register(email, password, name);
       }
+      navigate('/problems');
     } catch (err) {
       const detail = err.response?.data?.detail;
       if (typeof detail === 'string') setError(detail);
@@ -33,6 +36,10 @@ export default function AuthPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSkip = () => {
+    navigate('/problems');
   };
 
   return (
@@ -97,6 +104,15 @@ export default function AuthPage() {
           >
             {loading ? '...' : isLogin ? t('login') : t('register')}
             <ArrowRight size={18} />
+          </button>
+
+          <button
+            data-testid="auth-skip-btn"
+            type="button"
+            onClick={handleSkip}
+            className="auth-skip"
+          >
+            {t('later') || 'Позже'}
           </button>
         </form>
 

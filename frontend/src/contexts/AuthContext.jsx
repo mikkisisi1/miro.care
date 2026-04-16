@@ -14,12 +14,16 @@ export function AuthProvider({ children }) {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const { data } = await axios.get(`${API}/auth/me`, { withCredentials: true, headers });
       setUser(data.user);
-    } catch (err) {
-      if (err.response?.status !== 401) {
-        console.error('Auth check failed:', err.message);
+    } catch {
+      // No valid session — create guest automatically for demo mode
+      try {
+        const { data } = await axios.post(`${API}/auth/guest`, {}, { withCredentials: true });
+        if (data.access_token) localStorage.setItem('access_token', data.access_token);
+        setUser(data.user);
+      } catch {
+        setUser(false);
+        localStorage.removeItem('access_token');
       }
-      setUser(false);
-      localStorage.removeItem('access_token');
     } finally {
       setLoading(false);
     }
@@ -48,7 +52,14 @@ export function AuthProvider({ children }) {
       console.error('Logout request failed:', err.message);
     }
     localStorage.removeItem('access_token');
-    setUser(false);
+    // After logout, create new guest session
+    try {
+      const { data } = await axios.post(`${API}/auth/guest`, {}, { withCredentials: true });
+      if (data.access_token) localStorage.setItem('access_token', data.access_token);
+      setUser(data.user);
+    } catch {
+      setUser(false);
+    }
   }, []);
 
   const refreshUser = useCallback(async () => {
@@ -62,9 +73,11 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const isGuest = user?.is_guest === true || user?.role === 'guest';
+
   const value = useMemo(() => ({
-    user, loading, login, register, logout, refreshUser
-  }), [user, loading, login, register, logout, refreshUser]);
+    user, loading, login, register, logout, refreshUser, isGuest
+  }), [user, loading, login, register, logout, refreshUser, isGuest]);
 
   return (
     <AuthContext.Provider value={value}>

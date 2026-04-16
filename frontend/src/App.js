@@ -15,34 +15,26 @@ import ProfilePage from '@/pages/ProfilePage';
 import MiroRadio from '@/pages/MiroRadio';
 import '@/App.css';
 
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth();
+function WaitForAuth({ children }) {
+  const { loading } = useAuth();
   if (loading) return <div className="loading-screen"><div className="loading-spinner" /></div>;
-  if (user === false) return <Navigate to="/auth" replace />;
-  return children;
-}
-
-function PublicRoute({ children }) {
-  const { user, loading } = useAuth();
-  if (loading) return <div className="loading-screen"><div className="loading-spinner" /></div>;
-  if (user && user !== false) return <Navigate to="/problems" replace />;
   return children;
 }
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
-      <Route path="/problems" element={<ProtectedRoute><ProblemSelection /></ProtectedRoute>} />
-      <Route path="/voice-select" element={<ProtectedRoute><VoiceSelect /></ProtectedRoute>} />
-      <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
-      <Route path="/tariffs" element={<ProtectedRoute><TariffPage /></ProtectedRoute>} />
-      <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
-      <Route path="/specialists" element={<ProtectedRoute><SpecialistsPage /></ProtectedRoute>} />
-      <Route path="/about" element={<ProtectedRoute><AboutPage /></ProtectedRoute>} />
-      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-      <Route path="/radio" element={<ProtectedRoute><MiroRadio /></ProtectedRoute>} />
-      <Route path="*" element={<Navigate to="/auth" replace />} />
+      <Route path="/auth" element={<WaitForAuth><AuthPage /></WaitForAuth>} />
+      <Route path="/problems" element={<WaitForAuth><ProblemSelection /></WaitForAuth>} />
+      <Route path="/voice-select" element={<WaitForAuth><VoiceSelect /></WaitForAuth>} />
+      <Route path="/chat" element={<WaitForAuth><ChatPage /></WaitForAuth>} />
+      <Route path="/tariffs" element={<WaitForAuth><TariffPage /></WaitForAuth>} />
+      <Route path="/payment-success" element={<WaitForAuth><PaymentSuccess /></WaitForAuth>} />
+      <Route path="/specialists" element={<WaitForAuth><SpecialistsPage /></WaitForAuth>} />
+      <Route path="/about" element={<WaitForAuth><AboutPage /></WaitForAuth>} />
+      <Route path="/profile" element={<WaitForAuth><ProfilePage /></WaitForAuth>} />
+      <Route path="/radio" element={<WaitForAuth><MiroRadio /></WaitForAuth>} />
+      <Route path="*" element={<Navigate to="/problems" replace />} />
     </Routes>
   );
 }

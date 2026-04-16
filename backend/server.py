@@ -287,6 +287,41 @@ async def get_ai_response(session_id: str, user_message: str, problem: Optional[
         raise
 
 # ---------- AUTH ENDPOINTS ----------
+@api_router.post("/auth/guest")
+async def create_guest(response: Response):
+    """Create an anonymous guest user for demo mode."""
+    guest_id = uuid.uuid4().hex[:8]
+    guest_email = f"guest_{guest_id}@demo.miro.care"
+    user_doc = {
+        "email": guest_email,
+        "password_hash": "",
+        "name": f"Guest",
+        "role": "guest",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "tariff": None,
+        "minutes_total": 0,
+        "minutes_used": 0,
+        "minutes_left": 0,
+        "tariff_expires_at": None,
+        "test_used": False,
+        "selected_problem": None,
+        "selected_voice": "female",
+        "selected_language": "ru",
+        "theme": "system",
+        "last_plan": None,
+        "is_paid_session_active": False,
+        "free_messages_count": 0,
+        "is_guest": True,
+    }
+    result = await db.users.insert_one(user_doc)
+    user_id = str(result.inserted_id)
+    access_token = create_access_token(user_id, guest_email)
+    refresh_token = create_refresh_token(user_id)
+    set_auth_cookies(response, access_token, refresh_token)
+    user_doc["_id"] = user_id
+    user_doc.pop("password_hash")
+    return {"user": user_doc, "access_token": access_token}
+
 @api_router.post("/auth/register")
 async def register(req: RegisterRequest, response: Response):
     email = req.email.lower().strip()

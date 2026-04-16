@@ -158,6 +158,15 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 .auth-submit:hover { background: #E0E0E0; transform: translateY(-1px); }
 .auth-submit:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
 
+.auth-skip {
+  display: flex; align-items: center; justify-content: center;
+  background: none; border: 1px solid var(--border);
+  color: var(--text-muted); padding: 12px 24px; border-radius: 50px;
+  font-size: 0.95rem; font-family: var(--font-body); cursor: pointer;
+  transition: all 0.3s; width: 100%;
+}
+.auth-skip:hover { border-color: rgba(255,255,255,0.3); color: var(--text); }
+
 .auth-toggle {
   display: flex; align-items: center; justify-content: center; gap: 6px;
   background: none; border: none; color: var(--text-muted);
