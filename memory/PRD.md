@@ -64,6 +64,18 @@ MIRO.CARE — гибридная платформа психологическо
   - **Backend /api/chat/image**: Claude Sonnet 4.5 vision analyzes user photos
   - All CSS prefixed with xc- to avoid conflicts
 
+### Phase 3.3 — Inline Voice Selection + Greeting (2026-04-17)
+- **New user flow**: ProblemSelection → Chat (skip VoiceSelect page)
+- **Voice selection integrated into ChatPage**:
+  - Two large avatar cards (Miron & Oksana) shown in chat area before voice choice
+  - Header avatars also clickable with pulsing animation
+  - Selected avatar highlighted (blue border, blue name), other dimmed
+- **Cached TTS greeting**: greeting audio pre-fetched for both voices on page load
+- **Greeting message on voice select**:
+  - Miron: "Здравствуйте, я Мирон — ваш личный консультант..."
+  - Oksana: "Здравствуйте, я Оксана — ваш личный консультант..."
+- **Input disabled** until voice is chosen
+
 ## Prioritized Backlog
 
 ### P0 (Critical)
@@ -84,4 +96,4 @@ MIRO.CARE — гибридная платформа психологическо
 - [ ] Mobile PWA, WebSocket chat, Admin dashboard, Analytics
 
 ## Refactoring Needed
-- [ ] Split server.py (~750 lines) into: auth.py, chat.py, tts.py, payments.py
+- [ ] Split server.py (~760 lines) into: auth.py, chat.py, tts.py, payments.py
