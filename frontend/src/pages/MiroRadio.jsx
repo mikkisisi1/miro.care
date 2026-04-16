@@ -3,7 +3,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Play, Pause, Radio } from 'lucide-react';
 
-const YOUTUBE_MIX_ID = 'lFcSrYw-ARY';
+const YOUTUBE_MIX_ID = 'pjXs6XPtuKU';
 
 export default function MiroRadio() {
   const { t } = useLanguage();

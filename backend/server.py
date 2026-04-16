@@ -34,6 +34,7 @@ from emergentintegrations.payments.stripe.checkout import StripeCheckout, Checko
 # Fish Audio TTS
 fish_api_key = os.environ.get("FISH_AUDIO_API_KEY", "")
 fish_voice_male = os.environ.get("FISH_VOICE_MALE", "5cfccfb8aae14938be283ea6400b4a8a")
+fish_voice_female = os.environ.get("FISH_VOICE_FEMALE", "6745990b975d4041a23ad713bcee69f5")
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -501,7 +502,7 @@ def clean_text_for_tts(text: str) -> str:
 
 @api_router.post("/tts")
 async def text_to_speech(req: TTSRequest_Model, request: Request):
-    """Стриминговое озвучивание текста голосом Мирона (Fish Audio)"""
+    """Стриминговое озвучивание текста (Мирон / Оксана)"""
     await get_current_user(request)  # Auth check
 
     if not fish_api_key:
@@ -511,7 +512,7 @@ async def text_to_speech(req: TTSRequest_Model, request: Request):
     if not text:
         raise HTTPException(400, "No text to synthesize")
 
-    voice_id = fish_voice_male  # Голос Мирона
+    voice_id = fish_voice_female if req.voice == "female" else fish_voice_male
 
     def generate_audio():
         """Генератор — отдаёт чанки аудио по мере получения от Fish Audio"""

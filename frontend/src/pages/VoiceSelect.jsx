@@ -40,7 +40,8 @@ export default function VoiceSelect() {
           <div className="voice-avatar voice-avatar-male">
             <User size={48} />
           </div>
-          <span className="voice-label">{t('male')}</span>
+          <span className="voice-label">Miron</span>
+          <span className="voice-sublabel">{t('male')}</span>
         </button>
 
         <button
@@ -51,7 +52,8 @@ export default function VoiceSelect() {
           <div className="voice-avatar voice-avatar-female">
             <User size={48} />
           </div>
-          <span className="voice-label">{t('female')}</span>
+          <span className="voice-label">Oksana</span>
+          <span className="voice-sublabel">{t('female')}</span>
         </button>
       </div>
     </div>
