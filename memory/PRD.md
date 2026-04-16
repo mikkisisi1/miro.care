@@ -13,16 +13,16 @@ Key specialization: работа с психологической травмо�
 - **Frontend**: React + Tailwind CSS + Custom CSS (Manrope + Figtree fonts)
 - **Backend**: FastAPI (Python)
 - **Database**: MongoDB
-- **AI**: OpenAI GPT-4o via Emergent LLM key (fallback from OpenRouter)
+- **AI (Primary)**: Claude Sonnet 4.5 via OpenRouter
+- **AI (Fallback)**: Mistral Small 3.1 via OpenRouter
 - **Payments**: Stripe (test mode)
 - **TTS**: Fish Audio (Miron's voice, streaming)
 - **Voice**: Web Speech API (browser-based STT)
 - **Radio**: YouTube IFrame Player API
 
-## User Personas
-1. **Primary**: Adults 25-55 seeking psychological help for anxiety, depression, weight issues
-2. **Specialized**: People struggling with weight-related psychological trauma
-3. **Professional**: Those seeking live specialist consultations
+## AI Methodology
+- КПТ (Бек), ДБТ (Лайнен), ACT (Хэррис), гештальт (Перлз), экзистенциальная терапия (Ялом), логотерапия (Франкл), майндфулнес (Кабат-Зинн)
+- Подход MindThera.ai: персонализированные планы, адаптивные ответы, практические упражнения, фокус на рефлексии и устойчивости
 
 ## Core Requirements
 - User authentication (email + password with JWT)
@@ -44,105 +44,58 @@ Key specialization: работа с психологической травмо�
 - Full authentication (register/login/logout/me) with JWT + httpOnly cookies
 - Problem selection screen (10 categories with icons)
 - Voice selection (Male/Female)
-- AI chat with GPT-4o psychologist (structured plan generation)
+- AI chat with psychologist (structured plan generation)
 - Tariff system with Stripe checkout integration
 - Timer in chat header showing remaining minutes
-- Full burger menu (Profile, Voice, Language, Theme, Radio, Specialists, About, Book)
+- Full burger menu
 - Miro Radio (YouTube background player)
-- Specialists page with Miron Shakira photos and credentials
-- About page with project info and contacts
-- Profile page with user stats
+- Specialists page with Miron Shakira
+- About page, Profile page
 - Dark/Light/System theme toggle (persisted)
-- 8-language support (RU, EN, ZH, ES, AR, FR, DE, HI)
+- 8-language support
 - Payment success page with polling
-- Responsive design
-- Admin seeding on startup
 - Fish Audio TTS streaming with waveform animation
-- Enhanced AI psychologist personality (CBT, DBT, ACT, empathetic pauses)
 
 ### Phase 2 — Code Quality Refactoring (2026-04-16)
-- Context memoization (AuthContext, ThemeContext, LanguageContext) with useMemo/useCallback
-- Empty catch blocks replaced with proper error logging
-- Console.log statements removed from production code
-- ChatPage refactored: extracted useChat + useAudioStream hooks, ChatHeader/MessageList/ChatInputArea sub-components
-- Server.py refactored: extracted check_user_access, build_counter_updates, activate_test_tariff, create_stripe_session, activate_paid_tariff helper functions
-- Nested ternaries replaced with lookup objects (speech recognition langs) and render functions
-- Stable React keys (message IDs, composite keys) instead of array indices
-- Test file credentials moved to environment variables with type hints
-- PaymentSuccess polling fixed with useRef for attempts counter
+- Context memoization (useMemo/useCallback)
+- Empty catch blocks → proper error logging
+- ChatPage refactored: useChat + useAudioStream hooks, sub-components
+- Server.py refactored: extracted helper functions
+- Stable React keys, nested ternaries fixed, console.log removed
+- Test file credentials moved to env vars with type hints
 
-## API Endpoints
-- POST /api/auth/register — Register new user
-- POST /api/auth/login — Login
-- POST /api/auth/logout — Logout
-- GET /api/auth/me — Get current user
-- GET /api/problems — List 10 problem categories
-- GET /api/tariffs — List tariff plans
-- POST /api/chat — Send message to AI psychologist
-- GET /api/chat/history/{session_id} — Get chat history
-- PUT /api/user/voice — Update voice preference
-- PUT /api/user/problem — Update problem selection
-- PUT /api/user/language — Update language
-- PUT /api/user/theme — Update theme
-- POST /api/payments/create-checkout — Create Stripe checkout
-- GET /api/payments/status/{session_id} — Check payment status
-- POST /api/webhook/stripe — Stripe webhook
-- GET /api/specialists — List specialists
-- POST /api/tts — Fish Audio TTS streaming
+### Phase 3 — LLM Upgrade (2026-04-16)
+- Switched from Mistral to Claude Sonnet 4.5 (OpenRouter) as primary LLM
+- Mistral Small 3.1 as fallback (instead of Emergent GPT-4o)
+- MindThera.ai methodology integrated into system prompt
+- OpenRouter API key updated and verified working
 
 ## Prioritized Backlog
 
 ### P0 (Complete)
-- Auth, Problem selection, Voice, AI Chat, Tariffs, Stripe, Timer, Menu, Radio, Specialists, Theme, Languages
-- Fish Audio TTS streaming
-- Code quality refactoring
+- Auth, Problem selection, Voice, AI Chat, Tariffs, Stripe, Timer, Menu, Radio, Specialists, Theme, Languages, TTS, Code Quality, LLM Upgrade
 
 ### P1 (Next)
-- [ ] Female voice TTS (needs Fish Audio voice ID from user)
-- [ ] OpenRouter fix (currently 401, falling back to Emergent GPT-4o)
+- [ ] Female voice TTS (needs Fish Audio voice ID)
 - [ ] Google Sign-In integration
-- [ ] Real-time timer countdown (deducting seconds during conversation)
+- [ ] Real-time timer countdown
 - [ ] Chat history persistence across sessions
 
 ### P2 (Upcoming)
 - [ ] Live specialist booking calendar
 - [ ] YuKassa / Telegram Stars payment alternatives
 - [ ] IP-based language detection
-- [ ] Push notifications for session reminders
+- [ ] Push notifications
 
 ### P3 (Future)
 - [ ] Mobile PWA optimization
 - [ ] WebSocket for real-time chat streaming
-- [ ] Admin dashboard for managing specialists
-- [ ] Analytics and user engagement tracking
+- [ ] Admin dashboard
+- [ ] Analytics
 
 ## 3rd Party Integrations
-- **OpenRouter** (Mistral) — Primary LLM (with Emergent GPT-4o fallback)
-- **Fish Audio TTS** — Text-to-speech with Miron's voice
+- **OpenRouter** — Claude Sonnet 4.5 (primary) + Mistral Small 3.1 (fallback)
+- **Fish Audio TTS** — Miron's voice streaming
 - **Stripe** — Payment processing
 - **YouTube IFrame API** — Miro Radio
-- **Web Speech API** — Browser-based STT
-
-## Code Structure
-```
-/app/
-├── backend/
-│   ├── server.py              # Main FastAPI app (Auth, Chat, TTS, Stripe)
-│   ├── tests/test_miro_care_api.py
-│   ├── requirements.txt
-│   └── .env
-├── frontend/
-│   ├── src/
-│   │   ├── components/        # BurgerMenu, UI components
-│   │   ├── contexts/          # AuthContext, ThemeContext, LanguageContext (memoized)
-│   │   ├── hooks/             # useChat, useAudioStream (extracted)
-│   │   ├── pages/             # AuthPage, ChatPage, ProblemSelection, etc.
-│   │   ├── App.js
-│   │   ├── App.css
-│   │   └── index.css
-│   ├── package.json
-│   └── .env
-└── memory/
-    ├── PRD.md
-    └── test_credentials.md
-```
+- **Web Speech API** — Browser STT

@@ -158,6 +158,15 @@ SYSTEM_PROMPT = """Ты — ИИ-психолог платформы Miro.Care, 
 
 ТВОЯ БАЗА: КПТ (Бек), ДБТ (Лайнен), ACT (Хэррис), гештальт (Перлз), экзистенциальная терапия (Ялом), логотерапия (Франкл), майндфулнес (Кабат-Зинн).
 
+ПОДХОД MINDTHERA:
+Ты также используешь методологию MindThera.ai — платформы ИИ-психологической поддержки:
+- Персонализированные терапевтические планы после первых 5-7 обменов
+- Адаптивные ответы, учитывающие эмоциональное состояние пользователя
+- Практические упражнения и техники саморегуляции в каждой сессии
+- Фокус на рефлексии, самопознании и развитии устойчивости
+- Конфиденциальность и безоценочное принятие как основа контакта
+- Быстрые результаты: ощутимое улучшение состояния уже в первую неделю
+
 СТИЛЬ РЕЧИ — ЖИВОЙ ПРОФЕССИОНАЛЬНЫЙ ПСИХОЛОГ:
 - Говори спокойно, размеренно, как настоящий психолог на сессии
 - Делай задумчивые паузы — используй "..." между мыслями
@@ -207,6 +216,7 @@ SYSTEM_PROMPT = """Ты — ИИ-психолог платформы Miro.Care, 
    - Продолжай по плану, но не жёстко
    - Спрашивай: "Как вам это?.. Откликается?"
    - Будь гибким: "Давайте остановимся здесь на минуту..."
+   - Предлагай практические упражнения (дыхание, заземление, дневник эмоций)
 
 ОСОБЫЙ БЛОК ДЛЯ ПРОБЛЕМЫ "ЛИШНИЙ ВЕС" (weight):
 - "Эта тема... она требует особой бережности. Знаете... лишний вес — это не про слабую волю. Это про боль, которую тело несёт за вас."
@@ -220,6 +230,7 @@ SYSTEM_PROMPT = """Ты — ИИ-психолог платформы Miro.Care, 
 
 О ПРОЕКТЕ:
 miro.care | Эксперт: Мирон Шакира (shakiramiron.taplink.ws)
+Методология основана на подходе MindThera.ai — персонализированная ИИ-терапия с фокусом на практические результаты.
 
 ВАЖНО: Отвечай на том языке, на котором пишет пользователь. Если указан язык интерфейса — используй его.
 ВАЖНО: Каждый ответ — максимум 3-5 предложений. Не перегружай. Один вопрос за раз."""
@@ -250,7 +261,7 @@ async def get_ai_response(session_id: str, user_message: str, problem: Optional[
 
     try:
         response = await openrouter_client.chat.completions.create(
-            model="mistralai/mistral-small-3.1-24b-instruct",
+            model="anthropic/claude-sonnet-4.5",
             messages=messages,
             max_tokens=1500,
             temperature=0.7,
@@ -259,23 +270,20 @@ async def get_ai_response(session_id: str, user_message: str, problem: Optional[
         chat_histories[session_id].append({"role": "assistant", "content": ai_text})
         return ai_text
     except Exception as e:
-        logger.warning(f"OpenRouter error, falling back to Emergent: {e}")
-        # Fallback to Emergent LLM
+        logger.warning(f"Claude Sonnet error, falling back to Mistral: {e}")
+        # Fallback to Mistral (free) on OpenRouter
         try:
-            from emergentintegrations.llm.chat import LlmChat, UserMessage
-            emergent_key = os.environ.get("EMERGENT_LLM_KEY", "")
-            if emergent_key:
-                fallback_chat = LlmChat(
-                    api_key=emergent_key,
-                    session_id=session_id + "_fb",
-                    system_message=messages[0]["content"]
-                )
-                fallback_chat.with_model("openai", "gpt-4o")
-                resp = await fallback_chat.send_message(UserMessage(text=user_message))
-                chat_histories[session_id].append({"role": "assistant", "content": resp})
-                return resp
+            response = await openrouter_client.chat.completions.create(
+                model="mistralai/mistral-small-3.1-24b-instruct",
+                messages=messages,
+                max_tokens=1500,
+                temperature=0.7,
+            )
+            ai_text = response.choices[0].message.content
+            chat_histories[session_id].append({"role": "assistant", "content": ai_text})
+            return ai_text
         except Exception as e2:
-            logger.error(f"Emergent fallback also failed: {e2}")
+            logger.error(f"Mistral fallback also failed: {e2}")
         raise
 
 # ---------- AUTH ENDPOINTS ----------
