@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
+import LandingPage from '@/pages/LandingPage';
 import AuthPage from '@/pages/AuthPage';
 import ProblemSelection from '@/pages/ProblemSelection';
 import VoiceSelect from '@/pages/VoiceSelect';
@@ -24,6 +25,7 @@ function WaitForAuth({ children }) {
 function AppRoutes() {
   return (
     <Routes>
+      <Route path="/" element={<WaitForAuth><LandingPage /></WaitForAuth>} />
       <Route path="/auth" element={<WaitForAuth><AuthPage /></WaitForAuth>} />
       <Route path="/problems" element={<WaitForAuth><ProblemSelection /></WaitForAuth>} />
       <Route path="/voice-select" element={<WaitForAuth><VoiceSelect /></WaitForAuth>} />
@@ -34,7 +36,7 @@ function AppRoutes() {
       <Route path="/about" element={<WaitForAuth><AboutPage /></WaitForAuth>} />
       <Route path="/profile" element={<WaitForAuth><ProfilePage /></WaitForAuth>} />
       <Route path="/radio" element={<WaitForAuth><MiroRadio /></WaitForAuth>} />
-      <Route path="*" element={<Navigate to="/problems" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
