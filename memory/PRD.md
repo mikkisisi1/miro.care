@@ -44,7 +44,12 @@ MIRO.CARE — гибридная платформа психологическо
 - MindThera.ai methodology in system prompt
 - **Complete dark glassmorphism redesign**: all pages transformed
 - Miron's photo on auth page with gradient mask
-- Glass cards, dark inputs, red accent system
+- Glass cards, dark inputs, blue accent system (#3C8CFF)
+
+### Phase 3.1 — UI Polish (2026-04-16)
+- Thin blue border (0.5px, #3C8CFF) on glass panel and CTA button
+- Bold font-weight (800) for "MIRO CARE" brand title
+- Hidden "Made with Emergent" badge
 
 ## Prioritized Backlog
 
