@@ -298,7 +298,7 @@ class TestPaymentEndpoints:
         response = requests.post(f"{BASE_URL}/api/payments/create-checkout",
             json={
                 "tariff_id": "hour",
-                "origin_url": "https://xicon-preview-3.preview.emergentagent.com"
+                "origin_url": "https://miro-care-preview.preview.emergentagent.com"
             },
             headers={"Authorization": f"Bearer {auth_token}"}
         )

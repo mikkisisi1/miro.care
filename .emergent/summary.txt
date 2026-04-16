@@ -1,0 +1,136 @@
+<analysis>**original_problem_statement:** 
+The user provided a comprehensive PRD (Miro.Care) to build a hybrid psychological help platform. It features an AI-psychologist (specializing in eating disorders and excess weight) using voice and text, integration with live specialists (like expert Miron Shakira), and a Miro Radio feature (YouTube embed). Core functionality required: 9 problem categories, M/F voice selection, free initial diagnostic chat, Stripe-based tariffs (1h, 7h, 30h, test), dark/light themes, 8 languages, and specific integrations with OpenRouter for the LLM and Fish Audio for TTS (Miron's voice). 
+
+**User's preferred language**: **Russian (РУССКИЙ)**. (The user writes exclusively in Russian. INSTRUCT the next agent to respond in the user's preferred language only).
+
+**what currently exists?** 
+A fully functional MVP of Miro.Care exists. The React frontend includes Auth, Problem Selection, Voice Selection, Chat, Tariffs, Specialists, and Radio pages. The FastAPI backend includes JWT Auth, MongoDB storage, an AI Chat endpoint with an advanced empathetic system prompt, Stripe integration endpoints, and a Fish Audio TTS streaming endpoint. The app features a dark/light theme, language context, and a waveform animation during TTS playback.
+
+**Last working item**: 
+    - Last item agent was working: Enhancing the AI Psychologist's personality to sound like a live, professional psychologist (attentive, calm, with thoughtful pauses ...). Implemented true HTTP streaming for the Fish Audio TTS on both the FastAPI backend and React frontend (including a CSS waveform animation during playback).
+    - Status: USER VERIFICATION PENDING
+    - Agent Testing Done: Y
+    - Which testing method agent to use? screenshot tool and python -c / curl
+    - User Testing Done: N
+
+**All Pending/In progress Issue list**:
+  Issue 1: OpenRouter 401 Unauthorized Error
+     - Attempted fixes: Caught the 401 error and implemented a fallback to the Emergent LLM so the chat remains functional.
+     - Next debug checklist: Check   endpoint. The provided OpenRouter key might be invalid or out of credits, or the model  might require specific headers/permissions.
+     - Why fix this issue and what will be achieved with the fix? Ensures the app uses the user's requested LLM provider rather than relying on the fallback.
+     - Status: IN PROGRESS
+     - Is recurring issue? Y
+     - Should Test frontend/backend/both after fix? Backend
+     - Blocked on other issue: None
+
+**In progress Task List**:
+  Task 1: Female Voice (TTS) Support
+     - Where to resume:   endpoint and .
+     - What will be achieved with this? The user requested Male/Female voice selection. Currently, only Miron's voice ID (Male) is integrated. A female voice ID from Fish Audio needs to be requested from the user or mapped.
+     - Status: IN PROGRESS
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on something: Needs a valid Female Voice ID from the user for Fish Audio.
+
+**Upcoming and Future Tasks**
+    Upcoming Tasks:
+    - P0: Implement actual Stripe Webhooks for secure payment verification and minute deduction (currently endpoints exist but need robust webhook handling).
+    - P1: Real-time timer countdown logic in the Chat UI deducting actual minutes/tokens in backend.
+    - P1: Google Sign-In integration (requested in PRD).
+    - P1: Persistent chat history loading on chat initialization (currently saves to DB but needs robust pagination/reloading in UI).
+    
+    Future Tasks:
+    - P2: Live specialist booking calendar (currently just a static UI card).
+    - P2: Daily wellness check-in (mood tracking).
+
+**Completed work in this session**
+- React + FastAPI + MongoDB boilerplate setup (DONE)
+- Full UI components: Auth, Problem Selection, Tariffs, Specialists, Radio (DONE)
+-  with AI messaging, auto-scroll, and Fish Audio TTS streaming with waveform animation (DONE)
+-  endpoints for auth, problems, tariffs, openrouter chat, fish audio tts (DONE)
+- Stripe payment UI flow and mock backend endpoints (DONE)
+- System prompt adjustment for empathetic, paused speech tailored for eating disorder psychology (DONE)
+
+**Earlier issues found/mentioned but not fixed**
+   Issue 1: OpenRouter Integration Failure
+   - Debug checklist: Review OpenRouter API request in  (line ~170-240). Check if the API key is active.
+   - Why to solve this issue and what will be achieved with this? To use the specific LLM requested by the user.
+   - Should Test frontend/backend/both after fix: Backend
+   - Is recurring issue? Y
+
+**Known issue recurrence from previous fork**
+  - Issue recurrence in previous fork: NA (First session)
+  - Recurrence count: 0
+  - Status: NOT STARTED
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+React.js (Frontend), Tailwind CSS (Styling), FastAPI (Backend), MongoDB (Database), JWT (Authentication), Server-Sent Events/HTTP Streaming (TTS Audio), OpenRouter API, Fish Audio API, Stripe API.
+
+**key DB schema**
+  - : 
+  - : 
+
+**changes in tech stack**
+  - Transitioned from using  LLM wrapper to direct  client usage pointing to .
+  - Replaced OpenAI TTS with direct REST API calls to Fish Audio () using chunked streaming.
+
+**All files of reference**
+  - : Contains core business logic, LLM prompt, and streaming TTS implementation.
+  - : Contains the chat UI, auto-play logic, and chunked audio streaming handler.
+  - : Contains CSS variables for the theme and the  for the TTS waveform animation.
+  - : Master document containing all project requirements.
+
+**Areas that need refactoring**: 
+  -  is nearly 700 lines long. It should ideally be refactored into modular FastAPI routers (, , , ) in future iterations for maintainability.
+
+**key api endpoints**
+  -  & 
+  - : Handles OpenRouter LLM generation (with Emergent fallback).
+  - : Streams audio from Fish Audio API.
+  - : Creates Stripe checkout session.
+
+**Critical Info for New Agent**
+  - **LANGUAGE**: The user writes in Russian. You MUST respond in Russian.
+  - **SYSTEM PROMPT**: The system prompt in  has been highly customized to act as a trauma-informed psychologist (using CBT, DBT, etc.) with specific rules for eating disorders, including thoughtful pauses (...). Do NOT overwrite this prompt without retaining these psychological instructions.
+  - **TTS STREAMING**: Fish Audio is integrated via a streaming endpoint. The frontend uses a custom MediaSource / AudioBuffer or chunked playback strategy to play audio as it is generated. Do not break this streaming mechanism.
+  - **LLM FALLBACK**: Because the provided OpenRouter key returned a 401 error,  currently catches exceptions and falls back to Emergent's LLM to ensure the app doesn't crash during testing.
+
+**documents and test reports created in this job**
+  - 
+  - 
+  - 
+
+**Last 10 User Messages and any pending HUMAN messages**
+  1. (Message 147): User requests the voice to sound like a live, professional psychologist, attentive, calm, with thoughtful pauses, streaming, and instructs to write in Russian. -> *Completed (Prompt updated, streaming implemented).*
+  2. (Message 72): User provides OpenRouter API key. -> *Completed (Integrated, but getting 401).*
+  3. (Message 67): User provides Miron's Fish Audio Voice ID and API key. -> *Completed (Integrated).*
+  4. (Message 16): User uploads images of the expert Miron Shakira. -> *Completed (Added to Specialists page).*
+  5. (Message 13): User provides the massive, complete PRD for Miro.Care in Russian. -> *Completed (Parsed and base MVP built).*
+
+**Project Health Check:**
+  - Backend: Functional
+  - Frontend: Functional
+  - Mocked: Stripe webhooks/minute deductions are currently simulated/mocked. OpenRouter is falling back to Emergent due to a 401.
+
+**3rd Party Integrations**
+  - OpenRouter (LLM) — requires User API Key (Currently throwing 401)
+  - Fish Audio (TTS) — requires User API Key
+  - Stripe (Payments) — requires User API Key (using test key)
+  - OpenAI GPT-4o — uses Emergent LLM Key (Used as fallback)
+  - YouTube IFrame API (Radio) — No key required
+
+**Testing status**
+  - Testing agent used after significant changes: YES
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: 
+  - Known regressions: None
+
+**Credentials to test flow:**
+  - Check  (Usually  /  based on initial setup).
+
+**What agent forgot to execute**
+  - Did not fully implement the Google Sign-In integration requested in the PRD.
+  - Did not implement the live booking calendar logic for specialists (currently static UI).
+  - Did not ask for a Female Voice ID for Fish Audio (only Male/Miron is working).</analysis>
