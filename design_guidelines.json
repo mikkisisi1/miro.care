@@ -1,0 +1,117 @@
+{
+  "theme": "Light (Primary) with Dark/System toggle support",
+  "archetype": "1 (Organic & Earthy)",
+  "vibe": "Empathy-centered, warm, non-judgmental, calming. Designed specifically to reduce anxiety regarding weight and eating trauma.",
+  "colors": {
+    "light": {
+      "background": "#FDFBF7",
+      "surface": "#F2ECE5",
+      "surface_glass": "rgba(253, 251, 247, 0.75)",
+      "text_primary": "#2D2A26",
+      "text_secondary": "#7D756C",
+      "primary": "#B56C62",
+      "primary_hover": "#9C5950",
+      "accent_sage": "#8C9B85",
+      "border": "#E5DED5"
+    },
+    "dark": {
+      "background": "#1A1918",
+      "surface": "#262523",
+      "surface_glass": "rgba(26, 25, 24, 0.75)",
+      "text_primary": "#F2EFEB",
+      "text_secondary": "#A39E98",
+      "primary": "#D0877E",
+      "primary_hover": "#E69C92",
+      "accent_sage": "#A0B098",
+      "border": "#383633"
+    }
+  },
+  "typography": {
+    "headings": "Manrope",
+    "body": "Figtree",
+    "scales": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl font-light tracking-tighter text-balance",
+      "h2": "text-2xl sm:text-3xl font-medium tracking-tight",
+      "h3": "text-xl sm:text-2xl font-medium tracking-tight",
+      "body": "text-base leading-relaxed",
+      "overline": "text-xs font-semibold uppercase tracking-[0.2em]"
+    },
+    "rules": [
+      "No generic sans-serif for headings (Manrope gives a soft, approachable geometry).",
+      "Never center text by default; left-align dense content for low cognitive load.",
+      "Use explicit contrast checks on hover states."
+    ]
+  },
+  "spacing_and_layout": {
+    "scale": "Generous spacing philosophy (p-6 to p-12).",
+    "borderRadius": "Subtle roundness, max 24px (rounded-3xl) to maintain organic, soft shapes. No sharp edges.",
+    "grid_strategy": {
+      "problem_selection": "Bento Grid Protocol. Avoid perfect symmetrical squares. Mix col-span-1 and col-span-2 to create visual interest and offset alignment. Use gap-4 to gap-6."
+    }
+  },
+  "surfaces": {
+    "header": "Crystal Glassmorphism: backdrop-blur-xl bg-background/75, 1px subtle bottom border (border-border). MUST include z-50.",
+    "cards": "Flat solid background (surface color), subtle 1px border. NO heavy shadows, rely on color difference.",
+    "modals": "Soft tactile feel, rounded-3xl, centered. Backdrop must be bg-black/40 with backdrop-blur-sm."
+  },
+  "motion": {
+    "page_transitions": "Soft fade-in (opacity 0 to 1 over 0.4s).",
+    "lists": "Staggered entrance for problem selection and specialists cards.",
+    "interactions": "Hover states slightly lift (-translate-y-1) and darken/lighten border.",
+    "accessibility": "Respect prefers-reduced-motion for all Framer Motion instances."
+  },
+  "media_urls": {
+    "expert_miron_shakira": {
+      "url": "https://images.unsplash.com/photo-1657727534530-fcb5d2002c2a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzN8MHwxfHNlYXJjaHwxfHxwb3J0cmFpdCUyMHByb2Zlc3Npb25hbCUyMG1hbGUlMjBwc3ljaG9sb2dpc3QlMjBzdHVkaW98ZW58MHx8fHwxNzc2MzU1OTkwfDA&ixlib=rb-4.1.0&q=85",
+      "description": "Professional studio portrait of Miron Shakira, looking calm and empathetic."
+    },
+    "miro_radio_cover": {
+      "url": "https://images.unsplash.com/photo-1694055839308-97e8ae47f5a6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTJ8MHwxfHNlYXJjaHwxfHxwb2RjYXN0JTIwbWljcm9waG9uZSUyMHdhcm0lMjBzdHVkaW98ZW58MHx8fHwxNzc2MzU2MDAwfDA&ixlib=rb-4.1.0&q=85",
+      "description": "Warm yellow microphone cover for Miro Radio podcast visuals."
+    },
+    "ambient_background": {
+      "url": "https://images.pexels.com/photos/19977283/pexels-photo-19977283.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Abstract, calming sandstone texture. Use for hero sections or onboarding backgrounds."
+    }
+  },
+  "components_strategy": {
+    "auth": {
+      "style": "Minimalist, welcoming. Use ambient_background with a 40% white overlay. High-contrast typography.",
+      "shadcn": ["Input", "Button", "Form"]
+    },
+    "problem_selection_grid": {
+      "style": "10 categories with emojis. Asymmetrical bento grid. Each tile acts as a selectable card (border highlight on active).",
+      "layout": "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+    },
+    "voice_selection_modal": {
+      "style": "Dialog containing Male/Female avatars. Large clickable areas.",
+      "shadcn": ["Dialog"]
+    },
+    "ai_chat": {
+      "style": "Empathetic conversation UI. Avoid standard blue/green bubbles. Use soft grey/sand backgrounds for bot, terracotta tint for user.",
+      "timer": "In sticky header. Subtle, not alarming. Small pill shape with text-sm.",
+      "shadcn": ["ScrollArea", "Avatar", "Input"]
+    },
+    "tariff_selection": {
+      "style": "Pricing cards. The '7hrs' recommended plan should use 'The Tracing Beam' (subtle animated border) or a distinct sage/terracotta outline.",
+      "shadcn": ["Card", "Button"]
+    },
+    "burger_menu": {
+      "style": "Full-screen overlay triggered by header icon. Large Manrope typography for links. Staggered reveal.",
+      "shadcn": ["Sheet"]
+    },
+    "expert_card": {
+      "style": "Clean image-left, text-right bento card. Miron Shakira info (Psychologist, Dietitian, ISSA USA).",
+      "shadcn": ["Card", "Badge"]
+    }
+  },
+  "instructions_to_main_agent": [
+    "Install specific fonts via Next/Google fonts or CSS imports: Manrope (headings) and Figtree (body).",
+    "Use Framer Motion for the staggered list entrances (burger menu, problem grid).",
+    "All interactive and key informational elements MUST include a data-testid attribute.",
+    "Implement lucide-react or @phosphor-icons/react for UI icons (Phosphor preferred for a softer look).",
+    "Theme toggle must physically swap classes from the defined color palette.",
+    "In AI Chat, ensure scrolling is smooth and anchored to the bottom as new messages stream.",
+    "Never use generic placeholder images. ONLY use the provided media_urls in this JSON."
+  ]
+}
