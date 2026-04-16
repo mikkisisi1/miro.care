@@ -25,7 +25,7 @@ export default function LandingPage() {
       </button>
 
       <div className="landing-glass" data-testid="landing-glass-panel">
-        <p className="landing-glass-subtitle">{t('subtitle')}</p>
+        <p className="landing-glass-subtitle">Miron Shakira — ISSA USA, Stanford University</p>
         <p className="landing-glass-desc">{t('missionText')}</p>
         <button
           data-testid="landing-start-btn"
