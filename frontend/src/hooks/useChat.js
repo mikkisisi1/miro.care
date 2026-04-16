@@ -53,5 +53,5 @@ export default function useChat(user, lang, refreshUser, onAIMessage) {
     }
   }, [user, lang, refreshUser, onAIMessage]);
 
-  return { messages, sendMessage, loading, sessionId: sessionIdRef.current };
+  return { messages, setMessages, sendMessage, loading, sessionId: sessionIdRef.current };
 }

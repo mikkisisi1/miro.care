@@ -112,6 +112,12 @@ class ChatRequest(BaseModel):
     language: Optional[str] = "ru"
     problem: Optional[str] = None
 
+class ChatImageRequest(BaseModel):
+    session_id: str
+    image: str  # base64 encoded image
+    language: Optional[str] = "ru"
+    problem: Optional[str] = None
+
 class CheckoutRequest(BaseModel):
     tariff_id: str
     origin_url: str
@@ -477,6 +483,97 @@ async def chat_endpoint(req: ChatRequest, request: Request):
     except Exception as e:
         logger.error(f"Chat error: {e}")
         raise HTTPException(500, f"Chat error: {str(e)}")
+
+@api_router.post("/chat/image")
+async def chat_image_endpoint(req: ChatImageRequest, request: Request):
+    """Analyze an image sent by the user using Claude's vision"""
+    user = await get_current_user(request)
+    user_id = user["_id"]
+
+    is_free_phase, has_minutes, free_count = check_user_access(user)
+    if not is_free_phase and not has_minutes:
+        return {"response": "Ваши бесплатные сообщения закончились. Пожалуйста, выберите тариф.", "type": "tariff_prompt", "needs_tariff": True}
+
+    session_id = f"{user_id}_{req.session_id}"
+    lang = req.language or user.get("selected_language", "ru")
+
+    # Build vision message
+    image_data_url = f"data:image/jpeg;base64,{req.image}"
+    vision_msg = {
+        "role": "user",
+        "content": [
+            {"type": "image_url", "image_url": {"url": image_data_url}},
+            {"type": "text", "text": f"Пользователь отправил фото. Опиши что видишь и дай психологический комментарий. Отвечай на языке: {lang}"}
+        ]
+    }
+
+    # Get or init history
+    if session_id not in chat_histories:
+        problem = req.problem or user.get("selected_problem")
+        problem_context = ""
+        if problem:
+            for p in PROBLEMS:
+                if p["id"] == problem:
+                    problem_context = f"\n\nПользователь выбрал проблему: {p['name']}."
+                    break
+        system_msg = SYSTEM_PROMPT + problem_context + f"\n\nОтвечай на языке: {lang}"
+        chat_histories[session_id] = [{"role": "system", "content": system_msg}]
+
+    # Add to history as text placeholder (can't store full images in memory)
+    chat_histories[session_id].append({"role": "user", "content": "[Пользователь отправил фото]"})
+
+    # Build messages for API call
+    messages = chat_histories[session_id][:-1] + [vision_msg]
+    if len(messages) > 31:
+        messages = [messages[0]] + messages[-30:]
+
+    try:
+        response = await openrouter_client.chat.completions.create(
+            model="anthropic/claude-sonnet-4.5",
+            messages=messages,
+            max_tokens=1500,
+            temperature=0.7,
+        )
+        ai_text = response.choices[0].message.content
+        chat_histories[session_id].append({"role": "assistant", "content": ai_text})
+
+        await db.chat_messages.insert_one({
+            "user_id": user_id,
+            "session_id": req.session_id,
+            "user_message": "[image]",
+            "ai_response": ai_text,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "problem": req.problem or user.get("selected_problem"),
+        })
+
+        update_fields = build_counter_updates(user, is_free_phase, free_count, ai_text)
+        if update_fields:
+            await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
+
+        return {
+            "response": ai_text,
+            "type": "ai_response",
+            "needs_tariff": free_count + 2 >= 12 and not has_minutes,
+        }
+    except Exception as e:
+        logger.error(f"Image chat error: {e}")
+        # Fallback to Mistral
+        try:
+            # Mistral may not support vision, so just acknowledge the image
+            fallback_msgs = [m for m in chat_histories[session_id] if isinstance(m.get("content"), str)]
+            fallback_msgs.append({"role": "user", "content": f"Пользователь отправил фото. Поблагодари за доверие и спроси, что на фото. Отвечай на языке: {lang}"})
+            response = await openrouter_client.chat.completions.create(
+                model="mistralai/mistral-small-3.1-24b-instruct",
+                messages=fallback_msgs[-20:],
+                max_tokens=1500,
+                temperature=0.7,
+            )
+            ai_text = response.choices[0].message.content
+            chat_histories[session_id].append({"role": "assistant", "content": ai_text})
+            return {"response": ai_text, "type": "ai_response", "needs_tariff": False}
+        except Exception as e2:
+            logger.error(f"Image chat fallback error: {e2}")
+            raise HTTPException(500, f"Image analysis error: {str(e)}")
 
 @api_router.get("/chat/history/{session_id}")
 async def get_chat_history(session_id: str, request: Request):

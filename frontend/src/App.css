@@ -594,12 +594,84 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 
 .xc-chat-text-input-inner {
   width: 100%; height: 100%;
-  padding: 0 14px 0 10px;
+  padding: 0 36px 0 10px;
   border: none; background: transparent;
   color: #fff; font-size: 0.88rem; outline: none;
   font-family: var(--font-body);
 }
 .xc-chat-text-input-inner::placeholder { color: #8a8a8a; }
+
+/* Camera button inside input — xicon exact */
+.xc-camera-inline-btn {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  background: transparent; border: none; cursor: pointer;
+  padding: 4px; display: flex; align-items: center; justify-content: center;
+  color: #ababab; transition: opacity 0.2s;
+}
+.xc-camera-inline-btn:hover { color: #fff; }
+.xc-camera-inline-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+/* Image picker modal — xicon exact */
+.xc-image-picker-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex; align-items: flex-end; justify-content: center;
+  z-index: 1000; padding-bottom: 100px;
+}
+.xc-image-picker-modal {
+  background: rgba(26, 26, 31, 0.8);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px; padding: 12px;
+  width: 128px; height: 128px;
+  display: flex; flex-direction: column; justify-content: center;
+  gap: 6px; border: 0.5px solid var(--accent);
+}
+.xc-image-picker-option {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: transparent;
+  border: none; border-radius: 10px;
+  color: white; font-size: 0.75rem; cursor: pointer;
+  transition: background 0.2s;
+  font-family: var(--font-body);
+}
+.xc-image-picker-option:hover { background: rgba(60, 140, 255, 0.15); }
+.xc-image-picker-option svg { color: var(--accent); }
+
+/* Selected image preview */
+.xc-selected-image-preview {
+  position: relative; padding: 10px;
+  margin: 0 10px; z-index: 2;
+  background: rgba(26, 26, 31, 0.9);
+  border-radius: 12px;
+  display: flex; align-items: center; gap: 10px;
+}
+.xc-preview-thumb {
+  width: 80px; height: 80px; object-fit: cover;
+  border-radius: 8px;
+}
+.xc-remove-image-btn {
+  position: absolute; top: 5px; left: 5px;
+  width: 24px; height: 24px; border-radius: 50%;
+  border: none; background: rgba(0, 0, 0, 0.7);
+  color: white; display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.xc-send-image-btn {
+  margin-left: auto;
+  width: 40px; height: 40px; border-radius: 50%;
+  border: none; background: var(--accent);
+  color: white; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: all 0.2s;
+}
+.xc-send-image-btn:hover { background: var(--accent-hover, #5AA0FF); }
+.xc-send-image-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Chat message with image */
+.xc-chat-message.has-image { padding: 4px; }
+.xc-chat-message-image {
+  width: 100%; max-width: 200px;
+  border-radius: 12px; display: block;
+}
 
 /* Mic button */
 .xc-mic-btn {

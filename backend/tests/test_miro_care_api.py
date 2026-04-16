@@ -260,6 +260,78 @@ class TestChatEndpoint:
         assert response.status_code == 401, f"Expected 401, got {response.status_code}"
 
 
+class TestChatImageEndpoint:
+    """Test AI chat image analysis endpoint (Claude vision)"""
+
+    @pytest.fixture
+    def auth_token(self) -> str:
+        """Get auth token for admin user"""
+        return get_auth_token(ADMIN_EMAIL, ADMIN_PASSWORD)
+
+    def test_chat_image_endpoint_exists(self, auth_token: str) -> None:
+        """POST /api/chat/image endpoint should exist and require proper payload"""
+        # Send minimal request to verify endpoint exists
+        response = requests.post(f"{BASE_URL}/api/chat/image",
+            json={
+                "session_id": f"test_img_session_{uuid.uuid4().hex[:8]}",
+                "image": "",  # Empty image to test validation
+                "language": "en",
+                "problem": "anxiety"
+            },
+            headers={"Authorization": f"Bearer {auth_token}"},
+            timeout=30
+        )
+        # Endpoint should exist (not 404) - may return 200 or 500 depending on image processing
+        assert response.status_code != 404, f"Endpoint should exist, got {response.status_code}"
+
+    def test_chat_image_with_valid_base64(self, auth_token: str) -> None:
+        """POST /api/chat/image with valid base64 image should return AI analysis"""
+        import base64
+        # Create a minimal valid 1x1 red PNG image
+        # This is a valid PNG file (1x1 pixel, red)
+        png_bytes = bytes([
+            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,  # PNG signature
+            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,  # IHDR chunk
+            0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,  # 1x1 dimensions
+            0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53,  # 8-bit RGB
+            0xDE, 0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41,  # IDAT chunk
+            0x54, 0x08, 0xD7, 0x63, 0xF8, 0xCF, 0xC0, 0x00,  # compressed data
+            0x00, 0x00, 0x03, 0x00, 0x01, 0x00, 0x18, 0xDD,  # 
+            0x8D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45,  # IEND chunk
+            0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82
+        ])
+        image_base64 = base64.b64encode(png_bytes).decode('utf-8')
+
+        session_id = f"test_img_session_{uuid.uuid4().hex[:8]}"
+        response = requests.post(f"{BASE_URL}/api/chat/image",
+            json={
+                "session_id": session_id,
+                "image": image_base64,
+                "language": "en",
+                "problem": "anxiety"
+            },
+            headers={"Authorization": f"Bearer {auth_token}"},
+            timeout=90  # Vision API may take longer
+        )
+
+        # Should return 200 with AI response
+        assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+
+        data = response.json()
+        assert "response" in data, "Response should contain 'response' key"
+        assert "type" in data, "Response should contain 'type' key"
+        assert len(data["response"]) > 0, "AI response should not be empty"
+
+    def test_chat_image_without_auth_fails(self) -> None:
+        """POST /api/chat/image without auth should fail"""
+        response = requests.post(f"{BASE_URL}/api/chat/image", json={
+            "session_id": "test_session",
+            "image": "test_base64",
+            "language": "en"
+        })
+        assert response.status_code == 401, f"Expected 401, got {response.status_code}"
+
+
 class TestPaymentEndpoints:
     """Test payment-related endpoints"""
 

@@ -2,10 +2,13 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Send, Mic, MicOff, ArrowLeft, Volume2, VolumeX, Clock } from 'lucide-react';
+import { Send, Mic, MicOff, ArrowLeft, Volume2, VolumeX, Clock, Camera, Image as ImageIcon, X } from 'lucide-react';
 import BurgerMenu from '@/components/BurgerMenu';
 import useAudioStream from '@/hooks/useAudioStream';
 import useChat from '@/hooks/useChat';
+import axios from 'axios';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const SPEECH_LANGS = {
   ru: 'ru-RU', en: 'en-US', zh: 'zh-CN', es: 'es-ES',
@@ -21,11 +24,15 @@ export default function ChatPage() {
   const [isListening, setIsListening] = useState(false);
   const [showRunningText, setShowRunningText] = useState(false);
   const [runningText, setRunningText] = useState('');
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showImagePicker, setShowImagePicker] = useState(false);
   const recognitionRef = useRef(null);
   const silenceTimerRef = useRef(null);
   const lastTranscriptRef = useRef('');
   const liveTranscriptRef = useRef('');
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
 
   const { playTTS, stopTTS, playingTTS, ttsEnabled, toggleTTS } = useAudioStream(user);
 
@@ -35,9 +42,9 @@ export default function ChatPage() {
     }
   }, [ttsEnabled, playTTS]);
 
-  const { messages, sendMessage, loading } = useChat(user, lang, refreshUser, handleAIMessage);
+  const { messages, sendMessage, loading, sessionId, setMessages } = useChat(user, lang, refreshUser, handleAIMessage);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     const timer = setTimeout(() => {
@@ -46,7 +53,7 @@ export default function ChatPage() {
     return () => clearTimeout(timer);
   }, [messages, loading]);
 
-  // Handle sending
+  // Handle text sending
   const handleSend = (text) => {
     const msg = text || input;
     if (!msg || !msg.trim() || loading) return;
@@ -61,14 +68,13 @@ export default function ChatPage() {
     }
   };
 
-  // Handle sending - stable reference for startListening
+  // Stable ref for startListening
   const handleSendRef = useRef(handleSend);
   handleSendRef.current = handleSend;
 
-  // Speech recognition with running text (xicon style)
+  // Speech recognition (xicon style)
   const startListening = useCallback(() => {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
-
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
     recognition.lang = SPEECH_LANGS[lang] || 'en-US';
@@ -81,15 +87,10 @@ export default function ChatPage() {
         transcript += event.results[i][0].transcript;
       }
       liveTranscriptRef.current = transcript;
-
-      // Reset silence timer
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-
       if (transcript !== lastTranscriptRef.current) {
         lastTranscriptRef.current = transcript;
         setShowRunningText(false);
-
-        // 3s silence → show running text
         silenceTimerRef.current = setTimeout(() => {
           if (transcript && transcript.trim()) {
             setRunningText(transcript);
@@ -106,22 +107,14 @@ export default function ChatPage() {
         setRunningText(finalText);
         setShowRunningText(true);
         handleSendRef.current(finalText);
-        // Hide running text after marquee animation
-        setTimeout(() => {
-          setShowRunningText(false);
-          setRunningText('');
-        }, 8000);
+        setTimeout(() => { setShowRunningText(false); setRunningText(''); }, 8000);
       }
       liveTranscriptRef.current = '';
       lastTranscriptRef.current = '';
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     };
 
-    recognition.onerror = () => {
-      setIsListening(false);
-      liveTranscriptRef.current = '';
-    };
-
+    recognition.onerror = () => { setIsListening(false); liveTranscriptRef.current = ''; };
     recognition.start();
     recognitionRef.current = recognition;
     setIsListening(true);
@@ -133,10 +126,69 @@ export default function ChatPage() {
   }, []);
 
   const handleMicClick = () => {
-    if (isListening) {
-      stopListening();
-    } else {
-      startListening();
+    if (isListening) stopListening();
+    else startListening();
+  };
+
+  // Image handling
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setSelectedImage({
+          file,
+          preview: event.target.result,
+          base64: event.target.result.split(',')[1]
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset input so same file can be selected again
+    e.target.value = '';
+  };
+
+  const sendImageMessage = async () => {
+    if (!selectedImage || loading) return;
+    const msgId = `img_${Date.now()}`;
+
+    // Add user message with image preview
+    setMessages(prev => [...prev, { role: 'user', content: '', id: msgId, image: selectedImage.preview }]);
+    const imageBase64 = selectedImage.base64;
+    setSelectedImage(null);
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const { data } = await axios.post(`${API}/chat/image`, {
+        session_id: sessionId,
+        image: imageBase64,
+        language: lang,
+        problem: user?.selected_problem,
+      }, {
+        withCredentials: true,
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      const aiMsg = {
+        role: 'ai',
+        content: data.response,
+        id: `ai_img_${Date.now()}`,
+        isTariffPrompt: data.needs_tariff && data.type === 'tariff_prompt',
+      };
+      setMessages(prev => [...prev, aiMsg]);
+
+      if (!aiMsg.isTariffPrompt && ttsEnabled) {
+        const idx = messages.length + 2; // approximate
+        setTimeout(() => playTTS(data.response, idx), 100);
+      }
+      await refreshUser();
+    } catch (err) {
+      const errMsg = err.response?.data?.detail || 'Ошибка при анализе изображения';
+      setMessages(prev => [...prev, {
+        role: 'ai',
+        content: typeof errMsg === 'string' ? errMsg : 'Ошибка при анализе изображения',
+        id: `err_img_${Date.now()}`,
+      }]);
     }
   };
 
@@ -144,7 +196,6 @@ export default function ChatPage() {
   const minutesLeft = user?.minutes_left || 0;
   const isFreePhase = (user?.free_messages_count || 0) < 12;
   const hasMinutes = minutesLeft > 0;
-
   const formatTime = (mins) => {
     if (mins >= 60) return `${Math.floor(mins / 60)}${t('hours')} ${mins % 60}${t('min')}`;
     return `${mins} ${t('min')}`;
@@ -152,17 +203,12 @@ export default function ChatPage() {
 
   return (
     <div className="xc-chat-modal" data-testid="chat-page">
-      {/* Background wallpaper */}
       <div className="xc-chat-bg" style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/chat-bg.jpg)` }} />
 
       {/* Header */}
       <div className="xc-chat-header" data-testid="chat-header">
         <div className="xc-chat-agent-info">
-          <button
-            data-testid="chat-back-btn"
-            onClick={() => navigate('/problems')}
-            className="xc-close-btn"
-          >
+          <button data-testid="chat-back-btn" onClick={() => navigate('/problems')} className="xc-close-btn">
             <ArrowLeft size={20} strokeWidth={1.5} />
           </button>
           <div className="xc-chat-avatars-row">
@@ -186,21 +232,15 @@ export default function ChatPage() {
             <p className="xc-chat-agent-status">
               {isFreePhase && t('freeSession')}
               {!isFreePhase && hasMinutes && (
-                <span className="xc-timer-text">
-                  <Clock size={11} strokeWidth={1.5} /> {formatTime(minutesLeft)}
-                </span>
+                <span className="xc-timer-text"><Clock size={11} strokeWidth={1.5} /> {formatTime(minutesLeft)}</span>
               )}
               {!isFreePhase && !hasMinutes && 'online'}
             </p>
           </div>
         </div>
         <div className="xc-header-right">
-          <button
-            data-testid="tts-toggle-btn"
-            onClick={toggleTTS}
-            className={`xc-header-icon-btn ${ttsEnabled ? 'active' : ''}`}
-            title={ttsEnabled ? 'TTS On' : 'TTS Off'}
-          >
+          <button data-testid="tts-toggle-btn" onClick={toggleTTS}
+            className={`xc-header-icon-btn ${ttsEnabled ? 'active' : ''}`}>
             {ttsEnabled ? <Volume2 size={18} strokeWidth={1.5} /> : <VolumeX size={18} strokeWidth={1.5} />}
           </button>
         </div>
@@ -209,35 +249,28 @@ export default function ChatPage() {
       {/* Messages */}
       <div className="xc-chat-messages" data-testid="chat-messages">
         {messages.length === 0 && (
-          <div className="xc-chat-empty">
-            <p>{t('subtitle')}</p>
-          </div>
+          <div className="xc-chat-empty"><p>{t('subtitle')}</p></div>
         )}
         {messages.map((msg, i) => (
           <React.Fragment key={msg.id || `msg-${i}`}>
-            <div
-              className={`xc-chat-message ${msg.role === 'user' ? 'user' : 'assistant'}`}
-              data-testid={`chat-message-${i}`}
-            >
-              {msg.content.split('\n').map((line, j) => (
+            <div className={`xc-chat-message ${msg.role === 'user' ? 'user' : 'assistant'}${msg.image ? ' has-image' : ''}`}
+              data-testid={`chat-message-${i}`}>
+              {msg.image && (
+                <img src={msg.image} alt="Sent" className="xc-chat-message-image" />
+              )}
+              {msg.content && msg.content.split('\n').map((line, j) => (
                 <p key={`${msg.id}-line-${j}`}>{line}</p>
               ))}
               {msg.role === 'ai' && !msg.isTariffPrompt && (
-                <button
-                  data-testid={`tts-play-${i}`}
+                <button data-testid={`tts-play-${i}`}
                   onClick={() => playingTTS === i ? stopTTS() : playTTS(msg.content, i)}
-                  className={`xc-msg-speaker-btn ${playingTTS === i ? 'playing' : ''}`}
-                >
+                  className={`xc-msg-speaker-btn ${playingTTS === i ? 'playing' : ''}`}>
                   {playingTTS === i ? <VolumeX size={14} strokeWidth={1.5} /> : <Volume2 size={14} strokeWidth={1.5} />}
                 </button>
               )}
             </div>
             {msg.isTariffPrompt && (
-              <button
-                data-testid="go-to-tariffs-btn"
-                onClick={() => navigate('/tariffs')}
-                className="xc-tariff-btn"
-              >
+              <button data-testid="go-to-tariffs-btn" onClick={() => navigate('/tariffs')} className="xc-tariff-btn">
                 {t('tariffs')}
               </button>
             )}
@@ -245,26 +278,39 @@ export default function ChatPage() {
         ))}
         {loading && (
           <div className="xc-chat-message assistant typing" data-testid="chat-loading">
-            <span className="dot" />
-            <span className="dot" />
-            <span className="dot" />
+            <span className="dot" /><span className="dot" /><span className="dot" />
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Area */}
+      {/* Selected Image Preview */}
+      {selectedImage && (
+        <div className="xc-selected-image-preview">
+          <img src={selectedImage.preview} alt="Selected" className="xc-preview-thumb" />
+          <button className="xc-remove-image-btn" onClick={() => setSelectedImage(null)}>
+            <X size={14} />
+          </button>
+          <button className="xc-send-image-btn" onClick={sendImageMessage} disabled={loading}
+            data-testid="send-image-btn">
+            <Send size={18} strokeWidth={1.5} />
+          </button>
+        </div>
+      )}
+
+      {/* Hidden file inputs */}
+      <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} style={{ display: 'none' }} />
+      <input type="file" ref={cameraInputRef} accept="image/*" capture="environment" onChange={handleImageSelect} style={{ display: 'none' }} />
+
+      {/* Input Area — exact xicon layout */}
       <div className="xc-chat-input-area" data-testid="chat-input-form">
         {/* Mic button */}
-        <button
-          data-testid="mic-btn"
-          onClick={handleMicClick}
-          className={`xc-mic-btn ${isListening ? 'recording' : ''}`}
-        >
+        <button data-testid="mic-btn" onClick={handleMicClick}
+          className={`xc-mic-btn ${isListening ? 'recording' : ''}`}>
           {isListening ? <MicOff size={20} strokeWidth={1.5} /> : <Mic size={20} strokeWidth={1.5} />}
         </button>
 
-        {/* Input container */}
+        {/* Input container — text/wave/running text + camera inside */}
         <div className="xc-input-container">
           {showRunningText && runningText ? (
             <span className="xc-running-text-inner">{runningText}</span>
@@ -276,31 +322,45 @@ export default function ChatPage() {
               </svg>
             </div>
           ) : (
-            <input
-              data-testid="chat-input"
-              type="text"
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={handleKeyPress}
-              placeholder={t('sendMessage')}
-              className="xc-chat-text-input-inner"
-              disabled={loading}
-            />
+            <>
+              <input data-testid="chat-input" type="text" value={input}
+                onChange={e => setInput(e.target.value)} onKeyDown={handleKeyPress}
+                placeholder={t('sendMessage')} className="xc-chat-text-input-inner" disabled={loading} />
+              {/* Camera button inside input */}
+              <button className="xc-camera-inline-btn" data-testid="camera-inline-btn"
+                onClick={() => setShowImagePicker(true)} disabled={loading}>
+                <Camera size={18} strokeWidth={1.5} />
+              </button>
+            </>
           )}
         </div>
 
         {/* Send button */}
         {!isListening && !showRunningText && (
-          <button
-            data-testid="send-btn"
-            onClick={() => handleSend()}
-            disabled={!input.trim() || loading}
-            className="xc-send-btn"
-          >
+          <button data-testid="send-btn" onClick={() => handleSend()}
+            disabled={!input.trim() || loading} className="xc-send-btn">
             <Send size={18} strokeWidth={1.5} />
           </button>
         )}
       </div>
+
+      {/* Image Picker Modal */}
+      {showImagePicker && (
+        <div className="xc-image-picker-overlay" onClick={() => setShowImagePicker(false)}>
+          <div className="xc-image-picker-modal" onClick={e => e.stopPropagation()}>
+            <button className="xc-image-picker-option" data-testid="camera-option-btn"
+              onClick={() => { setShowImagePicker(false); cameraInputRef.current?.click(); }}>
+              <Camera size={20} strokeWidth={1.5} />
+              {t('camera') || 'Camera'}
+            </button>
+            <button className="xc-image-picker-option" data-testid="gallery-option-btn"
+              onClick={() => { setShowImagePicker(false); fileInputRef.current?.click(); }}>
+              <ImageIcon size={20} strokeWidth={1.5} />
+              {t('gallery') || 'Gallery'}
+            </button>
+          </div>
+        </div>
+      )}
 
       <BurgerMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
     </div>
