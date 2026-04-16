@@ -62,7 +62,8 @@ export default function ChatPage() {
       }
       await refreshUser();
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'ai', content: 'Sorry, an error occurred. Please try again.' }]);
+      const errMsg = err.response?.data?.detail || 'An error occurred. Please try again.';
+      setMessages(prev => [...prev, { role: 'ai', content: typeof errMsg === 'string' ? errMsg : 'An error occurred. Please try again.' }]);
     } finally {
       setLoading(false);
     }
