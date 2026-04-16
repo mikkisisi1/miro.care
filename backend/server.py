@@ -374,63 +374,60 @@ async def get_tariffs():
     return {"tariffs": TARIFFS}
 
 # ---------- CHAT ----------
+def check_user_access(user: dict) -> tuple:
+    """Check if user has access to chat. Returns (is_free_phase, has_minutes, free_count)."""
+    free_count = user.get("free_messages_count", 0)
+    has_minutes = (user.get("minutes_left", 0) or 0) > 0
+    is_free_phase = free_count < 12
+    return is_free_phase, has_minutes, free_count
+
+def build_counter_updates(user: dict, is_free_phase: bool, free_count: int, ai_response: str) -> dict:
+    """Build the DB update fields for counters and plan detection."""
+    update_fields = {}
+    if is_free_phase:
+        update_fields["free_messages_count"] = free_count + 2
+    else:
+        new_used = (user.get("minutes_used", 0) or 0) + 1
+        new_left = max(0, (user.get("minutes_left", 0) or 0) - 1)
+        update_fields["minutes_used"] = new_used
+        update_fields["minutes_left"] = new_left
+    if "ПЛАН РАБОТЫ" in ai_response or "PLAN" in ai_response.upper():
+        update_fields["last_plan"] = ai_response
+    return update_fields
+
 @api_router.post("/chat")
 async def chat_endpoint(req: ChatRequest, request: Request):
     user = await get_current_user(request)
     user_id = user["_id"]
 
-    # Check free messages limit or paid session
-    free_count = user.get("free_messages_count", 0)
-    has_minutes = (user.get("minutes_left", 0) or 0) > 0
-    is_free_phase = free_count < 12  # ~5-7 exchanges = ~10-14 messages
+    is_free_phase, has_minutes, free_count = check_user_access(user)
 
     if not is_free_phase and not has_minutes:
         return {"message": "Ваши бесплатные сообщения закончились. Пожалуйста, выберите тариф для продолжения.", "type": "tariff_prompt", "needs_tariff": True}
 
-    # Get or create chat session
     session_id = f"{user_id}_{req.session_id}"
 
     try:
         ai_response = await get_ai_response(session_id, req.message, req.problem or user.get("selected_problem"), req.language or user.get("selected_language", "ru"))
 
-        # Save to chat history in DB
-        msg_doc = {
+        await db.chat_messages.insert_one({
             "user_id": user_id,
             "session_id": req.session_id,
             "user_message": req.message,
             "ai_response": ai_response,
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "problem": req.problem or user.get("selected_problem"),
-        }
-        await db.chat_messages.insert_one(msg_doc)
+        })
 
-        # Update counters
-        update_fields = {}
-        if is_free_phase:
-            update_fields["free_messages_count"] = free_count + 2  # user + AI
-        else:
-            # Deduct ~1 minute per exchange
-            new_used = (user.get("minutes_used", 0) or 0) + 1
-            new_left = max(0, (user.get("minutes_left", 0) or 0) - 1)
-            update_fields["minutes_used"] = new_used
-            update_fields["minutes_left"] = new_left
-
-        # Check if AI generated a plan
-        if "ПЛАН РАБОТЫ" in ai_response or "PLAN" in ai_response.upper():
-            update_fields["last_plan"] = ai_response
-
+        update_fields = build_counter_updates(user, is_free_phase, free_count, ai_response)
         if update_fields:
             await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
-
-        # Check if needs tariff
-        needs_tariff = not is_free_phase and not has_minutes
-        remaining = user.get("minutes_left", 0) if has_minutes else None
 
         return {
             "message": ai_response,
             "type": "ai_response",
             "needs_tariff": free_count + 2 >= 12 and not has_minutes,
-            "minutes_left": remaining,
+            "minutes_left": user.get("minutes_left", 0) if has_minutes else None,
             "is_free_phase": is_free_phase,
         }
     except Exception as e:
@@ -462,7 +459,7 @@ def clean_text_for_tts(text: str) -> str:
 @api_router.post("/tts")
 async def text_to_speech(req: TTSRequest_Model, request: Request):
     """Стриминговое озвучивание текста голосом Мирона (Fish Audio)"""
-    user = await get_current_user(request)
+    await get_current_user(request)  # Auth check
 
     if not fish_api_key:
         raise HTTPException(500, "Fish Audio API key not configured")
@@ -497,6 +494,79 @@ async def text_to_speech(req: TTSRequest_Model, request: Request):
     )
 
 # ---------- STRIPE PAYMENTS ----------
+async def activate_test_tariff(user_id: str) -> dict:
+    """Activate the free test tariff for a user."""
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {
+            "tariff": "test",
+            "minutes_total": 3,
+            "minutes_used": 0,
+            "minutes_left": 3,
+            "test_used": True,
+            "tariff_expires_at": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(),
+            "is_paid_session_active": True,
+        }}
+    )
+    return {"type": "test_activated", "message": "Test tariff activated"}
+
+async def create_stripe_session(user: dict, tariff: dict, tariff_id: str, origin_url: str, base_url: str) -> dict:
+    """Create a Stripe checkout session and save the transaction."""
+    webhook_url = f"{base_url}api/webhook/stripe"
+    stripe_checkout = StripeCheckout(
+        api_key=os.environ["STRIPE_API_KEY"],
+        webhook_url=webhook_url
+    )
+
+    checkout_req = CheckoutSessionRequest(
+        amount=float(tariff["price"]),
+        currency="usd",
+        success_url=f"{origin_url}/payment-success?session_id={{CHECKOUT_SESSION_ID}}",
+        cancel_url=f"{origin_url}/tariffs",
+        metadata={
+            "user_id": user["_id"],
+            "tariff_id": tariff_id,
+            "email": user.get("email", ""),
+        }
+    )
+
+    session = await stripe_checkout.create_checkout_session(checkout_req)
+
+    await db.payment_transactions.insert_one({
+        "session_id": session.session_id,
+        "user_id": user["_id"],
+        "tariff_id": tariff_id,
+        "amount": tariff["price"],
+        "currency": "usd",
+        "payment_status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+
+    return {"url": session.url, "session_id": session.session_id}
+
+async def activate_paid_tariff(user_id: str, tariff_id: str, session_id: str) -> None:
+    """Activate a paid tariff after successful payment."""
+    tariff = TARIFFS[tariff_id]
+    expires_map = {"week": timedelta(days=7), "month": timedelta(days=30)}
+    expires = expires_map.get(tariff_id, timedelta(days=1))
+
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {
+            "tariff": tariff_id,
+            "minutes_total": tariff["minutes"],
+            "minutes_used": 0,
+            "minutes_left": tariff["minutes"],
+            "tariff_expires_at": (datetime.now(timezone.utc) + expires).isoformat(),
+            "is_paid_session_active": True,
+        }}
+    )
+
+    await db.payment_transactions.update_one(
+        {"session_id": session_id},
+        {"$set": {"payment_status": "paid", "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+
 @api_router.post("/payments/create-checkout")
 async def create_checkout(req: CheckoutRequest, request: Request):
     user = await get_current_user(request)
@@ -507,58 +577,10 @@ async def create_checkout(req: CheckoutRequest, request: Request):
     if req.tariff_id == "test":
         if user.get("test_used"):
             raise HTTPException(400, "Test tariff already used")
-        # Activate test directly without payment
-        await db.users.update_one(
-            {"_id": ObjectId(user["_id"])},
-            {"$set": {
-                "tariff": "test",
-                "minutes_total": 3,
-                "minutes_used": 0,
-                "minutes_left": 3,
-                "test_used": True,
-                "tariff_expires_at": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(),
-                "is_paid_session_active": True,
-            }}
-        )
-        return {"type": "test_activated", "message": "Test tariff activated"}
+        return await activate_test_tariff(user["_id"])
 
-    # Stripe checkout for paid tariffs
     host_url = str(request.base_url).rstrip("/")
-    webhook_url = f"{host_url}api/webhook/stripe"
-    stripe_checkout = StripeCheckout(
-        api_key=os.environ["STRIPE_API_KEY"],
-        webhook_url=webhook_url
-    )
-
-    success_url = f"{req.origin_url}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
-    cancel_url = f"{req.origin_url}/tariffs"
-
-    checkout_req = CheckoutSessionRequest(
-        amount=float(tariff["price"]),
-        currency="usd",
-        success_url=success_url,
-        cancel_url=cancel_url,
-        metadata={
-            "user_id": user["_id"],
-            "tariff_id": req.tariff_id,
-            "email": user.get("email", ""),
-        }
-    )
-
-    session = await stripe_checkout.create_checkout_session(checkout_req)
-
-    # Save payment transaction
-    await db.payment_transactions.insert_one({
-        "session_id": session.session_id,
-        "user_id": user["_id"],
-        "tariff_id": req.tariff_id,
-        "amount": tariff["price"],
-        "currency": "usd",
-        "payment_status": "pending",
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    })
-
-    return {"url": session.url, "session_id": session.session_id}
+    return await create_stripe_session(user, tariff, req.tariff_id, req.origin_url, host_url)
 
 @api_router.get("/payments/status/{session_id}")
 async def check_payment_status(session_id: str, request: Request):
@@ -582,31 +604,7 @@ async def check_payment_status(session_id: str, request: Request):
         status = await stripe_checkout.get_checkout_status(session_id)
 
         if status.payment_status == "paid" and tx.get("payment_status") != "paid":
-            tariff_id = tx["tariff_id"]
-            tariff = TARIFFS[tariff_id]
-
-            expires = timedelta(days=1)
-            if tariff_id == "week":
-                expires = timedelta(days=7)
-            elif tariff_id == "month":
-                expires = timedelta(days=30)
-
-            await db.users.update_one(
-                {"_id": ObjectId(user["_id"])},
-                {"$set": {
-                    "tariff": tariff_id,
-                    "minutes_total": tariff["minutes"],
-                    "minutes_used": 0,
-                    "minutes_left": tariff["minutes"],
-                    "tariff_expires_at": (datetime.now(timezone.utc) + expires).isoformat(),
-                    "is_paid_session_active": True,
-                }}
-            )
-
-            await db.payment_transactions.update_one(
-                {"session_id": session_id},
-                {"$set": {"payment_status": "paid", "updated_at": datetime.now(timezone.utc).isoformat()}}
-            )
+            await activate_paid_tariff(user["_id"], tx["tariff_id"], session_id)
 
         return {
             "status": status.status,

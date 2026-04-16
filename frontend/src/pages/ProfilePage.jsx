@@ -59,7 +59,7 @@ export default function ProfilePage() {
           <div className="profile-plan" data-testid="saved-plan">
             <h3>Saved Plan</h3>
             <div className="profile-plan-text">
-              {user.last_plan.split('\n').map((line, i) => <p key={i}>{line}</p>)}
+              {user.last_plan.split('\n').map((line, idx) => <p key={`plan-line-${idx}-${line.slice(0, 8)}`}>{line}</p>)}
             </div>
           </div>
         )}

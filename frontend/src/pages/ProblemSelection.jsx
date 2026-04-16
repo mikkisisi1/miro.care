@@ -39,8 +39,8 @@ export default function ProblemSelection() {
       });
       await refreshUser();
       navigate('/voice-select');
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // Problem selection update failed silently — user can retry
     }
   };
 

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 
 const ThemeContext = createContext(null);
 
@@ -28,8 +28,12 @@ export function ThemeProvider({ children }) {
     return () => mq.removeEventListener('change', handler);
   }, [theme]);
 
+  const setThemeStable = useCallback((t) => setTheme(t), []);
+
+  const value = useMemo(() => ({ theme, setTheme: setThemeStable }), [theme, setThemeStable]);
+
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

@@ -41,8 +41,8 @@ export default function TariffPage() {
       if (data.url) {
         window.location.href = data.url;
       }
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // Payment initiation failed silently — user can retry
     }
   };
 

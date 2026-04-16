@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 const LanguageContext = createContext(null);
 
@@ -146,10 +146,16 @@ export function LanguageProvider({ children }) {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
   }, [lang]);
 
-  const t = (key) => translations[lang]?.[key] || translations['en']?.[key] || key;
+  const t = useCallback((key) => translations[lang]?.[key] || translations['en']?.[key] || key, [lang]);
+
+  const setLangStable = useCallback((l) => setLang(l), []);
+
+  const value = useMemo(() => ({
+    lang, setLang: setLangStable, t, languages: LANGUAGES
+  }), [lang, setLangStable, t]);
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, t, languages: LANGUAGES }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   );

@@ -92,7 +92,7 @@ export default function AuthPage() {
             disabled={loading}
             className="auth-submit"
           >
-            {loading ? '...' : (isLogin ? t('login') : t('register'))}
+            {loading ? '...' : isLogin ? t('login') : t('register')}
             <ArrowRight size={18} />
           </button>
         </form>

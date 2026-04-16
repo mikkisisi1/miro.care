@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -14,13 +14,15 @@ export default function PaymentSuccess() {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [status, setStatus] = useState('checking');
+  const attemptsRef = useRef(0);
 
   useEffect(() => {
     if (!sessionId) return;
-    let attempts = 0;
+    let cancelled = false;
+
     const poll = async () => {
-      if (attempts >= 10) {
-        setStatus('timeout');
+      if (attemptsRef.current >= 10) {
+        if (!cancelled) setStatus('timeout');
         return;
       }
       try {
@@ -30,15 +32,21 @@ export default function PaymentSuccess() {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         if (data.payment_status === 'paid') {
-          setStatus('paid');
-          await refreshUser();
+          if (!cancelled) {
+            setStatus('paid');
+            await refreshUser();
+          }
           return;
         }
-      } catch {}
-      attempts++;
-      setTimeout(poll, 2000);
+      } catch (err) {
+        console.error('Payment status check failed:', err.message);
+      }
+      attemptsRef.current += 1;
+      if (!cancelled) setTimeout(poll, 2000);
     };
     poll();
+
+    return () => { cancelled = true; };
   }, [sessionId, refreshUser]);
 
   return (
