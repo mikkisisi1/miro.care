@@ -5,6 +5,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 from fastapi import FastAPI, APIRouter, HTTPException, Request, Response, Depends
+from fastapi.responses import StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
@@ -17,8 +18,22 @@ from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 from bson import ObjectId
-from emergentintegrations.llm.chat import LlmChat, UserMessage
+from openai import AsyncOpenAI
+from fish_audio_sdk import Session as FishSession, TTSRequest
+# OpenRouter client (primary LLM)
+openrouter_client = AsyncOpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=os.environ.get("OPENROUTER_API_KEY", ""),
+    default_headers={
+        "HTTP-Referer": "https://miro.care",
+        "X-OpenRouter-Title": "Miro.Care",
+    }
+)
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest
+
+# Fish Audio TTS
+fish_api_key = os.environ.get("FISH_AUDIO_API_KEY", "")
+fish_voice_male = os.environ.get("FISH_VOICE_MALE", "5cfccfb8aae14938be283ea6400b4a8a")
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
@@ -112,6 +127,10 @@ class LanguageUpdateRequest(BaseModel):
 class ThemeUpdateRequest(BaseModel):
     theme: str
 
+class TTSRequest_Model(BaseModel):
+    text: str
+    voice: Optional[str] = "male"
+
 # ---------- TARIFFS ----------
 TARIFFS = {
     "test": {"name": "Тест", "minutes": 3, "price": 0.0, "hours_label": "3 мин"},
@@ -180,28 +199,59 @@ miro.care | Эксперт: Мирон Шакира (shakiramiron.taplink.ws)
 
 ВАЖНО: Отвечай на том языке, на котором пишет пользователь. Если указан язык интерфейса — используй его."""
 
-# ---------- CHAT SESSIONS ----------
-chat_sessions: Dict[str, LlmChat] = {}
+# ---------- CHAT SESSIONS (OpenRouter) ----------
+# Store conversation histories in memory (keyed by session_id)
+chat_histories: Dict[str, list] = {}
 
-def get_or_create_chat(session_id: str, problem: Optional[str] = None, language: str = "ru") -> LlmChat:
-    if session_id not in chat_sessions:
+async def get_ai_response(session_id: str, user_message: str, problem: Optional[str] = None, language: str = "ru") -> str:
+    """Get AI response from OpenRouter with conversation history"""
+    if session_id not in chat_histories:
         problem_context = ""
         if problem:
             for p in PROBLEMS:
                 if p["id"] == problem:
                     problem_context = f"\n\nПользователь выбрал проблему: {p['name']}. Учитывай это в диалоге."
                     break
-
         lang_instruction = f"\n\nОтвечай на языке: {language}"
+        system_msg = SYSTEM_PROMPT + problem_context + lang_instruction
+        chat_histories[session_id] = [{"role": "system", "content": system_msg}]
 
-        chat = LlmChat(
-            api_key=os.environ["EMERGENT_LLM_KEY"],
-            session_id=session_id,
-            system_message=SYSTEM_PROMPT + problem_context + lang_instruction
+    chat_histories[session_id].append({"role": "user", "content": user_message})
+
+    # Keep conversation manageable (last 30 messages + system)
+    messages = chat_histories[session_id]
+    if len(messages) > 31:
+        messages = [messages[0]] + messages[-30:]
+
+    try:
+        response = await openrouter_client.chat.completions.create(
+            model="mistralai/mistral-small-3.1-24b-instruct:free",
+            messages=messages,
+            max_tokens=1500,
+            temperature=0.7,
         )
-        chat.with_model("openai", "gpt-4o")
-        chat_sessions[session_id] = chat
-    return chat_sessions[session_id]
+        ai_text = response.choices[0].message.content
+        chat_histories[session_id].append({"role": "assistant", "content": ai_text})
+        return ai_text
+    except Exception as e:
+        logger.warning(f"OpenRouter error, falling back to Emergent: {e}")
+        # Fallback to Emergent LLM
+        try:
+            from emergentintegrations.llm.chat import LlmChat, UserMessage
+            emergent_key = os.environ.get("EMERGENT_LLM_KEY", "")
+            if emergent_key:
+                fallback_chat = LlmChat(
+                    api_key=emergent_key,
+                    session_id=session_id + "_fb",
+                    system_message=messages[0]["content"]
+                )
+                fallback_chat.with_model("openai", "gpt-4o")
+                resp = await fallback_chat.send_message(UserMessage(text=user_message))
+                chat_histories[session_id].append({"role": "assistant", "content": resp})
+                return resp
+        except Exception as e2:
+            logger.error(f"Emergent fallback also failed: {e2}")
+        raise
 
 # ---------- AUTH ENDPOINTS ----------
 @api_router.post("/auth/register")
@@ -314,11 +364,9 @@ async def chat_endpoint(req: ChatRequest, request: Request):
 
     # Get or create chat session
     session_id = f"{user_id}_{req.session_id}"
-    chat = get_or_create_chat(session_id, req.problem or user.get("selected_problem"), req.language or user.get("selected_language", "ru"))
 
     try:
-        user_msg = UserMessage(text=req.message)
-        ai_response = await chat.send_message(user_msg)
+        ai_response = await get_ai_response(session_id, req.message, req.problem or user.get("selected_problem"), req.language or user.get("selected_language", "ru"))
 
         # Save to chat history in DB
         msg_doc = {
@@ -372,6 +420,58 @@ async def get_chat_history(session_id: str, request: Request):
         {"_id": 0}
     ).sort("timestamp", 1).to_list(200)
     return {"messages": messages}
+
+# ---------- TTS (Fish Audio) ----------
+@api_router.post("/tts")
+async def text_to_speech(req: TTSRequest_Model, request: Request):
+    """Convert text to speech using Fish Audio"""
+    user = await get_current_user(request)
+
+    if not fish_api_key:
+        raise HTTPException(500, "Fish Audio API key not configured")
+
+    # Clean text for TTS (remove markdown markers, emotion markers)
+    import re
+    text = req.text
+    text = re.sub(r'\*[^*]+\*', '', text)  # Remove *markers*
+    text = re.sub(r'\([^)]+\)', '', text)  # Remove (emotions)
+    text = re.sub(r'^(Нежно|Мягко|Шёпотом|Тихо|Уверенно)\s*,?\s*', '', text)
+    text = text.strip()
+
+    if not text:
+        raise HTTPException(400, "No text to synthesize")
+
+    # Select voice based on user preference
+    voice_id = fish_voice_male  # Male = Miron voice
+
+    try:
+        fish_session = FishSession(fish_api_key)
+
+        # Collect all audio chunks first, then return as single response
+        import io
+        audio_buffer = io.BytesIO()
+        for chunk in fish_session.tts(TTSRequest(
+            text=text,
+            reference_id=voice_id,
+        )):
+            audio_buffer.write(chunk)
+
+        audio_buffer.seek(0)
+        audio_data = audio_buffer.read()
+
+        if not audio_data:
+            raise HTTPException(500, "No audio data generated")
+
+        return Response(
+            content=audio_data,
+            media_type="audio/mpeg",
+            headers={"Content-Disposition": "inline; filename=tts.mp3"}
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Fish Audio TTS error: {e}")
+        raise HTTPException(500, f"TTS error: {str(e)}")
 
 # ---------- STRIPE PAYMENTS ----------
 @api_router.post("/payments/create-checkout")

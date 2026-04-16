@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import axios from 'axios';
-import { Send, Mic, MicOff, Clock, ArrowLeft, Menu } from 'lucide-react';
+import { Send, Mic, MicOff, Clock, ArrowLeft, Menu, Volume2, VolumeX } from 'lucide-react';
 import BurgerMenu from '@/components/BurgerMenu';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -18,6 +18,9 @@ export default function ChatPage() {
   const [sessionId] = useState(() => `session_${Date.now()}`);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [playingTTS, setPlayingTTS] = useState(null);
+  const [ttsEnabled, setTtsEnabled] = useState(true);
+  const audioRef = useRef(null);
   const messagesEndRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -35,6 +38,39 @@ export default function ChatPage() {
     if (mins >= 60) return `${Math.floor(mins / 60)}${t('hours')} ${mins % 60}${t('min')}`;
     return `${mins} ${t('min')}`;
   };
+
+  const playTTS = useCallback(async (text, msgIndex) => {
+    if (!ttsEnabled) return;
+    try {
+      // Stop any currently playing audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      setPlayingTTS(msgIndex);
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${API}/tts`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ text, voice: user?.selected_voice || 'male' }),
+      });
+      if (!response.ok) throw new Error('TTS failed');
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => { setPlayingTTS(null); URL.revokeObjectURL(url); };
+      audio.onerror = () => { setPlayingTTS(null); URL.revokeObjectURL(url); };
+      await audio.play();
+    } catch (err) {
+      console.error('TTS error:', err);
+      setPlayingTTS(null);
+    }
+  }, [ttsEnabled, user]);
 
   const sendMessage = useCallback(async (text) => {
     if (!text.trim()) return;
@@ -56,9 +92,19 @@ export default function ChatPage() {
       });
 
       if (data.needs_tariff && data.type === 'tariff_prompt') {
-        setMessages(prev => [...prev, { role: 'ai', content: data.message, isTariffPrompt: true }]);
+        setMessages(prev => {
+          const updated = [...prev, { role: 'ai', content: data.message, isTariffPrompt: true }];
+          return updated;
+        });
       } else {
-        setMessages(prev => [...prev, { role: 'ai', content: data.message }]);
+        setMessages(prev => {
+          const updated = [...prev, { role: 'ai', content: data.message }];
+          // Auto-play TTS for the new AI message
+          if (ttsEnabled) {
+            setTimeout(() => playTTS(data.message, updated.length - 1), 100);
+          }
+          return updated;
+        });
       }
       await refreshUser();
     } catch (err) {
@@ -117,6 +163,14 @@ export default function ChatPage() {
         <button data-testid="chat-menu-btn" onClick={() => setMenuOpen(true)} className="chat-header-btn">
           <Menu size={20} />
         </button>
+        <button
+          data-testid="tts-toggle-btn"
+          onClick={() => { setTtsEnabled(!ttsEnabled); if (audioRef.current) { audioRef.current.pause(); setPlayingTTS(null); } }}
+          className={`chat-header-btn ${ttsEnabled ? 'tts-active' : ''}`}
+          title={ttsEnabled ? 'TTS On' : 'TTS Off'}
+        >
+          {ttsEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+        </button>
       </header>
 
       <div className="chat-messages" data-testid="chat-messages">
@@ -132,6 +186,15 @@ export default function ChatPage() {
                 <p key={j}>{line}</p>
               ))}
             </div>
+            {msg.role === 'ai' && !msg.isTariffPrompt && (
+              <button
+                data-testid={`tts-play-${i}`}
+                onClick={() => playingTTS === i ? (() => { audioRef.current?.pause(); setPlayingTTS(null); })() : playTTS(msg.content, i)}
+                className={`chat-tts-btn ${playingTTS === i ? 'chat-tts-playing' : ''}`}
+              >
+                {playingTTS === i ? <VolumeX size={14} /> : <Volume2 size={14} />}
+              </button>
+            )}
             {msg.isTariffPrompt && (
               <button
                 data-testid="go-to-tariffs-btn"

@@ -97,10 +97,11 @@ Key specialization: работа с психологической травмо�
 - [ ] Analytics and user engagement tracking
 
 ## 3rd Party Integrations
-- **Emergent LLM** (OpenAI GPT-4o) — AI psychologist chat
+- **OpenRouter** (Mistral) — Primary LLM for AI psychologist chat (with Emergent LLM GPT-4o as fallback)
+- **Fish Audio TTS** — Text-to-speech with Miron's voice (Voice ID: 5cfccfb8aae14938be283ea6400b4a8a)
 - **Stripe** — Payment processing
 - **YouTube IFrame API** — Miro Radio background music
-- **Web Speech API** — Browser-based speech recognition
+- **Web Speech API** — Browser-based speech recognition (STT)
 
 ## Documents
 - `/app/memory/test_credentials.md` — Auth credentials
