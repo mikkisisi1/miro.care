@@ -152,6 +152,9 @@ export default function ChatPage() {
 
   return (
     <div className="xc-chat-modal" data-testid="chat-page">
+      {/* Background wallpaper */}
+      <div className="xc-chat-bg" style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/chat-bg.jpg)` }} />
+
       {/* Header */}
       <div className="xc-chat-header" data-testid="chat-header">
         <div className="xc-chat-agent-info">
@@ -162,11 +165,21 @@ export default function ChatPage() {
           >
             <ArrowLeft size={20} strokeWidth={1.5} />
           </button>
-          <div className="xc-chat-avatar-wrapper">
-            <div className="xc-chat-avatar-circle">
-              <span className="xc-chat-avatar-letter">M</span>
+          <div className="xc-chat-avatars-row">
+            <div className="xc-chat-avatar-item">
+              <div className="xc-chat-avatar-wrapper">
+                <img src="/miron-avatar.jpg" alt="Miron" className="xc-chat-avatar-img" />
+                <span className="xc-chat-online-dot" />
+              </div>
+              <span className="xc-avatar-name">Miron</span>
             </div>
-            <span className="xc-chat-online-dot" />
+            <div className="xc-chat-avatar-item">
+              <div className="xc-chat-avatar-wrapper">
+                <img src="/oksana-avatar.jpg" alt="Oksana" className="xc-chat-avatar-img" />
+                <span className="xc-chat-online-dot" />
+              </div>
+              <span className="xc-avatar-name">Oksana</span>
+            </div>
           </div>
           <div>
             <h3 className="xc-chat-agent-name">MIRO.CARE</h3>

@@ -53,8 +53,8 @@ MIRO.CARE — гибридная платформа психологическо
 
 ### Phase 3.2 — Xicon-Style Chat Dialog (2026-04-17)
 - **Complete chat page redesign** based on Xicon.online dialog window:
-  - Full-screen black background chat modal
-  - Header with round avatar (M letter) + green online dot + agent name
+  - Full-screen chat modal with mountain wallpaper background
+  - Header with 2 real photo avatars (Miron + Oksana) + green online dots + names
   - User messages: right-aligned, glassmorphism backdrop, blue border
   - AI messages: left-aligned, dark background, blue border, speaker button for TTS
   - Typing indicator with animated dots

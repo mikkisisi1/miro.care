@@ -374,14 +374,25 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   overflow: hidden;
 }
 
+/* Chat Background Wallpaper */
+.xc-chat-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.25;
+  pointer-events: none;
+}
+
 /* Chat Header */
 .xc-chat-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 16px; height: 64px;
+  padding: 0 16px; height: 68px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
-  background: rgba(26, 26, 31, 0.85);
+  background: rgba(10, 10, 12, 0.85);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  position: relative; z-index: 2;
 }
 
 .xc-chat-agent-info {
@@ -400,21 +411,29 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 .xc-chat-avatar-wrapper {
   position: relative; width: 44px; height: 44px;
 }
-.xc-chat-avatar-circle {
+.xc-chat-avatar-img {
   width: 100%; height: 100%; border-radius: 50%;
-  background: rgba(60, 140, 255, 0.15);
+  object-fit: cover;
   border: 0.5px solid rgba(60, 140, 255, 0.7);
-  display: flex; align-items: center; justify-content: center;
-}
-.xc-chat-avatar-letter {
-  font-family: var(--font-heading); font-size: 1.1rem;
-  font-weight: 600; color: var(--accent);
 }
 .xc-chat-online-dot {
-  position: absolute; bottom: 3px; right: 3px;
+  position: absolute; bottom: 1px; right: 1px;
   width: 6px; height: 6px;
   background: #22C55E; border-radius: 50%;
   border: 1px solid rgba(0, 0, 0, 0.5);
+}
+
+/* Avatars row — Miron + Oksana */
+.xc-chat-avatars-row {
+  display: flex; align-items: center; gap: 10px;
+}
+.xc-chat-avatar-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+.xc-avatar-name {
+  font-family: var(--font-heading); font-size: 0.55rem;
+  font-weight: 400; color: #ababab;
+  text-transform: uppercase; letter-spacing: 0.3px;
 }
 
 .xc-chat-agent-name {
@@ -459,6 +478,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   flex: 1; overflow-y: auto;
   padding: 16px; padding-bottom: 24px;
   display: flex; flex-direction: column; gap: 10px;
+  position: relative; z-index: 1;
 }
 
 .xc-chat-empty {
@@ -557,9 +577,9 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   display: flex; align-items: center; gap: 10px;
   padding: 12px 16px; padding-bottom: 28px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(20, 22, 25, 0.9);
+  background: rgba(10, 10, 12, 0.9);
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-  flex-shrink: 0; position: relative; z-index: 10;
+  flex-shrink: 0; position: relative; z-index: 2;
 }
 
 .xc-input-container {
@@ -662,8 +682,10 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 
 /* Responsive */
 @media (max-width: 480px) {
-  .xc-chat-header { height: 56px; padding: 0 12px; }
-  .xc-chat-avatar-wrapper { width: 38px; height: 38px; }
+  .xc-chat-header { height: 60px; padding: 0 10px; }
+  .xc-chat-avatar-wrapper { width: 36px; height: 36px; }
+  .xc-avatar-name { font-size: 0.48rem; }
+  .xc-chat-avatars-row { gap: 8px; }
   .xc-chat-message { font-size: 0.82rem; padding: 12px 14px; max-width: 88%; }
   .xc-chat-message.assistant { padding-bottom: 24px; }
   .xc-chat-input-area { padding: 10px 12px; padding-bottom: 22px; gap: 8px; }
