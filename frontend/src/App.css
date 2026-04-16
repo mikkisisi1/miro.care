@@ -296,6 +296,41 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 }
 .chat-tts-btn:hover { border-color: var(--primary); color: var(--primary); }
 .chat-tts-playing { border-color: var(--primary); color: var(--primary); background: rgba(181,108,98,0.08); }
+
+/* Анимация звуковой волны */
+.chat-tts-playing::after {
+  content: '';
+  display: inline-block;
+  width: 16px; height: 12px;
+  background: linear-gradient(
+    90deg,
+    var(--primary) 2px, transparent 2px,
+    transparent 4px, var(--primary) 4px,
+    var(--primary) 6px, transparent 6px,
+    transparent 8px, var(--primary) 8px,
+    var(--primary) 10px, transparent 10px,
+    transparent 12px, var(--primary) 12px
+  );
+  background-size: 16px 100%;
+  animation: soundWave 0.8s ease-in-out infinite alternate;
+  margin-left: 4px;
+}
+@keyframes soundWave {
+  0% { height: 4px; }
+  25% { height: 10px; }
+  50% { height: 6px; }
+  75% { height: 14px; }
+  100% { height: 8px; }
+}
+
+/* Пульсирующий индикатор загрузки TTS */
+.tts-loading {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 4px 10px; border-radius: 12px;
+  font-size: 0.7rem; color: var(--primary);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 .chat-text-input {
   flex: 1; background: var(--bg); border: 1px solid var(--border);
   border-radius: 24px; padding: 12px 18px; font-size: 0.92rem;

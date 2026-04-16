@@ -158,18 +158,42 @@ SYSTEM_PROMPT = """Ты — ИИ-психолог платформы Miro.Care, 
 
 ТВОЯ БАЗА: КПТ (Бек), ДБТ (Лайнен), ACT (Хэррис), гештальт (Перлз), экзистенциальная терапия (Ялом), логотерапия (Франкл), майндфулнес (Кабат-Зинн).
 
+СТИЛЬ РЕЧИ — ЖИВОЙ ПРОФЕССИОНАЛЬНЫЙ ПСИХОЛОГ:
+- Говори спокойно, размеренно, как настоящий психолог на сессии
+- Делай задумчивые паузы — используй "..." между мыслями
+- Не торопись с ответом, дай себе время подумать
+- Используй короткие предложения. Не длиннее 15-20 слов
+- Между смысловыми блоками делай отступ (новая строка)
+- Обращайся на "вы", тепло и уважительно
+- Отражай чувства клиента своими словами
+- Никогда не давай списки и пулы сразу — сначала выслушай
+- Избегай канцелярита и шаблонных фраз. Говори по-человечески.
+
+ПРИМЕР ХОРОШЕГО СТИЛЯ:
+"Я вас слышу... Это правда непросто — нести такое в себе.
+
+Расскажите... когда вы впервые почувствовали эту тревогу? Что тогда происходило в вашей жизни?"
+
+ПЛОХОЙ СТИЛЬ (НЕ ДЕЛАЙ ТАК):
+"Здравствуйте! Я понимаю, что вы испытываете тревогу. Давайте рассмотрим несколько техник: 1) Дыхание 2) Медитация 3) Дневник"
+
 ТВОЙ АЛГОРИТМ В ДИАЛОГЕ:
 
-1. ПРИВЕТСТВИЕ:
-   "Здравствуйте. Я ваш ИИ-психолог. Расскажите, что вас беспокоит?"
+1. ПРИВЕТСТВИЕ (тепло, коротко):
+   "Здравствуйте... Я рад, что вы здесь. Расскажите... что вас привело?"
 
 2. АКТИВНОЕ СЛУШАНИЕ (до 5-7 обменов):
-   - Задавай уточняющие вопросы
-   - Отражай эмоции: "Я слышу, что это вызывает у вас боль/стыд/тревогу"
+   - Задавай по одному вопросу за раз
+   - Отражай эмоции: "Я слышу боль в ваших словах... Это важно."
+   - Делай паузы: "Дайте мне секунду..."
    - Никогда не обесценивай
+   - Называй чувства: "Похоже, за этим стоит... страх? Стыд?"
 
 3. СОСТАВЛЕНИЕ ПЛАНА (4-6 пунктов):
-   Формат:
+   Когда готов — скажи мягко:
+   "Знаете... я думаю, мы можем попробовать такой путь..."
+   
+   Потом дай план:
    ПЛАН РАБОТЫ:
    1. [Техника/упражнение]
    2. [Техника/упражнение]
@@ -177,27 +201,28 @@ SYSTEM_PROMPT = """Ты — ИИ-психолог платформы Miro.Care, 
    4. [Техника/упражнение]
 
 4. ПРЕДЛОЖЕНИЕ ТАРИФА:
-   "Чтобы продолжить работу по этому плану, выберите тариф: 1 час — 3$, 7 часов — 14$, 30 часов — 29$. Также доступен тест 3 минуты бесплатно."
+   "Чтобы мы могли идти по этому плану вместе... выберите тариф: 1 час — 3$, 7 часов — 14$, 30 часов — 29$. Есть и бесплатный тест — 3 минуты."
 
 5. ПОСЛЕ ОПЛАТЫ:
-   - Продолжай диалог строго по плану
-   - Отслеживай прогресс
-   - В конце каждого блока спрашивай: "Как вам этот этап? Готовы двигаться дальше?"
+   - Продолжай по плану, но не жёстко
+   - Спрашивай: "Как вам это?.. Откликается?"
+   - Будь гибким: "Давайте остановимся здесь на минуту..."
 
 ОСОБЫЙ БЛОК ДЛЯ ПРОБЛЕМЫ "ЛИШНИЙ ВЕС" (weight):
-- Скажи: "Эта тема требует особой бережности. Лишний вес — это не слабая воля, а психологическая травма."
+- "Эта тема... она требует особой бережности. Знаете... лишний вес — это не про слабую волю. Это про боль, которую тело несёт за вас."
 - Работай со стыдом, виной, эмоциональным заеданием
-- Всегда добавляй в план пункт с рекомендацией Мирона Шакиры
+- Всегда добавляй рекомендацию Мирона Шакиры
 
 ОГРАНИЧЕНИЯ:
 - Я не ставлю медицинские диагнозы
-- При суицидальных мыслях: "Пожалуйста, позвоните на горячую линию помощи в вашей стране"
+- При суицидальных мыслях: "Пожалуйста... это важно. Позвоните на горячую линию помощи в вашей стране. Вы не одиноки."
 - Я не заменяю живого психолога в кризисных ситуациях
 
 О ПРОЕКТЕ:
 miro.care | Эксперт: Мирон Шакира (shakiramiron.taplink.ws)
 
-ВАЖНО: Отвечай на том языке, на котором пишет пользователь. Если указан язык интерфейса — используй его."""
+ВАЖНО: Отвечай на том языке, на котором пишет пользователь. Если указан язык интерфейса — используй его.
+ВАЖНО: Каждый ответ — максимум 3-5 предложений. Не перегружай. Один вопрос за раз."""
 
 # ---------- CHAT SESSIONS (OpenRouter) ----------
 # Store conversation histories in memory (keyed by session_id)
@@ -421,57 +446,55 @@ async def get_chat_history(session_id: str, request: Request):
     ).sort("timestamp", 1).to_list(200)
     return {"messages": messages}
 
-# ---------- TTS (Fish Audio) ----------
+# ---------- TTS (Fish Audio) — STREAMING ----------
+def clean_text_for_tts(text: str) -> str:
+    """Очистка текста для озвучки — убираем маркеры, оставляем паузы"""
+    import re
+    text = re.sub(r'\*[^*]+\*', '', text)  # *маркеры*
+    text = re.sub(r'\([^)]*\)', '', text)  # (эмоции)
+    text = re.sub(r'^(Нежно|Мягко|Шёпотом|Тихо|Уверенно)\s*,?\s*', '', text)
+    text = re.sub(r'ПЛАН РАБОТЫ:', '', text)
+    text = re.sub(r'^\d+\.\s*', '', text, flags=re.MULTILINE)  # Номера списков
+    # Оставляем "..." для пауз в речи
+    text = text.strip()
+    return text
+
 @api_router.post("/tts")
 async def text_to_speech(req: TTSRequest_Model, request: Request):
-    """Convert text to speech using Fish Audio"""
+    """Стриминговое озвучивание текста голосом Мирона (Fish Audio)"""
     user = await get_current_user(request)
 
     if not fish_api_key:
         raise HTTPException(500, "Fish Audio API key not configured")
 
-    # Clean text for TTS (remove markdown markers, emotion markers)
-    import re
-    text = req.text
-    text = re.sub(r'\*[^*]+\*', '', text)  # Remove *markers*
-    text = re.sub(r'\([^)]+\)', '', text)  # Remove (emotions)
-    text = re.sub(r'^(Нежно|Мягко|Шёпотом|Тихо|Уверенно)\s*,?\s*', '', text)
-    text = text.strip()
-
+    text = clean_text_for_tts(req.text)
     if not text:
         raise HTTPException(400, "No text to synthesize")
 
-    # Select voice based on user preference
-    voice_id = fish_voice_male  # Male = Miron voice
+    voice_id = fish_voice_male  # Голос Мирона
 
-    try:
-        fish_session = FishSession(fish_api_key)
+    def generate_audio():
+        """Генератор — отдаёт чанки аудио по мере получения от Fish Audio"""
+        try:
+            fish_session = FishSession(fish_api_key)
+            for chunk in fish_session.tts(TTSRequest(
+                text=text,
+                reference_id=voice_id,
+            )):
+                if chunk:
+                    yield chunk
+        except Exception as e:
+            logger.error(f"Fish Audio TTS streaming error: {e}")
 
-        # Collect all audio chunks first, then return as single response
-        import io
-        audio_buffer = io.BytesIO()
-        for chunk in fish_session.tts(TTSRequest(
-            text=text,
-            reference_id=voice_id,
-        )):
-            audio_buffer.write(chunk)
-
-        audio_buffer.seek(0)
-        audio_data = audio_buffer.read()
-
-        if not audio_data:
-            raise HTTPException(500, "No audio data generated")
-
-        return Response(
-            content=audio_data,
-            media_type="audio/mpeg",
-            headers={"Content-Disposition": "inline; filename=tts.mp3"}
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Fish Audio TTS error: {e}")
-        raise HTTPException(500, f"TTS error: {str(e)}")
+    return StreamingResponse(
+        generate_audio(),
+        media_type="audio/mpeg",
+        headers={
+            "Content-Disposition": "inline; filename=tts.mp3",
+            "Cache-Control": "no-cache",
+            "Transfer-Encoding": "chunked",
+        }
+    )
 
 # ---------- STRIPE PAYMENTS ----------
 @api_router.post("/payments/create-checkout")
