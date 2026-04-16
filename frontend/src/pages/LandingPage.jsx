@@ -9,89 +9,64 @@ const MIRON_PHOTO = 'https://customer-assets.emergentagent.com/job_bd32a9d2-c016
 
 export default function LandingPage() {
   const { t } = useLanguage();
-  const { isGuest } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="landing" data-testid="landing-page">
-      {/* Hero photo background */}
-      <div className="landing-photo-wrap">
-        <img src={MIRON_PHOTO} alt="Miron Shakira" className="landing-photo" />
-        <div className="landing-photo-overlay" />
+      {/* Photo — NO filters, clean */}
+      <img src={MIRON_PHOTO} alt="Miron Shakira" className="landing-photo" />
+
+      {/* Title outside glass — just MIRO CARE */}
+      <div className="landing-brand" data-testid="landing-title">
+        <span className="landing-brand-miro">MIRO</span>
+        <span className="landing-brand-care">CARE</span>
       </div>
 
-      {/* Top nav */}
-      <header className="landing-nav" data-testid="landing-nav">
-        <button data-testid="landing-menu-btn" onClick={() => setMenuOpen(true)} className="landing-nav-btn">
-          <Menu size={22} />
-        </button>
-        <nav className="landing-nav-links">
-          <button onClick={() => navigate('/problems')} className="landing-nav-link landing-nav-link-active">
+      {/* Burger in top-left */}
+      <button data-testid="landing-menu-btn" onClick={() => setMenuOpen(true)} className="landing-burger">
+        <Menu size={24} />
+      </button>
+
+      {/* Glass panel overlay on the photo */}
+      <div className="landing-glass" data-testid="landing-glass-panel">
+        <div className="landing-glass-top">
+          <p className="landing-glass-subtitle">{t('subtitle')}</p>
+          <p className="landing-glass-desc">{t('missionText')}</p>
+        </div>
+
+        <div className="landing-glass-mid">
+          <button
+            data-testid="landing-start-btn"
+            onClick={() => navigate('/problems')}
+            className="landing-glass-cta"
+          >
             {t('startChat')}
+            <ArrowRight size={16} />
           </button>
-          <button onClick={() => navigate('/specialists')} className="landing-nav-link">
-            {t('specialists')}
-          </button>
-          <button onClick={() => navigate('/about')} className="landing-nav-link">
-            {t('about')}
-          </button>
-        </nav>
-        <div className="landing-nav-right">
-          <span className="landing-nav-expert">Miron Shakira</span>
-        </div>
-      </header>
-
-      {/* Hero content */}
-      <div className="landing-hero">
-        <h1 className="landing-title" data-testid="landing-title">Miro.Care</h1>
-        <p className="landing-desc">
-          {t('missionText')}
-        </p>
-
-        <button
-          data-testid="landing-start-btn"
-          onClick={() => navigate('/problems')}
-          className="landing-cta"
-        >
-          {t('startChat')}
-          <ArrowRight size={18} />
-        </button>
-      </div>
-
-      {/* Bottom glass panel */}
-      <div className="landing-bottom">
-        <div className="landing-stars">
-          {[1, 2, 3, 4, 5].map(i => (
-            <Star key={i} size={16} fill="#FFB800" color="#FFB800" />
-          ))}
-          <span className="landing-stars-text">5/5</span>
         </div>
 
-        <div className="landing-glass-panel" data-testid="landing-glass-panel">
-          <div className="landing-panel-col">
-            <span className="landing-panel-tag">{t('expert')}</span>
-            <h3 className="landing-panel-title">Miron Shakira</h3>
-            <p className="landing-panel-text">ISSA USA, Stanford, 10 000+ clients</p>
-          </div>
-          <div className="landing-panel-divider" />
-          <div className="landing-panel-col">
-            <span className="landing-panel-tag">AI</span>
-            <h3 className="landing-panel-title">{t('subtitle')}</h3>
-            <p className="landing-panel-text">Claude Sonnet 4.5 + MindThera</p>
-          </div>
-          <div className="landing-panel-media" onClick={() => navigate('/radio')}>
-            <div className="landing-panel-play">
-              <Play size={20} fill="white" />
+        <div className="landing-glass-bottom">
+          <div className="landing-glass-info">
+            <div className="landing-glass-col">
+              <span className="landing-glass-tag">{t('expert')}</span>
+              <span className="landing-glass-val">Miron Shakira</span>
             </div>
-            <span className="landing-panel-media-label">Miro Radio</span>
+            <div className="landing-glass-sep" />
+            <div className="landing-glass-col">
+              <span className="landing-glass-tag">AI</span>
+              <span className="landing-glass-val">Claude Sonnet 4.5</span>
+            </div>
+            <div className="landing-glass-sep" />
+            <div className="landing-glass-col landing-glass-radio" onClick={() => navigate('/radio')}>
+              <Play size={16} fill="white" />
+              <span className="landing-glass-val">Miro Radio</span>
+            </div>
           </div>
-        </div>
-
-        <div className="landing-dots">
-          <span className="landing-dot landing-dot-active" />
-          <span className="landing-dot" />
-          <span className="landing-dot" />
+          <div className="landing-glass-stars">
+            {[1,2,3,4,5].map(i => <Star key={i} size={14} fill="#FFB800" color="#FFB800" />)}
+            <span>5/5</span>
+          </div>
         </div>
       </div>
 
