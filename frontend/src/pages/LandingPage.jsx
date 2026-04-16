@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Menu, Star, ArrowRight } from 'lucide-react';
+import { Menu, ArrowRight } from 'lucide-react';
 import BurgerMenu from '@/components/BurgerMenu';
 
 const MIRON_PHOTO = 'https://customer-assets.emergentagent.com/job_bd32a9d2-c016-4ed0-a4c8-df57dec03eb4/artifacts/pxuxfsm4_a2ceHzRs7mSOhk3UJsLG4RwEWT4PfMmLizx1oiZo.webp';
@@ -35,10 +35,6 @@ export default function LandingPage() {
           {t('startChat')}
           <ArrowRight size={16} />
         </button>
-        <div className="landing-glass-stars">
-          {[1,2,3,4,5].map(i => <Star key={i} size={14} fill="#FFB800" color="#FFB800" />)}
-          <span>5/5</span>
-        </div>
       </div>
 
       <BurgerMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
