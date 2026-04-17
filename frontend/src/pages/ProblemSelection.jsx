@@ -29,19 +29,14 @@ export default function ProblemSelection() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState(null);
 
-  const handleSelect = async (problemId) => {
+  const handleSelect = (problemId) => {
     setSelected(problemId);
-    try {
-      const token = localStorage.getItem('access_token');
-      await axios.put(`${API}/user/problem`, { problem: problemId }, {
-        withCredentials: true,
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      await refreshUser();
-      navigate('/chat');
-    } catch (err) {
-      if (process.env.NODE_ENV === 'development') console.error('Problem selection failed:', err.message);
-    }
+    navigate('/chat');
+    const token = localStorage.getItem('access_token');
+    axios.put(`${API}/user/problem`, { problem: problemId }, {
+      withCredentials: true,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }).then(() => refreshUser()).catch(() => {});
   };
 
   return (
