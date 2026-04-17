@@ -74,6 +74,12 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   overflow: hidden;
   background: #0A0A0B;
 }
+.landing::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 80px; z-index: 2;
+  background: linear-gradient(to bottom, #0A0A0B 0%, transparent 100%);
+  pointer-events: none;
+}
 
 /* Photo — full width on desktop, crop top/bottom only */
 .landing-photo {
