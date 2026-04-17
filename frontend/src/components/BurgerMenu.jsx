@@ -114,7 +114,7 @@ export default function BurgerMenu({ open, onClose }) {
             <Info size={20} /> <span>{t('about')}</span> <ChevronRight size={16} />
           </button>
 
-          <button data-testid="menu-book" onClick={() => window.open('https://shakiramiron.taplink.ws', '_blank')} className="menu-item menu-item-highlight">
+          <button data-testid="menu-book" onClick={() => goTo('/booking')} className="menu-item menu-item-highlight">
             <Calendar size={20} /> <span>{t('bookPsychologist')}</span> <ChevronRight size={16} />
           </button>
         </nav>
