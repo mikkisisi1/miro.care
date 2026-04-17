@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import axios from 'axios';
+import apiClient from '@/lib/apiClient';
 import { User } from 'lucide-react';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function VoiceSelect() {
   const { t } = useLanguage();
@@ -16,11 +14,7 @@ export default function VoiceSelect() {
   const handleSelect = async (voice) => {
     setSelected(voice);
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.put(`${API}/user/voice`, { voice }, {
-        withCredentials: true,
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      await apiClient.put('/user/voice', { voice });
       await refreshUser();
       navigate('/chat');
     } catch (err) {

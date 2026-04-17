@@ -2,10 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import axios from 'axios';
+import apiClient from '@/lib/apiClient';
 import { CheckCircle, Loader, XCircle } from 'lucide-react';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
@@ -31,11 +29,7 @@ export default function PaymentSuccess() {
         return;
       }
       try {
-        const token = localStorage.getItem('access_token');
-        const { data } = await axios.get(`${API}/payments/status/${sessionId}`, {
-          withCredentials: true,
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const { data } = await apiClient.get(`/payments/status/${sessionId}`);
         if (data.payment_status === 'paid') {
           processedRef.current = true;
           if (!cancelled) {

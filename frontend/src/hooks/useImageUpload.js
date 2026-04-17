@@ -1,7 +1,5 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+import apiClient from '@/lib/apiClient';
 
 export default function useImageUpload({ sessionId, lang, user, messages, setMessages, refreshUser, ttsEnabled, playTTS, loading }) {
   const [selectedImage, setSelectedImage] = useState(null);
@@ -30,15 +28,11 @@ export default function useImageUpload({ sessionId, lang, user, messages, setMes
     setSelectedImage(null);
 
     try {
-      const token = localStorage.getItem('access_token');
-      const { data } = await axios.post(`${API}/chat/image`, {
+      const { data } = await apiClient.post('/chat/image', {
         session_id: sessionId,
         image: imageBase64,
         language: lang,
         problem: user?.selected_problem,
-      }, {
-        withCredentials: true,
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       const aiMsg = {
@@ -62,8 +56,7 @@ export default function useImageUpload({ sessionId, lang, user, messages, setMes
         id: `err_img_${Date.now()}`,
       }]);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- API, axios are module-level constants
-  }, [selectedImage, loading, sessionId, lang, user, messages, setMessages, refreshUser, ttsEnabled, playTTS]);
+  }, [selectedImage, loading, sessionId, lang, user?.selected_problem, messages.length, setMessages, refreshUser, ttsEnabled, playTTS]);
 
   return { selectedImage, setSelectedImage, handleImageSelect, sendImageMessage };
 }

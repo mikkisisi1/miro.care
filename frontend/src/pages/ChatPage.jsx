@@ -13,9 +13,7 @@ import useChat from '@/hooks/useChat';
 import useSpeechRecognition from '@/hooks/useSpeechRecognition';
 import useImageUpload from '@/hooks/useImageUpload';
 import useCountdown from '@/hooks/useCountdown';
-import axios from 'axios';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+import apiClient, { API_BASE } from '@/lib/apiClient';
 
 const GREETINGS = {
   male: 'Здравствуйте, я Мирон — ваш личный консультант.\nРасскажите в двух словах, что вас беспокоит, и мы вместе попробуем разобраться.\nКак мне к вам обращаться?',
@@ -61,7 +59,7 @@ export default function ChatPage() {
     const preloadGreeting = async (voice) => {
       try {
         const token = localStorage.getItem('access_token');
-        const response = await fetch(`${API}/tts`, {
+        const response = await fetch(`${API_BASE}/tts`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -98,11 +96,7 @@ export default function ChatPage() {
     setVoiceChosen(true);
 
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.put(`${API}/user/voice`, { voice }, {
-        withCredentials: true,
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      await apiClient.put('/user/voice', { voice });
       await refreshUser();
     } catch (err) {
       if (process.env.NODE_ENV === 'development') console.error('Voice save failed:', err.message);

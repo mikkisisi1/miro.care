@@ -14,10 +14,10 @@ BASE_URL: str = os.environ.get(
     'https://psych-ai-chat-2.preview.emergentagent.com'
 ).rstrip('/')
 
-TEST_USER_EMAIL = "test@test.com"
-TEST_USER_PASSWORD = "Test123!"
-ADMIN_EMAIL = "admin@miro.care"
-ADMIN_PASSWORD = "MiroCare2026!"
+TEST_USER_EMAIL = os.environ.get("TEST_USER_EMAIL", "test@test.com")
+TEST_USER_PASSWORD = os.environ.get("TEST_USER_PASSWORD", "Test123!")
+ADMIN_EMAIL = os.environ.get("TEST_ADMIN_EMAIL", "admin@miro.care")
+ADMIN_PASSWORD = os.environ.get("TEST_ADMIN_PASSWORD", "MiroCare2026!")
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────

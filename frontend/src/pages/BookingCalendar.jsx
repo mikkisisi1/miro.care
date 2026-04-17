@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ArrowLeft, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import axios from 'axios';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+import { ArrowLeft, Check, X } from 'lucide-react';
+import apiClient from '@/lib/apiClient';
 
 const WEEKDAYS = { en: ['Mon','Tue','Wed','Thu','Fri'], ru: ['Пн','Вт','Ср','Чт','Пт'] };
 const MONTHS = {
@@ -23,11 +21,7 @@ export default function BookingCalendar() {
 
   const loadSlots = useCallback(async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const { data } = await axios.get(`${API}/bookings/slots`, {
-        withCredentials: true,
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const { data } = await apiClient.get('/bookings/slots');
       setCalendar(data.calendar);
       setPrice(data.price);
       setAdvancePercent(data.advance_percent);
@@ -42,11 +36,7 @@ export default function BookingCalendar() {
     if (booking) return;
     setBooking(true);
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.post(`${API}/bookings/book`, { date, time_slot: timeSlot }, {
-        withCredentials: true,
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      await apiClient.post('/bookings/book', { date, time_slot: timeSlot });
       await loadSlots();
     } catch (err) {
       const detail = err.response?.data?.detail || 'Booking failed';
@@ -56,7 +46,6 @@ export default function BookingCalendar() {
     }
   };
 
-  // Group calendar by weeks for grid layout
   const monthName = calendar.length > 0
     ? (MONTHS[lang] || MONTHS.en)[new Date(calendar[0].date).getMonth()]
     : '';
@@ -114,7 +103,7 @@ export default function BookingCalendar() {
                   {day.slots.map(slot => (
                     <button
                       key={slot.time}
-                      className={`booking-slot booking-slot-${slot.status}`}
+                      className={`booking-slot booking-slot-${slot.time === selectedDay ? 'selected' : slot.status}`}
                       disabled={slot.status !== 'available' || booking}
                       onClick={() => handleBook(day.date, slot.time)}
                       data-testid={`slot-${day.date}-${slot.time}`}

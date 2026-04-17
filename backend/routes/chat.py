@@ -32,7 +32,6 @@ openrouter_client = AsyncOpenAI(
 )
 
 # ---------- IN-MEMORY SESSION HISTORIES ----------
-# Keyed by "{user_id}_{session_id}"
 chat_histories: Dict[str, list] = {}
 
 # ---------- MODELS ----------
@@ -46,7 +45,7 @@ class ChatRequest(BaseModel):
 
 class ChatImageRequest(BaseModel):
     session_id: str
-    image: str  # base64 encoded
+    image: str
     language: Optional[str] = "ru"
     problem: Optional[str] = None
 
@@ -135,6 +134,62 @@ async def call_openrouter(messages: list, model: str = "anthropic/claude-sonnet-
         raise
 
 
+def _trim_messages(messages: list, max_len: int = 31) -> list:
+    """Keep system message + last N messages to stay within context window."""
+    if len(messages) > max_len:
+        return [messages[0]] + messages[-max_len + 1:]
+    return messages
+
+
+async def _handle_search_tag(session_id: str, ai_text: str) -> str:
+    """If AI response contains [SEARCH: ...], execute search and get final answer."""
+    search_match = SEARCH_TAG_RE.search(ai_text)
+    if not search_match:
+        return ai_text
+
+    search_query = search_match.group(1).strip()
+    logger.info(f"AI requested search: '{search_query}'")
+    search_results = ddg_search(search_query)
+
+    chat_histories[session_id].append({"role": "assistant", "content": ai_text})
+    chat_histories[session_id].append({
+        "role": "user",
+        "content": (
+            f"[Результаты поиска по запросу '{search_query}']\n{search_results}\n\n"
+            "[Используй эти данные чтобы дать финальный ответ пользователю. "
+            "НЕ показывай тег [SEARCH]. Дай готовый ответ.]"
+        ),
+    })
+
+    messages = _trim_messages(chat_histories[session_id])
+    return await call_openrouter(messages)
+
+
+async def _init_session(session_id: str, problem: Optional[str], language: str, user_id: Optional[str]) -> None:
+    """Initialize chat session with system prompt if not exists."""
+    if session_id in chat_histories:
+        return
+    problem_context = find_problem_context(problem)
+    personal_context = await load_personal_context(user_id)
+    lang_instruction = f"\n\nОтвечай на языке: {language}"
+    system_msg = SYSTEM_PROMPT + SEARCH_INSTRUCTION + problem_context + personal_context + lang_instruction
+    chat_histories[session_id] = [{"role": "system", "content": system_msg}]
+
+
+async def _save_name_if_found(user_id: str, message: str, free_count: int) -> None:
+    """Extract and save user name from message if not already set."""
+    name_extracted = extract_user_name(message)
+    if not name_extracted and len(message.split()) <= 2 and free_count >= 1:
+        candidate = message.strip().strip(".,!?;:")
+        if candidate and 1 < len(candidate) < 30 and candidate[0].isupper():
+            name_extracted = candidate.split()[0]
+    if name_extracted:
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {"user_display_name": name_extracted}}
+        )
+
+
 # ---------- SESSION NOTES (cross-session memory) ----------
 NOTES_SUMMARY_PROMPT = """Ты — психологический ассистент. На основе диалога создай краткий контекст для следующей сессии.
 
@@ -148,12 +203,8 @@ NOTES_SUMMARY_PROMPT = """Ты — психологический ассисте
 
 
 async def update_session_notes(user_id: str, session_id: str) -> None:
-    """
-    Background task: summarise the current conversation and persist it
-    to users.session_notes so future sessions have cross-session context.
-    """
+    """Background task: summarise conversation and persist to users.session_notes."""
     try:
-        # Pull last 30 messages of this session from MongoDB (persisted)
         msgs = await db.chat_messages.find(
             {"user_id": user_id, "session_id": session_id},
             {"_id": 0, "user_message": 1, "ai_response": 1, "timestamp": 1},
@@ -162,7 +213,6 @@ async def update_session_notes(user_id: str, session_id: str) -> None:
         if not msgs:
             return
 
-        # Build a plain dialogue text for the summariser
         msgs.reverse()
         dialogue_lines = []
         for m in msgs:
@@ -177,7 +227,6 @@ async def update_session_notes(user_id: str, session_id: str) -> None:
         dialogue_text = "\n".join(dialogue_lines)
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
-        # Load existing notes to merge (keep memory cumulative)
         user_doc = await db.users.find_one({"_id": ObjectId(user_id)}, {"session_notes": 1})
         prev_notes = (user_doc or {}).get("session_notes") or ""
 
@@ -188,18 +237,13 @@ async def update_session_notes(user_id: str, session_id: str) -> None:
                 "content": (
                     f"Дата сессии: {today}\n\n"
                     f"Диалог:\n{dialogue_text}\n\n"
-                    + (f"Контекст предыдущих сессий (уже сохранён):\n{prev_notes}\n\n" if prev_notes else "")
+                    + (f"Контекст предыдущих сессий:\n{prev_notes}\n\n" if prev_notes else "")
                     + "Напиши обновлённые заметки, включая новую информацию из этого диалога."
                 ),
             },
         ]
 
-        new_notes = await call_openrouter(
-            summarise_messages,
-            model="anthropic/claude-sonnet-4.5",
-        )
-
-        # Cap notes at 1500 chars to keep system prompt lean
+        new_notes = await call_openrouter(summarise_messages, model="anthropic/claude-sonnet-4.5")
         new_notes = new_notes.strip()[:1500]
 
         await db.users.update_one(
@@ -212,53 +256,6 @@ async def update_session_notes(user_id: str, session_id: str) -> None:
         logger.info(f"Session notes updated for user {user_id} (session {session_id})")
     except Exception as e:
         logger.warning(f"Session notes update failed for user {user_id}: {e}")
-
-
-async def get_ai_response(
-    session_id: str,
-    user_message: str,
-    problem: Optional[str] = None,
-    language: str = "ru",
-    user_id: Optional[str] = None,
-) -> str:
-    if session_id not in chat_histories:
-        problem_context = find_problem_context(problem)
-        personal_context = await load_personal_context(user_id)
-        lang_instruction = f"\n\nОтвечай на языке: {language}"
-        system_msg = SYSTEM_PROMPT + SEARCH_INSTRUCTION + problem_context + personal_context + lang_instruction
-        chat_histories[session_id] = [{"role": "system", "content": system_msg}]
-
-    chat_histories[session_id].append({"role": "user", "content": user_message})
-
-    messages = chat_histories[session_id]
-    if len(messages) > 31:
-        messages = [messages[0]] + messages[-30:]
-
-    ai_text = await call_openrouter(messages)
-
-    search_match = SEARCH_TAG_RE.search(ai_text)
-    if search_match:
-        search_query = search_match.group(1).strip()
-        logger.info(f"AI requested search: '{search_query}'")
-        search_results = ddg_search(search_query)
-
-        chat_histories[session_id].append({"role": "assistant", "content": ai_text})
-        chat_histories[session_id].append({
-            "role": "user",
-            "content": (
-                f"[Результаты поиска по запросу '{search_query}']\n{search_results}\n\n"
-                "[Используй эти данные чтобы дать финальный ответ пользователю. "
-                "НЕ показывай тег [SEARCH]. Дай готовый ответ.]"
-            ),
-        })
-
-        messages = chat_histories[session_id]
-        if len(messages) > 31:
-            messages = [messages[0]] + messages[-30:]
-        ai_text = await call_openrouter(messages)
-
-    chat_histories[session_id].append({"role": "assistant", "content": ai_text})
-    return ai_text
 
 
 def check_user_access(user: dict) -> tuple:
@@ -298,13 +295,18 @@ async def chat_endpoint(req: ChatRequest, request: Request):
 
     session_id = f"{user_id}_{req.session_id}"
     try:
-        ai_response = await get_ai_response(
+        await _init_session(
             session_id,
-            req.message,
             req.problem or user.get("selected_problem"),
             req.language or user.get("selected_language", "ru"),
-            user_id=user_id,
+            user_id,
         )
+
+        chat_histories[session_id].append({"role": "user", "content": req.message})
+        messages = _trim_messages(chat_histories[session_id])
+        ai_response = await call_openrouter(messages)
+        ai_response = await _handle_search_tag(session_id, ai_response)
+        chat_histories[session_id].append({"role": "assistant", "content": ai_response})
 
         await db.chat_messages.insert_one({
             "user_id": user_id,
@@ -316,26 +318,14 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         })
 
         if not user.get("user_display_name"):
-            name_extracted = extract_user_name(req.message)
-            if not name_extracted and len(req.message.split()) <= 2 and free_count >= 1:
-                candidate = req.message.strip().strip(".,!?;:")
-                if candidate and 1 < len(candidate) < 30 and candidate[0].isupper():
-                    name_extracted = candidate.split()[0]
-            if name_extracted:
-                await db.users.update_one(
-                    {"_id": ObjectId(user_id)},
-                    {"$set": {"user_display_name": name_extracted}}
-                )
+            await _save_name_if_found(user_id, req.message, free_count)
 
         update_fields = build_counter_updates(user, is_free_phase, free_count, ai_response)
         if update_fields:
             await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
 
-        # Every 6th user message → update session notes in the background (non-blocking)
-        user_messages_count = sum(
-            1 for m in chat_histories.get(session_id, []) if m.get("role") == "user"
-        )
-        if user_messages_count > 0 and user_messages_count % 6 == 0:
+        user_msg_count = sum(1 for m in chat_histories.get(session_id, []) if m.get("role") == "user")
+        if user_msg_count > 0 and user_msg_count % 6 == 0:
             asyncio.create_task(update_session_notes(user_id, req.session_id))
 
         return {
@@ -366,6 +356,9 @@ async def chat_image_endpoint(req: ChatImageRequest, request: Request):
     session_id = f"{user_id}_{req.session_id}"
     lang = req.language or user.get("selected_language", "ru")
 
+    await _init_session(session_id, req.problem or user.get("selected_problem"), lang, user_id)
+    chat_histories[session_id].append({"role": "user", "content": "[Пользователь отправил фото]"})
+
     vision_msg = {
         "role": "user",
         "content": [
@@ -374,16 +367,8 @@ async def chat_image_endpoint(req: ChatImageRequest, request: Request):
         ],
     }
 
-    if session_id not in chat_histories:
-        problem_context = find_problem_context(req.problem or user.get("selected_problem"))
-        system_msg = SYSTEM_PROMPT + problem_context + f"\n\nОтвечай на языке: {lang}"
-        chat_histories[session_id] = [{"role": "system", "content": system_msg}]
-
-    chat_histories[session_id].append({"role": "user", "content": "[Пользователь отправил фото]"})
-
     messages = chat_histories[session_id][:-1] + [vision_msg]
-    if len(messages) > 31:
-        messages = [messages[0]] + messages[-30:]
+    messages = _trim_messages(messages)
 
     try:
         ai_text = await call_openrouter(messages)
@@ -395,10 +380,7 @@ async def chat_image_endpoint(req: ChatImageRequest, request: Request):
                 "role": "user",
                 "content": f"Пользователь отправил фото. Поблагодари за доверие и спроси, что на фото. Отвечай на языке: {lang}",
             })
-            ai_text = await call_openrouter(
-                fallback_msgs[-20:],
-                model="mistralai/mistral-small-3.1-24b-instruct",
-            )
+            ai_text = await call_openrouter(fallback_msgs[-20:], model="mistralai/mistral-small-3.1-24b-instruct")
         except Exception as e2:
             logger.error(f"Image chat fallback error: {e2}")
             raise HTTPException(500, f"Image analysis error: {str(e)}")
@@ -437,7 +419,6 @@ async def get_chat_history(session_id: str, request: Request):
 
 @router.get("/chat/notes")
 async def get_session_notes(request: Request):
-    """Return the user's persistent session notes (cross-session memory)."""
     user = await get_current_user(request)
     doc = await db.users.find_one(
         {"_id": ObjectId(user["_id"])},
@@ -451,7 +432,6 @@ async def get_session_notes(request: Request):
 
 @router.delete("/chat/notes")
 async def clear_session_notes(request: Request):
-    """Clear the user's persistent session notes (fresh start)."""
     user = await get_current_user(request)
     await db.users.update_one(
         {"_id": ObjectId(user["_id"])},

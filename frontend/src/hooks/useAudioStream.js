@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+import { API_BASE } from '@/lib/apiClient';
 
 export default function useAudioStream(user) {
   const [playingTTS, setPlayingTTS] = useState(null);
@@ -29,7 +28,7 @@ export default function useAudioStream(user) {
 
     try {
       const token = localStorage.getItem('access_token');
-      const response = await fetch(`${API}/tts`, {
+      const response = await fetch(`${API_BASE}/tts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,8 +79,7 @@ export default function useAudioStream(user) {
       if (process.env.NODE_ENV === 'development') console.error('TTS playback error:', err.message);
       setPlayingTTS(null);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- API, fetch, Audio, MediaSource are stable globals
-  }, [ttsEnabled, user, stopTTS]);
+  }, [ttsEnabled, user?.selected_voice, stopTTS]);
 
   return { playTTS, stopTTS, playingTTS, ttsEnabled, toggleTTS };
 }

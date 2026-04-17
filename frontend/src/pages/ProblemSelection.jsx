@@ -2,10 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
-import axios from 'axios';
+import apiClient from '@/lib/apiClient';
 import { AlertTriangle, CloudRain, HeartCrack, Wind, Sparkles, UtensilsCrossed, Scale, Flame, Globe, Zap } from 'lucide-react';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const ICONS = {
   AlertTriangle, CloudRain, HeartCrack, Wind, Sparkles,
@@ -32,11 +30,9 @@ export default function ProblemSelection() {
   const handleSelect = (problemId) => {
     setSelected(problemId);
     navigate('/chat');
-    const token = localStorage.getItem('access_token');
-    axios.put(`${API}/user/problem`, { problem: problemId }, {
-      withCredentials: true,
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    }).then(() => refreshUser()).catch(() => {});
+    apiClient.put('/user/problem', { problem: problemId })
+      .then(() => refreshUser())
+      .catch(() => {});
   };
 
   return (

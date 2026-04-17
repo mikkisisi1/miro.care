@@ -9,9 +9,9 @@ import uuid
 
 BASE_URL: str = os.environ.get('REACT_APP_BACKEND_URL', 'https://psych-ai-chat-2.preview.emergentagent.com').rstrip('/')
 
-# Test credentials
-ADMIN_EMAIL: str = "admin@miro.care"
-ADMIN_PASSWORD: str = "MiroCare2026!"
+# Test credentials from environment
+ADMIN_EMAIL: str = os.environ.get("TEST_ADMIN_EMAIL", "admin@miro.care")
+ADMIN_PASSWORD: str = os.environ.get("TEST_ADMIN_PASSWORD", "MiroCare2026!")
 
 
 def get_auth_token(email: str, password: str) -> str:

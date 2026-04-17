@@ -10,11 +10,11 @@ from datetime import datetime, timedelta
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
-# Test credentials from test_credentials.md
-ADMIN_EMAIL = "admin@miro.care"
-ADMIN_PASSWORD = "MiroCare2026!"
-TEST_USER_EMAIL = "test@test.com"
-TEST_USER_PASSWORD = "Test123!"
+# Test credentials from environment (fallback to test_credentials.md defaults)
+ADMIN_EMAIL = os.environ.get("TEST_ADMIN_EMAIL", "admin@miro.care")
+ADMIN_PASSWORD = os.environ.get("TEST_ADMIN_PASSWORD", "MiroCare2026!")
+TEST_USER_EMAIL = os.environ.get("TEST_USER_EMAIL", "test@test.com")
+TEST_USER_PASSWORD = os.environ.get("TEST_USER_PASSWORD", "Test123!")
 
 
 class TestAuthGuest:

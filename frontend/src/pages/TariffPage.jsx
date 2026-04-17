@@ -2,10 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import axios from 'axios';
+import apiClient from '@/lib/apiClient';
 import { Clock, Zap, Calendar, Moon, Gift } from 'lucide-react';
-
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const TARIFF_ICONS = { test: Gift, hour: Zap, week: Calendar, month: Moon };
 
@@ -23,13 +21,9 @@ export default function TariffPage() {
 
   const handleSelect = async (tariffId) => {
     try {
-      const token = localStorage.getItem('access_token');
-      const { data } = await axios.post(`${API}/payments/create-checkout`, {
+      const { data } = await apiClient.post('/payments/create-checkout', {
         tariff_id: tariffId,
         origin_url: window.location.origin,
-      }, {
-        withCredentials: true,
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       if (data.type === 'test_activated') {
