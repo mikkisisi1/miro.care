@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Volume2, VolumeX, Clock, Menu } from 'lucide-react';
+import { ArrowLeft, Volume2, VolumeX, Menu } from 'lucide-react';
 
 export default function ChatHeader({
   voiceChosen, activeVoice, onVoiceSelect,
@@ -41,16 +41,6 @@ export default function ChatHeader({
             </div>
             <span className="xc-avatar-name">Oksana</span>
           </button>
-        </div>
-        <div>
-          <h3 className="xc-chat-agent-name" translate="no">MIRO.CARE</h3>
-          <p className="xc-chat-agent-status">
-            {isFreePhase && freeSessionLabel}
-            {!isFreePhase && hasMinutes && !showCountdown && (
-              <span className="xc-timer-text"><Clock size={11} strokeWidth={1.5} /> {formatTime(minutesLeft)}</span>
-            )}
-            {!isFreePhase && !hasMinutes && 'online'}
-          </p>
         </div>
       </div>
       <div className="xc-header-right">
