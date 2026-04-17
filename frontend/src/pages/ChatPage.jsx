@@ -13,7 +13,7 @@ import useChat from '@/hooks/useChat';
 import useSpeechRecognition from '@/hooks/useSpeechRecognition';
 import useImageUpload from '@/hooks/useImageUpload';
 import useCountdown from '@/hooks/useCountdown';
-import apiClient, { API_BASE } from '@/lib/apiClient';
+import apiClient, { API_BASE, getAuthToken } from '@/lib/apiClient';
 
 const GREETINGS = {
   male: 'Здравствуйте, я Мирон — ваш личный консультант.\nРасскажите в двух словах, что вас беспокоит, и мы вместе попробуем разобраться.\nКак мне к вам обращаться?',
@@ -58,7 +58,7 @@ export default function ChatPage() {
     if (voiceChosen) return;
     const preloadGreeting = async (voice) => {
       try {
-        const token = localStorage.getItem('access_token');
+        const token = getAuthToken();
         const response = await fetch(`${API_BASE}/tts`, {
           method: 'POST',
           headers: {

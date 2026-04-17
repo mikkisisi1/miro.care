@@ -4,9 +4,57 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import {
-  X, User, Mic, Globe, Palette, Radio, Users, Phone,
+  X, User, Mic, Globe, Palette, Radio, Users,
   Link2, Info, Calendar, LogOut, LogIn, Sun, Moon, Monitor, ChevronRight
 } from 'lucide-react';
+
+const MENU_ITEMS = [
+  { id: 'voice', icon: Mic, labelKey: 'chooseVoice', path: '/voice-select' },
+  { id: 'radio', icon: Radio, labelKey: 'radio', path: '/radio' },
+  { id: 'specialists', icon: Users, labelKey: 'specialists', path: '/specialists' },
+  { id: 'about', icon: Info, labelKey: 'about', path: '/about' },
+];
+
+const THEME_OPTIONS = [
+  { id: 'light', icon: Sun },
+  { id: 'dark', icon: Moon },
+  { id: 'system', icon: Monitor },
+];
+
+function LanguageGrid({ languages, lang, setLang, onClose }) {
+  return (
+    <div className="menu-sub-grid" data-testid="language-grid">
+      {languages.map(l => (
+        <button
+          key={l.code}
+          data-testid={`lang-${l.code}`}
+          onClick={() => { setLang(l.code); onClose(); }}
+          className={`menu-lang-btn ${lang === l.code ? 'menu-lang-active' : ''}`}
+        >
+          <span className="menu-lang-flag">{l.flag}</span>
+          <span>{l.native}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ThemeOptions({ theme, setTheme, t, onClose }) {
+  return (
+    <div className="menu-sub-themes" data-testid="theme-options">
+      {THEME_OPTIONS.map(th => (
+        <button
+          key={th.id}
+          data-testid={`theme-${th.id}`}
+          onClick={() => { setTheme(th.id); onClose(); }}
+          className={`menu-theme-btn ${theme === th.id ? 'menu-theme-active' : ''}`}
+        >
+          <th.icon size={16} /> {t(th.id)}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 export default function BurgerMenu({ open, onClose }) {
   const { user, logout, isGuest } = useAuth();
@@ -18,10 +66,7 @@ export default function BurgerMenu({ open, onClose }) {
 
   if (!open) return null;
 
-  const goTo = (path) => {
-    onClose();
-    navigate(path);
-  };
+  const goTo = (path) => { onClose(); navigate(path); };
 
   const handleLogout = async () => {
     onClose();
@@ -57,62 +102,21 @@ export default function BurgerMenu({ open, onClose }) {
             </button>
           )}
 
-          <button data-testid="menu-voice" onClick={() => goTo('/voice-select')} className="menu-item">
-            <Mic size={20} /> <span>{t('chooseVoice')}</span> <ChevronRight size={16} />
-          </button>
+          {MENU_ITEMS.map(item => (
+            <button key={item.id} data-testid={`menu-${item.id}`} onClick={() => goTo(item.path)} className="menu-item">
+              <item.icon size={20} /> <span>{t(item.labelKey)}</span> <ChevronRight size={16} />
+            </button>
+          ))}
 
           <button data-testid="menu-language-toggle" onClick={() => setShowLangs(!showLangs)} className="menu-item">
             <Globe size={20} /> <span>{t('language')}</span> <ChevronRight size={16} className={showLangs ? 'rotate-90' : ''} />
           </button>
-          {showLangs && (
-            <div className="menu-sub-grid" data-testid="language-grid">
-              {languages.map(l => (
-                <button
-                  key={l.code}
-                  data-testid={`lang-${l.code}`}
-                  onClick={() => { setLang(l.code); setShowLangs(false); }}
-                  className={`menu-lang-btn ${lang === l.code ? 'menu-lang-active' : ''}`}
-                >
-                  <span className="menu-lang-flag">{l.flag}</span>
-                  <span>{l.native}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          {showLangs && <LanguageGrid languages={languages} lang={lang} setLang={setLang} onClose={() => setShowLangs(false)} />}
 
           <button data-testid="menu-theme-toggle" onClick={() => setShowThemes(!showThemes)} className="menu-item">
             <Palette size={20} /> <span>{t('theme')}</span> <ChevronRight size={16} className={showThemes ? 'rotate-90' : ''} />
           </button>
-          {showThemes && (
-            <div className="menu-sub-themes" data-testid="theme-options">
-              {[
-                { id: 'light', icon: Sun, label: t('light') },
-                { id: 'dark', icon: Moon, label: t('dark') },
-                { id: 'system', icon: Monitor, label: t('system') },
-              ].map(th => (
-                <button
-                  key={th.id}
-                  data-testid={`theme-${th.id}`}
-                  onClick={() => { setTheme(th.id); setShowThemes(false); }}
-                  className={`menu-theme-btn ${theme === th.id ? 'menu-theme-active' : ''}`}
-                >
-                  <th.icon size={16} /> {th.label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          <button data-testid="menu-radio" onClick={() => goTo('/radio')} className="menu-item">
-            <Radio size={20} /> <span>{t('radio')}</span> <ChevronRight size={16} />
-          </button>
-
-          <button data-testid="menu-specialists" onClick={() => goTo('/specialists')} className="menu-item">
-            <Users size={20} /> <span>{t('specialists')}</span> <ChevronRight size={16} />
-          </button>
-
-          <button data-testid="menu-about" onClick={() => goTo('/about')} className="menu-item">
-            <Info size={20} /> <span>{t('about')}</span> <ChevronRight size={16} />
-          </button>
+          {showThemes && <ThemeOptions theme={theme} setTheme={setTheme} t={t} onClose={() => setShowThemes(false)} />}
 
           <button data-testid="menu-book" onClick={() => goTo('/booking')} className="menu-item menu-item-highlight">
             <Calendar size={20} /> <span>{t('bookPsychologist')}</span> <ChevronRight size={16} />

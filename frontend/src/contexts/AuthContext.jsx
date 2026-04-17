@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import apiClient from '@/lib/apiClient';
+import apiClient, { setAuthToken, removeAuthToken } from '@/lib/apiClient';
 
 const AuthContext = createContext(null);
 
@@ -14,11 +14,11 @@ export function AuthProvider({ children }) {
     } catch {
       try {
         const { data } = await apiClient.post('/auth/guest', {});
-        if (data.access_token) localStorage.setItem('access_token', data.access_token);
+        if (data.access_token) setAuthToken(data.access_token);
         setUser(data.user);
       } catch {
         setUser(false);
-        localStorage.removeItem('access_token');
+        removeAuthToken();
       }
     } finally {
       setLoading(false);
@@ -29,14 +29,14 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const { data } = await apiClient.post('/auth/login', { email, password });
-    if (data.access_token) localStorage.setItem('access_token', data.access_token);
+    if (data.access_token) setAuthToken(data.access_token);
     setUser(data.user);
     return data;
   }, []);
 
   const register = useCallback(async (email, password, name) => {
     const { data } = await apiClient.post('/auth/register', { email, password, name });
-    if (data.access_token) localStorage.setItem('access_token', data.access_token);
+    if (data.access_token) setAuthToken(data.access_token);
     setUser(data.user);
     return data;
   }, []);
@@ -47,10 +47,10 @@ export function AuthProvider({ children }) {
     } catch (err) {
       if (process.env.NODE_ENV === 'development') console.error('Logout request failed:', err.message);
     }
-    localStorage.removeItem('access_token');
+    removeAuthToken();
     try {
       const { data } = await apiClient.post('/auth/guest', {});
-      if (data.access_token) localStorage.setItem('access_token', data.access_token);
+      if (data.access_token) setAuthToken(data.access_token);
       setUser(data.user);
     } catch {
       setUser(false);

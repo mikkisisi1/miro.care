@@ -1,6 +1,28 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import apiClient from '@/lib/apiClient';
 
+/**
+ * Load the most recent chat session and its messages from the backend.
+ * Returns restored message array or empty array.
+ */
+async function loadChatHistory(sessionIdRef) {
+  const { data } = await apiClient.get('/chat/sessions');
+  if (!data.sessions?.length) return [];
+
+  const lastSession = data.sessions[0];
+  sessionIdRef.current = lastSession.session_id;
+
+  const histResp = await apiClient.get(`/chat/history/${lastSession.session_id}`);
+  if (!histResp.data.messages?.length) return [];
+
+  const restored = [];
+  for (const m of histResp.data.messages) {
+    if (m.user_message) restored.push({ role: 'user', content: m.user_message, id: `hist_u_${restored.length}` });
+    if (m.ai_response) restored.push({ role: 'ai', content: m.ai_response, id: `hist_a_${restored.length}` });
+  }
+  return restored;
+}
+
 export default function useChat(user, lang, refreshUser, onAIMessage) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -14,35 +36,21 @@ export default function useChat(user, lang, refreshUser, onAIMessage) {
   useEffect(() => {
     if (!user || historyLoaded) return;
     let cancelled = false;
-    const loadHistory = async () => {
+    (async () => {
       try {
-        const { data } = await apiClient.get('/chat/sessions');
-        if (data.sessions?.length > 0) {
-          const lastSession = data.sessions[0];
-          sessionIdRef.current = lastSession.session_id;
-          const histResp = await apiClient.get(`/chat/history/${lastSession.session_id}`);
-          if (histResp.data.messages?.length > 0 && !cancelled) {
-            const restored = [];
-            for (const m of histResp.data.messages) {
-              if (m.user_message) restored.push({ role: 'user', content: m.user_message, id: `hist_u_${restored.length}` });
-              if (m.ai_response) restored.push({ role: 'ai', content: m.ai_response, id: `hist_a_${restored.length}` });
-            }
-            if (restored.length > 0) setMessages(restored);
-          }
-        }
+        const restored = await loadChatHistory(sessionIdRef);
+        if (!cancelled && restored.length > 0) setMessages(restored);
       } catch {
         if (process.env.NODE_ENV === 'development') console.error('No chat history found');
       }
       if (!cancelled) setHistoryLoaded(true);
-    };
-    loadHistory();
+    })();
     return () => { cancelled = true; };
   }, [user, historyLoaded]);
 
   const sendMessage = useCallback(async (text) => {
     if (!text.trim()) return;
-    const userMsg = { role: 'user', content: text, id: `user_${Date.now()}` };
-    setMessages(prev => [...prev, userMsg]);
+    setMessages(prev => [...prev, { role: 'user', content: text, id: `user_${Date.now()}` }]);
     setLoading(true);
 
     try {

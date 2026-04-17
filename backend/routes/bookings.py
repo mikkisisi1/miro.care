@@ -30,33 +30,32 @@ async def get_specialists(problem: str = None):
 
 
 # ---------- BOOKING SLOTS ----------
-@router.get("/bookings/slots")
-async def get_booking_slots(request: Request):
-    user = await get_current_user(request)
-    user_id = user["_id"]
-
+def _compute_date_range():
+    """Compute the booking date range based on Moscow time."""
     now_utc = datetime.now(timezone.utc)
-    now_moscow = now_utc + timedelta(hours=3)
-    today = now_moscow.date()
+    today = (now_utc + timedelta(hours=3)).date()
+    return today, today.isoformat(), (today + timedelta(days=30)).isoformat()
 
-    start_date = today.isoformat()
-    end_date = (today + timedelta(days=30)).isoformat()
 
+async def _fetch_booked_slots(start_date: str, end_date: str) -> dict:
+    """Fetch existing bookings and return a lookup map keyed by 'date_time'."""
     booked_cursor = db.bookings.find(
         {"date": {"$gte": start_date, "$lte": end_date}, "status": {"$in": ["booked", "confirmed"]}},
         {"_id": 0, "date": 1, "time_slot": 1, "user_id": 1, "status": 1},
     )
     booked_list = await booked_cursor.to_list(500)
-
-    booked_map = {
+    return {
         f"{b['date']}_{b['time_slot']}": {"user_id": b.get("user_id"), "status": b.get("status")}
         for b in booked_list
     }
 
+
+def _build_calendar(today, booked_map: dict, user_id: str) -> list:
+    """Generate the 31-day calendar with slot availability."""
     calendar = []
     for day_offset in range(31):
         d = today + timedelta(days=day_offset)
-        if d.weekday() >= 5:  # skip Sat/Sun
+        if d.weekday() >= 5:
             continue
         day_slots = []
         for slot in BOOKING_SLOTS:
@@ -68,7 +67,15 @@ async def get_booking_slots(request: Request):
             else:
                 day_slots.append({"time": slot, "status": "available"})
         calendar.append({"date": d.isoformat(), "weekday": d.weekday(), "slots": day_slots})
+    return calendar
 
+
+@router.get("/bookings/slots")
+async def get_booking_slots(request: Request):
+    user = await get_current_user(request)
+    today, start_date, end_date = _compute_date_range()
+    booked_map = await _fetch_booked_slots(start_date, end_date)
+    calendar = _build_calendar(today, booked_map, user["_id"])
     return {"calendar": calendar, "price": BOOKING_PRICE, "advance_percent": BOOKING_ADVANCE_PERCENT}
 
 

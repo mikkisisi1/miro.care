@@ -202,6 +202,17 @@ NOTES_SUMMARY_PROMPT = """Ты — психологический ассисте
 Пиши лаконично, только факты. Без приветствий и заголовков. Это внутренние заметки для следующего сеанса."""
 
 
+def _build_dialogue_text(msgs: list) -> str:
+    """Convert chat messages into a formatted dialogue string for summarisation."""
+    lines = []
+    for m in msgs:
+        if m.get("user_message") and m["user_message"] != "[image]":
+            lines.append(f"Пользователь: {m['user_message']}")
+        if m.get("ai_response"):
+            lines.append(f"Ассистент: {m['ai_response'][:300]}")
+    return "\n".join(lines)
+
+
 async def update_session_notes(user_id: str, session_id: str) -> None:
     """Background task: summarise conversation and persist to users.session_notes."""
     try:
@@ -214,19 +225,11 @@ async def update_session_notes(user_id: str, session_id: str) -> None:
             return
 
         msgs.reverse()
-        dialogue_lines = []
-        for m in msgs:
-            if m.get("user_message") and m["user_message"] != "[image]":
-                dialogue_lines.append(f"Пользователь: {m['user_message']}")
-            if m.get("ai_response"):
-                dialogue_lines.append(f"Ассистент: {m['ai_response'][:300]}")
-
-        if not dialogue_lines:
+        dialogue_text = _build_dialogue_text(msgs)
+        if not dialogue_text:
             return
 
-        dialogue_text = "\n".join(dialogue_lines)
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-
         user_doc = await db.users.find_one({"_id": ObjectId(user_id)}, {"session_notes": 1})
         prev_notes = (user_doc or {}).get("session_notes") or ""
 
@@ -279,13 +282,11 @@ def build_counter_updates(user: dict, is_free_phase: bool, free_count: int, ai_r
     return update_fields
 
 
-# ---------- ENDPOINTS ----------
-@router.post("/chat")
-async def chat_endpoint(req: ChatRequest, request: Request):
-    user = await get_current_user(request)
+async def _process_chat_message(user: dict, req: ChatRequest) -> dict:
+    """Core logic for processing a text chat message. Returns the response dict."""
     user_id = user["_id"]
-
     is_free_phase, has_minutes, free_count = check_user_access(user)
+
     if not is_free_phase and not has_minutes:
         return {
             "message": "Ваши бесплатные сообщения закончились. Пожалуйста, выберите тариф для продолжения.",
@@ -294,58 +295,53 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         }
 
     session_id = f"{user_id}_{req.session_id}"
-    try:
-        await _init_session(
-            session_id,
-            req.problem or user.get("selected_problem"),
-            req.language or user.get("selected_language", "ru"),
-            user_id,
-        )
+    await _init_session(
+        session_id,
+        req.problem or user.get("selected_problem"),
+        req.language or user.get("selected_language", "ru"),
+        user_id,
+    )
 
-        chat_histories[session_id].append({"role": "user", "content": req.message})
-        messages = _trim_messages(chat_histories[session_id])
-        ai_response = await call_openrouter(messages)
-        ai_response = await _handle_search_tag(session_id, ai_response)
-        chat_histories[session_id].append({"role": "assistant", "content": ai_response})
+    chat_histories[session_id].append({"role": "user", "content": req.message})
+    messages = _trim_messages(chat_histories[session_id])
+    ai_response = await call_openrouter(messages)
+    ai_response = await _handle_search_tag(session_id, ai_response)
+    chat_histories[session_id].append({"role": "assistant", "content": ai_response})
 
-        await db.chat_messages.insert_one({
-            "user_id": user_id,
-            "session_id": req.session_id,
-            "user_message": req.message,
-            "ai_response": ai_response,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "problem": req.problem or user.get("selected_problem"),
-        })
+    await db.chat_messages.insert_one({
+        "user_id": user_id,
+        "session_id": req.session_id,
+        "user_message": req.message,
+        "ai_response": ai_response,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "problem": req.problem or user.get("selected_problem"),
+    })
 
-        if not user.get("user_display_name"):
-            await _save_name_if_found(user_id, req.message, free_count)
+    if not user.get("user_display_name"):
+        await _save_name_if_found(user_id, req.message, free_count)
 
-        update_fields = build_counter_updates(user, is_free_phase, free_count, ai_response)
-        if update_fields:
-            await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
+    update_fields = build_counter_updates(user, is_free_phase, free_count, ai_response)
+    if update_fields:
+        await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
 
-        user_msg_count = sum(1 for m in chat_histories.get(session_id, []) if m.get("role") == "user")
-        if user_msg_count > 0 and user_msg_count % 6 == 0:
-            asyncio.create_task(update_session_notes(user_id, req.session_id))
+    user_msg_count = sum(1 for m in chat_histories.get(session_id, []) if m.get("role") == "user")
+    if user_msg_count > 0 and user_msg_count % 6 == 0:
+        asyncio.create_task(update_session_notes(user_id, req.session_id))
 
-        return {
-            "message": ai_response,
-            "type": "ai_response",
-            "needs_tariff": free_count + 2 >= 12 and not has_minutes,
-            "minutes_left": user.get("minutes_left", 0) if has_minutes else None,
-            "is_free_phase": is_free_phase,
-        }
-    except Exception as e:
-        logger.error(f"Chat error: {e}")
-        raise HTTPException(500, f"Chat error: {str(e)}")
+    return {
+        "message": ai_response,
+        "type": "ai_response",
+        "needs_tariff": free_count + 2 >= 12 and not has_minutes,
+        "minutes_left": user.get("minutes_left", 0) if has_minutes else None,
+        "is_free_phase": is_free_phase,
+    }
 
 
-@router.post("/chat/image")
-async def chat_image_endpoint(req: ChatImageRequest, request: Request):
-    user = await get_current_user(request)
+async def _process_image_message(user: dict, req: ChatImageRequest) -> dict:
+    """Core logic for processing an image chat message. Returns the response dict."""
     user_id = user["_id"]
-
     is_free_phase, has_minutes, free_count = check_user_access(user)
+
     if not is_free_phase and not has_minutes:
         return {
             "response": "Ваши бесплатные сообщения закончились. Пожалуйста, выберите тариф.",
@@ -367,23 +363,18 @@ async def chat_image_endpoint(req: ChatImageRequest, request: Request):
         ],
     }
 
-    messages = chat_histories[session_id][:-1] + [vision_msg]
-    messages = _trim_messages(messages)
+    messages = _trim_messages(chat_histories[session_id][:-1] + [vision_msg])
 
     try:
         ai_text = await call_openrouter(messages)
     except Exception as e:
         logger.error(f"Image chat error: {e}")
-        try:
-            fallback_msgs = [m for m in chat_histories[session_id] if isinstance(m.get("content"), str)]
-            fallback_msgs.append({
-                "role": "user",
-                "content": f"Пользователь отправил фото. Поблагодари за доверие и спроси, что на фото. Отвечай на языке: {lang}",
-            })
-            ai_text = await call_openrouter(fallback_msgs[-20:], model="mistralai/mistral-small-3.1-24b-instruct")
-        except Exception as e2:
-            logger.error(f"Image chat fallback error: {e2}")
-            raise HTTPException(500, f"Image analysis error: {str(e)}")
+        fallback_msgs = [m for m in chat_histories[session_id] if isinstance(m.get("content"), str)]
+        fallback_msgs.append({
+            "role": "user",
+            "content": f"Пользователь отправил фото. Поблагодари за доверие и спроси, что на фото. Отвечай на языке: {lang}",
+        })
+        ai_text = await call_openrouter(fallback_msgs[-20:], model="mistralai/mistral-small-3.1-24b-instruct")
 
     chat_histories[session_id].append({"role": "assistant", "content": ai_text})
 
@@ -405,6 +396,27 @@ async def chat_image_endpoint(req: ChatImageRequest, request: Request):
         "type": "ai_response",
         "needs_tariff": free_count + 2 >= 12 and not has_minutes,
     }
+
+
+# ---------- ENDPOINTS ----------
+@router.post("/chat")
+async def chat_endpoint(req: ChatRequest, request: Request):
+    user = await get_current_user(request)
+    try:
+        return await _process_chat_message(user, req)
+    except Exception as e:
+        logger.error(f"Chat error: {e}")
+        raise HTTPException(500, f"Chat error: {str(e)}")
+
+
+@router.post("/chat/image")
+async def chat_image_endpoint(req: ChatImageRequest, request: Request):
+    user = await get_current_user(request)
+    try:
+        return await _process_image_message(user, req)
+    except Exception as e:
+        logger.error(f"Image chat error: {e}")
+        raise HTTPException(500, f"Image analysis error: {str(e)}")
 
 
 @router.get("/chat/history/{session_id}")
