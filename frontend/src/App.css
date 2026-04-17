@@ -498,7 +498,19 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 }
 
 .xc-header-right {
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 10px;
+}
+.xc-countdown {
+  font-family: 'Courier New', monospace;
+  font-size: 1.15rem; font-weight: 700;
+  color: #00CFFF;
+  text-shadow: 0 0 8px rgba(0, 207, 255, 0.6), 0 0 16px rgba(0, 207, 255, 0.3);
+  letter-spacing: 0.05em;
+  animation: countdownPulse 1s ease-in-out infinite;
+}
+@keyframes countdownPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 .xc-header-icon-btn {
   width: 32px; height: 32px;

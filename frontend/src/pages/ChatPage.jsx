@@ -12,6 +12,7 @@ import useAudioStream from '@/hooks/useAudioStream';
 import useChat from '@/hooks/useChat';
 import useSpeechRecognition from '@/hooks/useSpeechRecognition';
 import useImageUpload from '@/hooks/useImageUpload';
+import useCountdown from '@/hooks/useCountdown';
 import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -142,6 +143,7 @@ export default function ChatPage() {
   const minutesLeft = user?.minutes_left || 0;
   const isFreePhase = (user?.free_messages_count || 0) < 12;
   const hasMinutes = minutesLeft > 0;
+  const countdownSeconds = useCountdown(minutesLeft, hasMinutes, isFreePhase);
   const formatTime = (mins) => {
     if (mins >= 60) return `${Math.floor(mins / 60)}${t('hours')} ${mins % 60}${t('min')}`;
     return `${mins} ${t('min')}`;
@@ -163,6 +165,7 @@ export default function ChatPage() {
         formatTime={formatTime}
         onBack={() => navigate('/problems')}
         freeSessionLabel={t('freeSession')}
+        countdownSeconds={countdownSeconds}
       />
 
       <div className="xc-chat-messages" data-testid="chat-messages">

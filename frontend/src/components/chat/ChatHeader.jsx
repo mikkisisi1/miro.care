@@ -5,8 +5,10 @@ export default function ChatHeader({
   voiceChosen, activeVoice, onVoiceSelect,
   ttsEnabled, toggleTTS,
   isFreePhase, hasMinutes, minutesLeft, formatTime,
-  onBack, freeSessionLabel,
+  onBack, freeSessionLabel, countdownSeconds,
 }) {
+  const showCountdown = countdownSeconds !== null && countdownSeconds >= 0;
+
   return (
     <div className="xc-chat-header" data-testid="chat-header">
       <div className="xc-chat-agent-info">
@@ -43,7 +45,7 @@ export default function ChatHeader({
           <h3 className="xc-chat-agent-name">MIRO.CARE</h3>
           <p className="xc-chat-agent-status">
             {isFreePhase && freeSessionLabel}
-            {!isFreePhase && hasMinutes && (
+            {!isFreePhase && hasMinutes && !showCountdown && (
               <span className="xc-timer-text"><Clock size={11} strokeWidth={1.5} /> {formatTime(minutesLeft)}</span>
             )}
             {!isFreePhase && !hasMinutes && 'online'}
@@ -51,6 +53,11 @@ export default function ChatHeader({
         </div>
       </div>
       <div className="xc-header-right">
+        {showCountdown && (
+          <span className="xc-countdown" data-testid="countdown-timer">
+            {countdownSeconds}
+          </span>
+        )}
         <button
           data-testid="tts-toggle-btn"
           onClick={toggleTTS}
