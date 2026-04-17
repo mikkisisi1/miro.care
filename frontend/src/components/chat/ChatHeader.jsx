@@ -1,11 +1,12 @@
 import React from 'react';
-import { ArrowLeft, Volume2, VolumeX, Clock } from 'lucide-react';
+import { ArrowLeft, Volume2, VolumeX, Clock, Menu } from 'lucide-react';
 
 export default function ChatHeader({
   voiceChosen, activeVoice, onVoiceSelect,
   ttsEnabled, toggleTTS,
   isFreePhase, hasMinutes, minutesLeft, formatTime,
   onBack, freeSessionLabel, countdownSeconds,
+  onMenuOpen,
 }) {
   const showCountdown = countdownSeconds !== null && countdownSeconds >= 0;
 
@@ -64,6 +65,13 @@ export default function ChatHeader({
           className={`xc-header-icon-btn ${ttsEnabled ? 'active' : ''}`}
         >
           {ttsEnabled ? <Volume2 size={18} strokeWidth={1.5} /> : <VolumeX size={18} strokeWidth={1.5} />}
+        </button>
+        <button
+          data-testid="chat-menu-btn"
+          onClick={onMenuOpen}
+          className="xc-header-icon-btn"
+        >
+          <Menu size={18} strokeWidth={1.5} />
         </button>
       </div>
     </div>

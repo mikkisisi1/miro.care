@@ -101,22 +101,6 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   .landing-brand { left: 20px; top: auto; bottom: 280px; transform: none; }
 }
 
-/* Burger — 2 thin lines, right side */
-.landing-burger {
-  position: absolute; top: 24px; right: 24px; z-index: 20;
-  background: none; border: none;
-  cursor: pointer; padding: 10px 6px;
-}
-.landing-burger:hover .landing-burger-lines span { background: #fff; }
-.landing-burger-lines {
-  display: flex; flex-direction: column; gap: 7px;
-}
-.landing-burger-lines span {
-  display: block; width: 32px; height: 1.5px;
-  background: rgba(255,255,255,0.6);
-  transition: background 0.2s;
-}
-
 /* Glass panel — more transparent, less blur */
 .landing-glass {
   position: absolute; z-index: 10;
