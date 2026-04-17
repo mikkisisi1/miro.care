@@ -34,6 +34,7 @@ Build Miro.Care, a hybrid psychological help platform featuring an AI-psychologi
   - Added `/health` endpoint for Kubernetes liveness/readiness probes (was returning 404)
   - Added `/api/v1/guest/comm/config` endpoint (Emergent platform requirement)
   - Fixed cookie `secure` flag to be environment-aware (HTTPS in production)
+  - **Fixed `.gitignore` blocking `.env` files** — removed duplicate sections (lines 84-109) that prevented env files from being deployed, causing blank page on production
 
 ### P1 (High)
 - Google Sign-In integration (Emergent-managed Google Auth)
