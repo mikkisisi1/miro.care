@@ -34,7 +34,7 @@ export default function LandingPage() {
           className="landing-glass-cta"
         >
           <span className="landing-cta-glow" />
-          ПСИХОЛОГ
+          {t('ctaButton')}
         </button>
       </div>
 

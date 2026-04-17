@@ -79,7 +79,7 @@ export default function MiroRadio() {
           className={`radio-play-btn ${playing ? 'radio-playing' : ''}`}
         >
           {playing ? <Pause size={24} /> : <Play size={24} />}
-          <span>{playing ? t('paused') : 'Play'}</span>
+          <span>{playing ? t('playing') : 'Play'}</span>
         </button>
 
         <p className="radio-status" data-testid="radio-status">
