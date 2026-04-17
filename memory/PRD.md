@@ -30,6 +30,10 @@ Build Miro.Care, a hybrid psychological help platform featuring an AI-psychologi
 ## Prioritized Backlog
 ### P0 (Critical)
 - (None — all critical issues resolved)
+- **[2026-04-17] Fixed deployment blockers:**
+  - Added `/health` endpoint for Kubernetes liveness/readiness probes (was returning 404)
+  - Added `/api/v1/guest/comm/config` endpoint (Emergent platform requirement)
+  - Fixed cookie `secure` flag to be environment-aware (HTTPS in production)
 
 ### P1 (High)
 - Google Sign-In integration (Emergent-managed Google Auth)

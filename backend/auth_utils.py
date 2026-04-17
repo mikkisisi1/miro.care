@@ -68,11 +68,12 @@ async def get_current_user(request: Request) -> dict:
 
 
 def set_auth_cookies(response: Response, access_token: str, refresh_token: str):
+    is_production = os.environ.get("FRONTEND_URL", "").startswith("https")
     response.set_cookie(
         key="access_token", value=access_token,
-        httponly=True, secure=False, samesite="lax", max_age=86400, path="/"
+        httponly=True, secure=is_production, samesite="lax", max_age=86400, path="/"
     )
     response.set_cookie(
         key="refresh_token", value=refresh_token,
-        httponly=True, secure=False, samesite="lax", max_age=604800, path="/"
+        httponly=True, secure=is_production, samesite="lax", max_age=604800, path="/"
     )

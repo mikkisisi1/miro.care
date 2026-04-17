@@ -24,6 +24,17 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Miro.Care API")
 api_router = APIRouter(prefix="/api")
 
+
+# ---------- HEALTH CHECK (Kubernetes liveness/readiness) ----------
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+
+@app.get("/api/v1/guest/comm/config")
+async def guest_comm_config():
+    return {"status": "ok"}
+
 # Mount all route modules
 api_router.include_router(auth_router)
 api_router.include_router(chat_router)
