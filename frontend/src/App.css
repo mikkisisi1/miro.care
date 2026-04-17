@@ -103,7 +103,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 @media (max-width: 768px) {
   .landing-brand { left: 20px; top: auto; bottom: 360px; transform: none; }
   .landing-brand-miro, .landing-brand-care {
-    font-size: clamp(2.5rem, 10vw, 4rem);
+    font-size: clamp(3.75rem, 15vw, 6rem);
   }
 }
 
