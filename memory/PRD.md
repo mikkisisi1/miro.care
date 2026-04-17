@@ -96,7 +96,8 @@ MIRO.CARE — гибридная платформа психологическо
 - [ ] Google Sign-In integration
 
 ### P2 (Upcoming)
-- [ ] Live specialist booking calendar
+- [x] Live specialist booking calendar
+- [x] Session Notes auto-summary (cross-session memory via users.session_notes)
 - [ ] YuKassa / Telegram Stars payments
 - [ ] IP-based language detection
 - [ ] Session notes auto-summary (save key context between sessions)
