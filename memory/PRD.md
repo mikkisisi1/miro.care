@@ -111,4 +111,12 @@ MIRO.CARE — гибридная платформа психологическо
 - [x] server.py helpers extracted: find_problem_context, load_personal_context, extract_user_name, call_openrouter
 - [x] Empty catch blocks: all now log errors
 - [x] Console cleanup: production console.error guarded with NODE_ENV check
-- [ ] Split server.py (~1000 lines) into: auth.py, chat.py, tts.py, payments.py
+- [x] **server.py split (2026-05-xx)**: 1246 lines → 84 lines (93% reduction)
+  - database.py, config.py, auth_utils.py
+  - routes/auth.py, routes/chat.py, routes/tts.py, routes/payments.py, routes/bookings.py
+  - 32/32 regression tests passed (iteration_9.json)
+
+## Deployment Fixes (2026-05-xx)
+- [x] CORS: now reads CORS_ORIGINS env var (wildcard fallback)
+- [x] .gitignore: removed 5 duplicate .env-blocking entries
+- [x] .dockerignore: created to protect test_credentials.md
