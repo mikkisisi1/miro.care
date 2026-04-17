@@ -1,21 +1,34 @@
 <analysis>**original_problem_statement**: 
-The user wants to build Miro.Care, a hybrid psychological help platform featuring an AI-psychologist (Miron/Oksana) utilizing voice/text, live specialist integration, Stripe-based tariffs, DuckDuckGo live search for crisis info, specialist booking calendar, and OpenRouter (Claude Sonnet 4.5) / Fish Audio (TTS) integrations. A strict design lock () is in place to prevent unauthorized AI modifications to the UI.
+The user is building Miro.Care, a hybrid psychological help platform featuring an AI-psychologist (Miron/Oksana) utilizing voice/text, live specialist integration, Stripe-based tariffs, DuckDuckGo live search, and OpenRouter / Fish Audio integrations. A strict design lock () is in place. Recently, the user reported deployment failures due to Kubernetes health checks receiving 404 errors.
 
 **User's preferred language**: **Russian (РУССКИЙ)**
-*(INSTRUCTION FOR NEXT AGENT: You MUST automatically respond in the user's preferred language. The user writes exclusively in Russian. ALWAYS reply in Russian.)*
+*(INSTRUCT FOR NEXT AGENT: You MUST automatically detect the user's primary language from their messages inside the trajectory tag. The user writes exclusively in Russian. You MUST ALWAYS respond in Russian.)*
 
 **what currently exists?** 
-A highly polished, heavily-featured and thoroughly tested MVP. The frontend uses React with a highly customized dark glassmorphism UI. The backend (FastAPI) handles multi-step prompt logic, persists chat history, summarizes session notes, streams Fish Audio TTS, runs , manages user tariff states, and supports live specialist bookings. Stripe payments and webhooks are fully integrated and tested. The frontend now utilizes a centralized  for secure API communication.
+A highly polished MVP. The frontend uses React with a highly customized dark glassmorphism UI. The backend (FastAPI) handles multi-step prompt logic, persists chat history, streams Fish Audio TTS, runs , and supports live specialist bookings. In the latest session, Kubernetes deployment blockers ( and  404 errors) were successfully resolved.
 
 **Last working item**: 
-    - Last item agent was working: Refining the AI's communication style in  (). The user requested a live, professional, attentive, calm tone, occasionally thoughtful with small pauses.
+    - Last item agent was working: Fixing deployment errors caused by missing K8s health probe endpoints () and platform config endpoints (). The agent successfully added these to  and validated them via curl.
     - Status: USER VERIFICATION PENDING
     - Agent Testing Done: Y
-    - Which testing method agent to use? python -c / bash scripts
+    - Which testing method agent to use? manual testing by curl
     - User Testing Done: N
 
-**All Pending/In progress Issue list**:  
-  *(None. All active issues and code quality findings were resolved and thoroughly tested.)*
+**All Pending/In progress Issue list**:
+  Issue 1: AI Agents allegedly silent on the user's side / production (Carried over from previous fork).
+  
+  Issues Detail:
+  - Issue 1: 
+     - Attempted fixes: The previous agent tested the chat endpoint. **CRITICAL INSIGHT**: During the curl test in this session, the AI responded with *Ваши бесплатные сообщения закончились. Пожалуйста, выберите тариф...* (Your free messages have ended. Please choose a tariff...). 
+     - Next debug checklist: 
+       1. The silence might actually be the frontend not properly handling or displaying the out of credits/minutes response, OR the user simply ran out of credits.
+       2. Check  to see how it handles  or out-of-minutes states.
+       3. Inform the user that their account might just be out of credits.
+     - Why fix this issue and what will be achieved with the fix? Core functionality must clearly communicate state to the user.
+     - Status: USER VERIFICATION PENDING
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on other issue: None
 
 **In progress Task List**: 
  *(None)*
@@ -24,36 +37,33 @@ A highly polished, heavily-featured and thoroughly tested MVP. The frontend uses
     Upcoming Tasks:
     - P1: Google Sign-In integration (Use Emergent-managed Google Auth).
     - P1: Notification system (email/push) 1 day before a live specialist consultation.
-    - P2: YuKassa / Telegram Stars integration (Russian payment alternatives).
     
     Future Tasks:
+    - P2: YuKassa / Telegram Stars integration (Russian payment alternatives).
     - P2: Language detection by IP.
     - P2: PWA implementation.
     - P2: WebSockets for chat.
     - P3: Admin panel and Analytics.
 
 **Completed work in this session**
-- Verified 100% of all features via testing agent () (DONE).
-- Stripe Webhooks: Implemented complete payment verification, DB transaction updates, and frontend polling via  () (DONE).
-- Code Quality Refactoring: Removed insecure localStorage token usage, fixed React hook dependencies, created centralized , refactored  complexity, and secured console logs () (DONE).
-- Desktop Landing Page UI: Replaced the main hero photo, removed the top gradient, and meticulously adjusted the  to  per user feedback (DONE).
-- Mobile Landing Page UI: Applied the new photo, removed opacity filters, zoomed in (), repositioned the image (), and increased the MIRO CARE brand text size by 50% (DONE).
-- AI Personality Tuning: Updated  to incorporate a thoughtful, calm, and pausing tone (...дай подумать...) (DONE).
+- Added  endpoint to  to fix Kubernetes deployment infinite restart loops (DONE).
+- Added  endpoint to  to satisfy platform requirements (DONE).
+- Executed full backend API test suite via bash script verifying Auth, Guest, Health, and Chat endpoints are functional (DONE).
 
 **Earlier issues found/mentioned but not fixed**
    - None
 
 **Known issue recurrence from previous fork**
-  - Issue recurrence in previous fork: **UNAUTHORIZED DESIGN CHANGES**.
+  - Issue recurrence in previous fork: UNAUTHORIZED DESIGN CHANGES.
   - Recurrence count: 1
   - Status: RESOLVED
-  - Note: **CRITICAL WARNING FOR NEXT AGENT**: The user is highly specific about exact pixel/position changes. Always follow their explicit directions for UI adjustments (like shifting photos, scaling text) and do not introduce unprompted UI fixes.
+  - Note: DO NOT tweak CSS or UI elements (, ) without the user's explicit request. A strict design lock is in place ().
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-React.js, FastAPI, MongoDB, SSE HTTP Streaming (TTS Audio), OpenRouter API (Claude), Fish Audio API, DuckDuckGo Search API, CSS Glassmorphism, Stripe Webhooks, Axios Interceptors.
+React.js, FastAPI, MongoDB, SSE HTTP Streaming (TTS Audio), OpenRouter API (Claude Sonnet), Fish Audio API, DuckDuckGo Search API, CSS Glassmorphism, Stripe Webhooks.
 
 **key DB schema**
   - : 
@@ -61,44 +71,32 @@ React.js, FastAPI, MongoDB, SSE HTTP Streaming (TTS Audio), OpenRouter API (Clau
   - : 
 
 **changes in tech stack**
-  - Introduced  for centralized Axios HTTP requests and token interception on the frontend. Replaces direct  calls in components.
+  - None in this session.
 
 **All files of reference** 
-  -  (Stripe webhooks implementation)
-  -  (Payment polling UI)
-  -  (New centralized API client)
-  -  (Updated photo positioning, text scaling)
-  -  (Updated main photo URLs)
-  -  (Modified  for psychological tone)
+  -  (Updated to fix deployment)
+  -  (Updated)
 
 **Areas that need refactoring**: 
-  - None. Extensive code quality refactoring was successfully executed in this session.
+  - None. 
 
 **key api endpoints**
-  -  (New)
-  -  (New)
+  -  (Newly added)
+  -  (Newly added)
+  - 
+  - 
 
 **Critical Info for New Agent**
   - **LANGUAGE**: The user writes strictly in Russian. You MUST respond in Russian.
-  - **API CLIENT**: The frontend now uses . Do not use direct  with manual token headers or access  for tokens directly in UI components.
-  - **DESIGN**: The user spent extensive time (15+ iterations) perfectly aligning the desktop and mobile landing photos. Do NOT modify  or  CSS rules unless explicitly requested.
+  - **DESIGN LOCK**:  is active. Do not touch UI/CSS unless explicitly asked.
+  - **INSIGHT ON PREVIOUS BUG**: The user previously complained the AI was silent. Backend testing in this session revealed the API is returning . The issue might not be a broken agent, but rather the user running out of free messages, or the frontend failing to display this specific rejection state properly.
 
 **documents and test reports created in this job**
-  -  (Full Feature test)
-  -  (Payments test)
-  -  (Regression test post-refactor)
+  -  (Updated)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-  1. User asked to shift the mobile photo down.
-  2. Agent shifted it.
-  3. User complained the agent was lying and asked to shift it correctly.
-  4. Agent analyzed the image via tool and shifted it down past the cropped band.
-  5. User asked to shift the photo to the left.
-  6. Agent shifted it left.
-  7. User confirmed, then asked to increase the MIRO CARE brand text on mobile by 50%.
-  8. Agent increased it. User asked to move it slightly lower. Agent moved it lower.
-  9. User asked to confirm if Fish Audio streaming and Psychological knowledge base are active. Agent proved they were.
-  10. User explicitly instructed: I wrote: alive professional attentive calm tone. occasionally thoughtful with small pauses. streaming. Agent updated  and tested it. (No further response from user).
+ - User: Asked to confirm plan. (COMPLETED - Agent asked human)
+ - User: Ignored the plan, provided deployment error logs showing 404s for K8s health probes. -> Agent diagnosed, added the missing endpoints, tested, and resolved the deployment blocker. (COMPLETED)
 
 **Project Health Check:**
   - Backend: Functional
@@ -112,13 +110,27 @@ React.js, FastAPI, MongoDB, SSE HTTP Streaming (TTS Audio), OpenRouter API (Clau
   - DuckDuckGo ( package) — No key required
 
 **Testing status**
-  - Testing agent used after significant changes: YES (Iterations 11, 12, 13)
+  - Testing agent used after significant changes: NO (Small backend endpoints addition, self-tested via curl script).
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None explicitly created in this session, but existing tests were refactored.
+  - Test files created: None
   - Known regressions: None.
 
 **Credentials to test flow:**
   - Check  for Admin and Test user.
 
 **What agent forgot to execute**
-  - Nothing forgotten. The agent resolved everything user asked for, including rigorous payment setups, refactors, and aesthetic iterations.</analysis>
+  - Nothing.
+
+**Debugging checklist for current issue**
+    Issue: User claims AI agents are silent (from previous context).
+    
+    Frontend files to check: 
+    - 
+    - 
+    - Check how the frontend handles the backend response when  or  is exhausted.
+  
+    Backend files to check:
+    -  
+
+    Database to check:
+    - Check the user's actual credit balance in the  collection.</analysis>
