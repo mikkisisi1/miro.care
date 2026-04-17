@@ -85,7 +85,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   object-fit: cover; object-position: center 35%;
 }
 @media (max-width: 768px) {
-  .landing-photo { left: 50%; width: 100%; opacity: 0.7; }
+  .landing-photo { left: 0; width: 100%; opacity: 1; object-position: center 30%; }
 }
 
 /* Brand outside glass */
@@ -102,6 +102,9 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 }
 @media (max-width: 768px) {
   .landing-brand { left: 20px; top: auto; bottom: 360px; transform: none; }
+  .landing-brand-miro, .landing-brand-care {
+    font-size: clamp(2.5rem, 10vw, 4rem);
+  }
 }
 
 /* Glass panel — more transparent, less blur */
