@@ -431,6 +431,8 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   }
   .xc-close-btn {
     width: 30px; height: 30px;
+    background: none;
+    margin-bottom: -8px;
   }
   /* Main content takes remaining width */
   .xc-chat-body {
