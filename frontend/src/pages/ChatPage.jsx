@@ -149,9 +149,14 @@ export default function ChatPage() {
     return `${mins} ${t('min')}`;
   };
 
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 769;
+  const chatBg = isDesktop
+    ? `${process.env.PUBLIC_URL}/chat-bg-desktop.jpg`
+    : `${process.env.PUBLIC_URL}/chat-bg.jpg`;
+
   return (
     <div className="xc-chat-modal" data-testid="chat-page">
-      <div className="xc-chat-bg" style={{ backgroundImage: `url(${process.env.PUBLIC_URL}/chat-bg.jpg)` }} />
+      <div className="xc-chat-bg" style={{ backgroundImage: `url(${chatBg})` }} />
 
       <ChatHeader
         voiceChosen={voiceChosen}
