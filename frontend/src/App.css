@@ -103,9 +103,9 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   .landing-brand { left: 20px; top: auto; bottom: 280px; transform: none; }
 }
 
-/* Burger — 2 thin lines */
+/* Burger — 2 thin lines, right side */
 .landing-burger {
-  position: absolute; top: 24px; left: 24px; z-index: 20;
+  position: absolute; top: 24px; right: 24px; z-index: 20;
   background: none; border: none;
   cursor: pointer; padding: 10px 6px;
 }
@@ -1102,17 +1102,17 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 }
 @keyframes menuOverlayIn { from { opacity: 0; } to { opacity: 1; } }
 .menu-panel {
-  position: absolute; left: 0; top: 0; bottom: 0;
+  position: absolute; right: 0; top: 0; bottom: 0;
   width: 25vw; max-width: 25vw;
   background: rgba(20, 22, 30, 0.55);
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-  border-right: 0.5px solid rgba(60, 140, 255, 0.15);
+  border-left: 0.5px solid rgba(60, 140, 255, 0.15);
   padding: 28px 24px;
   display: flex; flex-direction: column;
   animation: menuSlideIn 2s cubic-bezier(0.22, 1, 0.36, 1); overflow-y: auto;
-  box-shadow: 8px 0 40px rgba(0, 0, 0, 0.4);
+  box-shadow: -8px 0 40px rgba(0, 0, 0, 0.4);
 }
-@keyframes menuSlideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes menuSlideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 .menu-close {
   position: absolute; top: 16px; right: 16px;
   background: rgba(255, 255, 255, 0.06); border: 0.5px solid rgba(255, 255, 255, 0.1);
