@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const MIRON_PHOTO = 'https://customer-assets.emergentagent.com/job_471ad105-27b6-4b16-a680-2ec9de6a061a/artifacts/fwsp6wwk_grok_image_1776405907910.jpg';
+const MIRON_PHOTO = 'https://customer-assets.emergentagent.com/job_471ad105-27b6-4b16-a680-2ec9de6a061a/artifacts/ija0kf5g_grok_image_1776410408510.jpg';
 
 export default function LandingPage() {
   const { t } = useLanguage();
