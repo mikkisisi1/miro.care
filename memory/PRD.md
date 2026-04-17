@@ -8,7 +8,7 @@ Build Miro.Care, a hybrid psychological help platform featuring an AI-psychologi
 - Backend: FastAPI, Python
 - Database: MongoDB
 - Integrations: OpenRouter (Claude Sonnet 4.5), Fish Audio (TTS), Stripe, DuckDuckGo Search
-- Auth: JWT-based, centralized apiClient.js with interceptors
+- Auth: JWT-based, centralized apiClient.js with getAuthToken/setAuthToken/removeAuthToken
 
 ## What's Been Implemented
 - Full AI psychologist chat with SSE streaming
@@ -17,9 +17,15 @@ Build Miro.Care, a hybrid psychological help platform featuring an AI-psychologi
 - Stripe payments with webhooks and tariff management
 - Specialist booking calendar
 - Landing page (desktop + mobile) with custom photo positioning
-- Code quality refactoring: centralized apiClient.js, secure token handling
 - AI personality tuning (calm, professional tone with pauses)
 - **[2026-04-17] Fixed deployment blocker: removed duplicate .env-blocking entries from .gitignore**
+- **[2026-04-17] Code quality refactoring:**
+  - Centralized localStorage token access via getAuthToken/setAuthToken/removeAuthToken in apiClient.js
+  - Extracted streaming logic in useAudioStream.js (fetchAndStreamTTS, pumpStream, appendChunk)
+  - Extracted loadChatHistory from useChat.js
+  - Refactored BurgerMenu into data-driven MENU_ITEMS structure with extracted LanguageGrid/ThemeOptions
+  - Refactored chat.py endpoints into _process_chat_message/_process_image_message/_build_dialogue_text
+  - Refactored bookings.py into _compute_date_range/_fetch_booked_slots/_build_calendar
 
 ## Prioritized Backlog
 ### P0 (Critical)
@@ -45,6 +51,12 @@ A strict design lock (DESIGN_LOCK.md) is in place. Do NOT modify `.landing-photo
 - `/app/backend/server.py` — Main FastAPI app
 - `/app/backend/config.py` — System prompt, AI config
 - `/app/backend/routes/` — auth.py, bookings.py, chat.py, payments.py, tts.py
-- `/app/frontend/src/lib/apiClient.js` — Centralized Axios client
+- `/app/frontend/src/lib/apiClient.js` — Centralized Axios client with token functions
 - `/app/frontend/src/pages/LandingPage.jsx` — Landing page
 - `/app/frontend/src/App.css` — Strict design rules
+
+## Test Reports
+- iteration_11.json — Full feature test
+- iteration_12.json — Payments test
+- iteration_13.json — Regression post-refactor
+- iteration_14.json — Regression after code quality refactoring (100% pass)
