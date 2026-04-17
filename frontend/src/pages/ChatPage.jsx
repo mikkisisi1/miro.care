@@ -173,46 +173,48 @@ export default function ChatPage() {
         countdownSeconds={countdownSeconds}
       />
 
-      <div className="xc-chat-messages" data-testid="chat-messages">
-        {!voiceChosen && messages.length === 0 && (
-          <div className="xc-voice-hint" data-testid="voice-hint">
-            <p>{t('chooseVoice')}</p>
-          </div>
-        )}
-        <MessageList
-          messages={messages}
+      <div className="xc-chat-body">
+        <div className="xc-chat-messages" data-testid="chat-messages">
+          {!voiceChosen && messages.length === 0 && (
+            <div className="xc-voice-hint" data-testid="voice-hint">
+              <p>{t('chooseVoice')}</p>
+            </div>
+          )}
+          <MessageList
+            messages={messages}
+            loading={loading}
+            playingTTS={playingTTS}
+            playTTS={playTTS}
+            stopTTS={stopTTS}
+            messagesEndRef={messagesEndRef}
+          />
+        </div>
+
+        <ImagePreview
+          selectedImage={selectedImage}
+          onRemove={() => setSelectedImage(null)}
+          onSend={sendImageMessage}
           loading={loading}
-          playingTTS={playingTTS}
-          playTTS={playTTS}
-          stopTTS={stopTTS}
-          messagesEndRef={messagesEndRef}
+        />
+
+        <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} style={{ display: 'none' }} />
+        <input type="file" ref={cameraInputRef} accept="image/*" capture="environment" onChange={handleImageSelect} style={{ display: 'none' }} />
+
+        <ChatInputArea
+          input={input}
+          setInput={setInput}
+          loading={loading}
+          voiceChosen={voiceChosen}
+          isListening={isListening}
+          showRunningText={showRunningText}
+          runningText={runningText}
+          onSend={handleSend}
+          onMicClick={toggleMic}
+          onCameraClick={() => setShowImagePicker(true)}
+          onKeyDown={handleKeyPress}
+          placeholder={t('sendMessage')}
         />
       </div>
-
-      <ImagePreview
-        selectedImage={selectedImage}
-        onRemove={() => setSelectedImage(null)}
-        onSend={sendImageMessage}
-        loading={loading}
-      />
-
-      <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} style={{ display: 'none' }} />
-      <input type="file" ref={cameraInputRef} accept="image/*" capture="environment" onChange={handleImageSelect} style={{ display: 'none' }} />
-
-      <ChatInputArea
-        input={input}
-        setInput={setInput}
-        loading={loading}
-        voiceChosen={voiceChosen}
-        isListening={isListening}
-        showRunningText={showRunningText}
-        runningText={runningText}
-        onSend={handleSend}
-        onMicClick={toggleMic}
-        onCameraClick={() => setShowImagePicker(true)}
-        onKeyDown={handleKeyPress}
-        placeholder={t('sendMessage')}
-      />
 
       {showImagePicker && (
         <ImagePickerModal
