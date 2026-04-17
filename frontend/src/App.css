@@ -758,6 +758,12 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   flex-shrink: 0; position: relative; z-index: 2;
 }
+@media (min-width: 769px) {
+  .xc-chat-input-area {
+    background: rgba(10, 10, 12, 0.4);
+    padding-bottom: 14px;
+  }
+}
 
 .xc-input-container {
   flex: 1; height: 40px;
