@@ -86,7 +86,12 @@ MIRO.CARE — гибридная платформа психологическо
 ## Prioritized Backlog
 
 ### P0 (Critical)
-- [ ] Implement actual Stripe Webhooks for payment verification
+- [x] Stripe Webhooks + полная платёжная логика (2026-04-17)
+  - Webhook handler: checkout.session.completed -> активация тарифа
+  - Idempotent activate_paid_tariff (не активирует дважды)
+  - Graceful fallback при ошибках Stripe API
+  - PaymentSuccess: 5 состояний (checking/paid/expired/timeout/error)
+  - 12/12 backend + frontend тестов PASSED
 
 ### P1 (Next)
 - [x] Real-time timer countdown in chat (last 5 min)
