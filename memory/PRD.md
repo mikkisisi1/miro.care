@@ -77,6 +77,13 @@ MIRO.CARE — гибридная платформа психологическо
   - get_ai_response now accepts user_id for personalization
 - **selected_voice defaults to null** for all new users
 
+### Phase 4.1 — Final System Prompt (2026-04-17)
+- **Replaced SYSTEM_PROMPT** with user's finalized version:
+  - Expanded knowledge base: +Motivational Interviewing (Miller/Rollnick), +Window of Tolerance (Siegel), +Neuroscience of Emotions (Barrett), +Self-Compassion (Neff), +Rumination (Nolen-Hoeksema), +DBT skills (Linehan), +Self-Determination (Deci/Ryan), +Mindfulness (Kabat-Zinn), +Sleep (Walker)
+  - Enhanced crisis protocol: 6-step structured response (direct question, concrete resources, stay present)
+  - Acute state handling: panic/dissociation → grounding, breathing
+  - Cleaner structure: removed book references from output
+
 ## Prioritized Backlog
 
 ### P0 (Critical)
