@@ -1096,26 +1096,31 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 
 /* ===== BURGER MENU ===== */
 .menu-overlay {
-  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-  z-index: 100; animation: fadeIn 0.2s ease;
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  z-index: 100; animation: menuOverlayIn 0.6s ease;
 }
+@keyframes menuOverlayIn { from { opacity: 0; } to { opacity: 1; } }
 .menu-panel {
-  position: absolute; right: 0; top: 0; bottom: 0;
-  width: 320px; max-width: 90vw;
-  background: rgba(28, 28, 30, 0.95); backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
-  border-left: 1px solid var(--border-subtle); padding: 20px;
+  position: absolute; left: 0; top: 0; bottom: 0;
+  width: 50vw; max-width: 50vw;
+  background: rgba(20, 22, 30, 0.55);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-right: 0.5px solid rgba(60, 140, 255, 0.15);
+  padding: 20px;
   display: flex; flex-direction: column;
-  animation: slideIn 0.3s ease; overflow-y: auto;
+  animation: menuSlideIn 2s cubic-bezier(0.22, 1, 0.36, 1); overflow-y: auto;
+  box-shadow: 8px 0 40px rgba(0, 0, 0, 0.4);
 }
-@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes menuSlideIn { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 .menu-close {
   position: absolute; top: 16px; right: 16px;
-  background: none; border: none; color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.06); border: 0.5px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-secondary);
   cursor: pointer; padding: 8px; border-radius: 12px;
+  transition: background 0.2s;
 }
-.menu-close:hover { background: var(--surface); }
+.menu-close:hover { background: rgba(255, 255, 255, 0.12); }
 
 .menu-user-section {
   display: flex; align-items: center; gap: 12px;
@@ -1219,7 +1224,11 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 .radio-status { font-size: 0.85rem; color: var(--text-muted); }
 
 /* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .menu-panel { width: 75vw; max-width: 75vw; }
+}
 @media (max-width: 480px) {
+  .menu-panel { width: 85vw; max-width: 85vw; }
   .expert-photos { grid-template-columns: 1fr; }
   .expert-photo-secondary { display: none; }
   .profile-stats { flex-direction: column; }
