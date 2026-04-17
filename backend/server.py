@@ -472,6 +472,34 @@ def extract_user_name(message: str) -> Optional[str]:
                 return candidate.capitalize()
     return None
 
+import re
+
+def ddg_search(query: str, max_results: int = 3) -> str:
+    """Search DuckDuckGo and return formatted results."""
+    try:
+        from duckduckgo_search import DDGS
+        results = DDGS().text(query, max_results=max_results)
+        if not results:
+            return "Поиск не дал результатов."
+        parts = []
+        for r in results:
+            parts.append(f"- {r.get('title', '')}: {r.get('body', '')}")
+        return "\n".join(parts)
+    except Exception as e:
+        logger.warning(f"DDG search error: {e}")
+        return "Не удалось выполнить поиск."
+
+SEARCH_TAG_RE = re.compile(r'\[SEARCH:\s*(.+?)\]')
+
+SEARCH_INSTRUCTION = """
+
+ИНСТРУМЕНТ ПОИСКА:
+Если тебе нужна актуальная информация из интернета (телефон доверия, горячая линия, конкретный факт, ресурс помощи) — напиши в ответе тег:
+[SEARCH: запрос]
+Например: [SEARCH: телефон доверия Россия]
+Система выполнит поиск и даст тебе результаты. После этого ты дашь финальный ответ пользователю.
+Используй поиск ТОЛЬКО когда действительно нужна актуальная информация. Не используй для обычного разговора."""
+
 async def call_openrouter(messages: list, model: str = "anthropic/claude-sonnet-4.5") -> str:
     """Call OpenRouter with fallback from Claude to Mistral."""
     try:
@@ -490,12 +518,12 @@ async def call_openrouter(messages: list, model: str = "anthropic/claude-sonnet-
         raise
 
 async def get_ai_response(session_id: str, user_message: str, problem: Optional[str] = None, language: str = "ru", user_id: Optional[str] = None) -> str:
-    """Get AI response from OpenRouter with conversation history and personalization"""
+    """Get AI response from OpenRouter with conversation history, personalization, and web search."""
     if session_id not in chat_histories:
         problem_context = find_problem_context(problem)
         personal_context = await load_personal_context(user_id)
         lang_instruction = f"\n\nОтвечай на языке: {language}"
-        system_msg = SYSTEM_PROMPT + problem_context + personal_context + lang_instruction
+        system_msg = SYSTEM_PROMPT + SEARCH_INSTRUCTION + problem_context + personal_context + lang_instruction
         chat_histories[session_id] = [{"role": "system", "content": system_msg}]
 
     chat_histories[session_id].append({"role": "user", "content": user_message})
@@ -505,7 +533,29 @@ async def get_ai_response(session_id: str, user_message: str, problem: Optional[
     if len(messages) > 31:
         messages = [messages[0]] + messages[-30:]
 
+    # Step 1: Get AI response (may contain [SEARCH: ...] tag)
     ai_text = await call_openrouter(messages)
+
+    # Step 2: If AI requested a search, execute it and get final answer
+    search_match = SEARCH_TAG_RE.search(ai_text)
+    if search_match:
+        search_query = search_match.group(1).strip()
+        logger.info(f"AI requested search: '{search_query}'")
+        search_results = ddg_search(search_query)
+
+        # Inject search results and ask AI to give final answer
+        chat_histories[session_id].append({"role": "assistant", "content": ai_text})
+        chat_histories[session_id].append({
+            "role": "user",
+            "content": f"[Результаты поиска по запросу '{search_query}']\n{search_results}\n\n[Используй эти данные чтобы дать финальный ответ пользователю. НЕ показывай тег [SEARCH]. Дай готовый ответ.]"
+        })
+
+        messages = chat_histories[session_id]
+        if len(messages) > 31:
+            messages = [messages[0]] + messages[-30:]
+
+        ai_text = await call_openrouter(messages)
+
     chat_histories[session_id].append({"role": "assistant", "content": ai_text})
     return ai_text
 
