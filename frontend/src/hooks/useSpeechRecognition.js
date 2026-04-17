@@ -38,6 +38,7 @@ export default function useSpeechRecognition(lang, onFinalTranscript) {
           if (transcript && transcript.trim()) {
             setRunningText(transcript);
             setShowRunningText(true);
+            recognitionRef.current?.stop();
           }
         }, 3000);
       }
