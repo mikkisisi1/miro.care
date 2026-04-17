@@ -1,14 +1,13 @@
-<analysis><handoff summary>
-**original_problem_statement**: 
-The user wants to build Miro.Care, a hybrid psychological help platform. It features an AI-psychologist (specializing in eating disorders, stress, anxiety) using voice and text, integration with live specialists, and a Miro Radio feature. Core functionalities include: M/F voice selection (Miron/Oksana), free initial diagnostic chat, Stripe-based tariffs, dark/light themes (now strictly dark glassmorphism), 8 languages, and integration with OpenRouter (Claude Sonnet 4.5 + Mistral fallback) and Fish Audio for TTS.
+<analysis>**original_problem_statement**: 
+The user wants to build Miro.Care, a hybrid psychological help platform. It features an AI-psychologist (specializing in stress, anxiety, eating disorders) using voice and text, integration with live specialists, and Miro Radio. Core functionalities include: M/F voice selection (Miron/Oksana), free initial diagnostic chat, Stripe-based tariffs, strictly dark glassmorphism design, 8 languages, and integration with OpenRouter (Claude Sonnet 4.5 + Mistral fallback) and Fish Audio for TTS.
 
 **User's preferred language**: **Russian (РУССКИЙ)**. (The user writes exclusively in Russian. INSTRUCT the next agent to respond in the user's preferred language only).
 
 **what currently exists?** 
-A highly polished, functional MVP. The React frontend features a strict dark glassmorphism design. The Chat UI has been completely overhauled to match the user's provided reference (Xicon), featuring a header with two avatars (Miron/Oksana), a mountain wallpaper background, and a complex input bar with speech recognition, waves, and a camera icon. The FastAPI backend handles JWT auth, an advanced AI Chat endpoint using OpenRouter (now supporting Vision for image analysis), Fish Audio TTS streaming, and mock Stripe endpoints. 
+A highly functional, polished MVP. The React frontend features a strict dark glassmorphism design with a fully functional Xicon-style Chat UI. In the latest session, the user flow was streamlined: users now go directly from problem selection to the chat window, where they click an avatar (Miron/Oksana) to trigger a voice greeting. The backend FastAPI service runs a complex AI logic leveraging OpenRouter, strictly adhering to a highly detailed psychological framework (Cognitive Behavioral Therapy, Burnout cycles, Polyvagal theory, etc.). It also has a vision endpoint for image analysis and personalization logic that extracts the user's name during chat.
 
 **Last working item**: 
-    - Last item agent was working: Implementing the exact bottom input bar design from the Xicon reference, including a functional camera icon that opens a modal to select photos (Camera/Gallery) and sends them to a newly created backend endpoint () for AI visual analysis.
+    - Last item agent was working: Completely overhauling the backend AI  inside  based on a comprehensive psychological Technical Specification (ТЗ) provided by the user. Added personalization to extract and save the user's name into the MongoDB user record, and fixed the voice selection state ( by default).
     - Status: USER VERIFICATION PENDING
     - Agent Testing Done: Y
     - Which testing method agent to use? testing_agent_v3_fork
@@ -18,7 +17,7 @@ A highly polished, functional MVP. The React frontend features a strict dark gla
   *(No active bug blockers. Everything requested has been implemented and tested successfully).*
 
 **In progress Task List**:
-  *(No active in-progress tasks. Waiting for user confirmation on the Chat UI updates).*
+  *(No active in-progress tasks. Waiting for the user's next message/confirmation).*
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
@@ -26,6 +25,7 @@ A highly polished, functional MVP. The React frontend features a strict dark gla
     - P1: Real-time timer countdown logic in the Chat UI deducting actual minutes/tokens in backend.
     - P1: Google Sign-In integration (requested in PRD).
     - P1: Persistent chat history loading on chat initialization (currently saves to DB but needs robust pagination/reloading in UI).
+    - P2: Implement Session Notes (extracting key context at the end of a session to be used as context for the user's next visit).
     
     Future Tasks:
     - P2: Live specialist booking calendar (currently just a static UI card).
@@ -33,19 +33,17 @@ A highly polished, functional MVP. The React frontend features a strict dark gla
     - P3: PWA implementation, WebSockets for chat, and an Admin panel.
 
 **Completed work in this session**
-- Chat UI redesign (Xicon style) (DONE):
-  - Completely rewrote  and  to match the layout of the provided github repository.
-  - Added two avatars (Miron and Oksana) with green online dots to the chat header.
-  - Added a mountain wallpaper background to the chat dialog area.
-  - Recreated the bottom input bar exactly: microphone icon left, input field with camera icon inside, and send button.
-  - Implemented an image picker modal (Camera / Gallery options).
-- Backend Image Analysis (DONE):
-  - Created  endpoint in  to handle base64 image uploads and pass them to OpenRouter for visual analysis.
-  - Updated  to handle image payloads.
-- Localization strings added for the new image picker modal (DONE).
+- Voice Selection UI Flow (DONE):
+  - Bypassed . Problem selection now routes directly to .
+  - Added clickable avatars in the  header to select Miron/Oksana, which immediately triggers the cached TTS greeting.
+  - Fixed cache bug where  incorrectly loaded as true.
+- AI Personality & Knowledge Base Overhaul (DONE):
+  - Updated  in  to utilize a 4-level framework (State, Thinking, Emotion, Action) based on specific psychology literature (Feeling Good, Body Keeps the Score, etc.).
+  - Integrated dynamic personalization in  to extract and save the user's name to their database profile.
+  - Ensured AI restrictions: No diagnosis, simple language, no unprompted medical advice.
 
 **Earlier issues found/mentioned but not fixed**
-  None. 
+   None.
 
 **Known issue recurrence from previous fork**
   - Issue recurrence in previous fork: OpenRouter 401 error
@@ -63,43 +61,43 @@ React.js (Frontend), Custom Hooks, Tailwind/Custom CSS, FastAPI (Backend), Mongo
   - : 
 
 **changes in tech stack**
-  - OpenRouter usage expanded to handle Vision (base64 image uploads).
+  - None this session, but heavy logic added to 's prompt handling.
 
 **All files of reference** 
-  - : Completely rewritten to match the new UI requirements.
-  - : Extensive updates for chat avatars, backgrounds, and input layout.
-  - : Added  endpoint.
-  - : Updated to support image sending.
-  - : Added strings for new UI elements.
+  - : Updated to handle direct voice selection via header avatars.
+  - : Updated CSS to highlight the active avatar.
+  - : Re-routed to skip VoiceSelect page.
+  - : Massively updated  and  for new logic and personalization.
 
 **Areas that need refactoring**: 
-  -  is now over 760 lines long. Splitting it into distinct routers (, , , ) is highly recommended before adding more features like Stripe Webhooks.
+  -  is now nearing **1,000 lines**. Splitting it into distinct routers (, , , ) should be treated as a priority before adding more complex features (like Stripe webhooks).
 
 **key api endpoints**
-  - : Text chat.
-  - : **NEW** - Handles image uploads (base64) and text prompt for AI visual analysis.
+  - : Text chat (now tracks user name).
+  - : Image uploads.
   - : Audio streaming.
-  - : Guest auth.
 
 **Critical Info for New Agent**
-  - **LANGUAGE**: The user writes in Russian. You MUST respond in Russian.
-  - **USER TEMPERAMENT**: The user is highly specific about UI mimicking provided references. If they provide a reference (like Xicon), copy it *exactly* as requested without taking creative liberties.
-  - **IMAGE ANALYSIS**: The backend now supports vision models.  handles this by receiving base64 image strings from the frontend and passing them in the correct OpenRouter format.
+  - **LANGUAGE**: The user writes strictly in Russian. You MUST respond in Russian.
+  - **AI KNOWLEDGE BASE**: The user is highly protective of the AI's psychological framework. Do not alter the core behavioral rules set in  without explicit permission. The AI is a guide, not a doctor and speaks simply.
+  - **REFACTORING WARNING**:  is massive. Be careful when using  to not break existing webhook/auth logic. 
 
 **documents and test reports created in this job**
   -  (updated)
-  - 
-  - 
+  -  (Frontend testing)
+  -  (Backend AI logic testing)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-  1. User asked to confirm plan.
-  2. User provided a GitHub link to a repository (Xicon) and instructed to completely copy its dialog window code (running text, bottom icons, etc.). -> *Completed*
-  3. User uploaded 3 images and requested the chat header to have 2 avatars (Miron/Oksana) and a mountain background wallpaper. -> *Completed*
-  4. User reiterated that the bottom dialog window must be an *exact* copy of Xicon, and added a functional requirement: clicking the camera icon must allow sending a photo from gallery/camera for the AI agent to analyze. -> *Completed (Pending user verification)*.
+  1. User requested changing the flow: Click problem -> go straight to chat -> click Miron/Oksana avatar -> triggers voice greeting.
+  2. Agent implemented the UI changes and verified with the testing agent.
+  3. User provided a massive, highly-detailed Technical Specification (ТЗ) for the AI's behavior, dictating its knowledge base (CBT, burnout theory) and conversational structure.
+  4. Agent asked if they should apply this to the system prompt.
+  5. User replied: да (yes).
+  6. Agent updated the backend prompt, added user name extraction, passed all tests, updated the PRD, and called the finish tool. (Pending user's next request).
 
 **Project Health Check:**
-  - Backend: Functional (20/20 tests passing, including new image endpoint).
-  - Frontend: Functional (UI matches requested designs perfectly).
+  - Backend: Functional (20/20 pytest tests passing, 28/28 integration tests passing).
+  - Frontend: Functional.
   - Mocked: Stripe webhooks.
 
 **3rd Party Integrations** 
@@ -109,14 +107,13 @@ React.js (Frontend), Custom Hooks, Tailwind/Custom CSS, FastAPI (Backend), Mongo
   - YouTube IFrame API (Radio) — No key required
 
 **Testing status**
-  - Testing agent used after significant changes: YES ( run successfully).
+  - Testing agent used after significant changes: YES ( and ).
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None manually, relied on testing agent.
+  - Test files created: None manually, relied on existing backend pytest suite.
   - Known regressions: None
 
 **Credentials to test flow:**
-  - Check  (Usually guest mode works seamlessly, or use  / ).
+  - Check  (Guest mode works seamlessly).
 
 **What agent forgot to execute**
-  - The agent executed all UI and functional requirements perfectly. Once the user confirms they are happy with the chat UI, the agent should propose moving on to the backend tasks (Stripe webhooks or the Chat timer logic).
-</handoff summary></analysis>
+  - The agent completed the requested backend logic flawlessly. Moving forward, the agent should propose refactoring  or tackling the P0 Stripe Webhooks task.</analysis>
