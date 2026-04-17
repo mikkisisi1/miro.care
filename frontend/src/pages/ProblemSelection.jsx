@@ -40,7 +40,7 @@ export default function ProblemSelection() {
       await refreshUser();
       navigate('/chat');
     } catch (err) {
-      console.error('Problem selection failed:', err.message);
+      if (process.env.NODE_ENV === 'development') console.error('Problem selection failed:', err.message);
     }
   };
 

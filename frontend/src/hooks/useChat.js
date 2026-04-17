@@ -51,6 +51,7 @@ export default function useChat(user, lang, refreshUser, onAIMessage) {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- API, axios are module-level constants
   }, [user, lang, refreshUser, onAIMessage]);
 
   return { messages, setMessages, sendMessage, loading, sessionId: sessionIdRef.current };

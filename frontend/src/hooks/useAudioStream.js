@@ -80,6 +80,7 @@ export default function useAudioStream(user) {
       if (process.env.NODE_ENV === 'development') console.error('TTS playback error:', err.message);
       setPlayingTTS(null);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- API, fetch, Audio, MediaSource are stable globals
   }, [ttsEnabled, user, stopTTS]);
 
   return { playTTS, stopTTS, playingTTS, ttsEnabled, toggleTTS };

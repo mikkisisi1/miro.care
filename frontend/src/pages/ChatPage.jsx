@@ -66,7 +66,7 @@ export default function ChatPage() {
           greetingCacheRef.current[voice] = URL.createObjectURL(blob);
         }
       } catch (err) {
-        console.error('TTS greeting cache miss:', err.message);
+        if (process.env.NODE_ENV === 'development') console.error('TTS greeting cache miss:', err.message);
       }
     };
     preloadGreeting('male');
@@ -96,7 +96,7 @@ export default function ChatPage() {
       });
       await refreshUser();
     } catch (err) {
-      console.error('Voice save failed:', err.message);
+      if (process.env.NODE_ENV === 'development') console.error('Voice save failed:', err.message);
     }
 
     setMessages([{

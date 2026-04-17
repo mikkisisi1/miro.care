@@ -47,6 +47,7 @@ export default function PaymentSuccess() {
     poll();
 
     return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- API, axios, attemptsRef are stable
   }, [sessionId, refreshUser]);
 
   return (

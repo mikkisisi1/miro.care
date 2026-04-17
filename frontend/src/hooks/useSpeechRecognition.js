@@ -61,6 +61,7 @@ export default function useSpeechRecognition(lang, onFinalTranscript) {
     recognition.start();
     recognitionRef.current = recognition;
     setIsListening(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- SpeechRecognition, SPEECH_LANGS are stable
   }, [lang]);
 
   const stopListening = useCallback(() => {

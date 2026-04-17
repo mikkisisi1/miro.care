@@ -42,7 +42,7 @@ export default function TariffPage() {
         window.location.href = data.url;
       }
     } catch (err) {
-      console.error('Payment initiation failed:', err.message);
+      if (process.env.NODE_ENV === 'development') console.error('Payment initiation failed:', err.message);
     }
   };
 

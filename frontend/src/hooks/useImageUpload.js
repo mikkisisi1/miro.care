@@ -62,6 +62,7 @@ export default function useImageUpload({ sessionId, lang, user, messages, setMes
         id: `err_img_${Date.now()}`,
       }]);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- API, axios are module-level constants
   }, [selectedImage, loading, sessionId, lang, user, messages, setMessages, refreshUser, ttsEnabled, playTTS]);
 
   return { selectedImage, setSelectedImage, handleImageSelect, sendImageMessage };

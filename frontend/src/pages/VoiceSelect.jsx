@@ -24,7 +24,7 @@ export default function VoiceSelect() {
       await refreshUser();
       navigate('/chat');
     } catch (err) {
-      console.error('Voice update failed:', err.message);
+      if (process.env.NODE_ENV === 'development') console.error('Voice update failed:', err.message);
     }
   };
 
