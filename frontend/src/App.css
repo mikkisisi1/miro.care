@@ -690,16 +690,16 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 
 .xc-chat-message.user {
   align-self: flex-end;
-  background: rgba(180, 180, 180, 0.12);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  background: rgba(180, 180, 180, 0.08);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   color: #d0d0d0;
   border: 1px solid rgba(60, 140, 255, 0.45);
   border-bottom-right-radius: 4px;
 }
 .xc-chat-message.assistant {
   align-self: flex-start;
-  background: rgba(26, 26, 31, 0.8);
-  backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
+  background: rgba(26, 26, 31, 0.45);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   color: #8FC8F0;
   border: 1px solid rgba(60, 140, 255, 0.35);
   border-bottom-left-radius: 4px;
