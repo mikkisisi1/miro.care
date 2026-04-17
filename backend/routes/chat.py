@@ -4,6 +4,7 @@ Includes AI logic (OpenRouter + DuckDuckGo search).
 """
 import os
 import re
+import asyncio
 import logging
 from datetime import datetime, timezone
 from typing import Optional, Dict
@@ -134,6 +135,85 @@ async def call_openrouter(messages: list, model: str = "anthropic/claude-sonnet-
         raise
 
 
+# ---------- SESSION NOTES (cross-session memory) ----------
+NOTES_SUMMARY_PROMPT = """Ты — психологический ассистент. На основе диалога создай краткий контекст для следующей сессии.
+
+Напиши 4-6 предложений, включая:
+— ключевые темы и проблемы, которые обсуждались
+— эмоциональное состояние пользователя (тревога, апатия, норма и т.д.)
+— что было предложено или попробовано
+— любые важные личные детали, упомянутые пользователем
+
+Пиши лаконично, только факты. Без приветствий и заголовков. Это внутренние заметки для следующего сеанса."""
+
+
+async def update_session_notes(user_id: str, session_id: str) -> None:
+    """
+    Background task: summarise the current conversation and persist it
+    to users.session_notes so future sessions have cross-session context.
+    """
+    try:
+        # Pull last 30 messages of this session from MongoDB (persisted)
+        msgs = await db.chat_messages.find(
+            {"user_id": user_id, "session_id": session_id},
+            {"_id": 0, "user_message": 1, "ai_response": 1, "timestamp": 1},
+        ).sort("timestamp", -1).limit(30).to_list(30)
+
+        if not msgs:
+            return
+
+        # Build a plain dialogue text for the summariser
+        msgs.reverse()
+        dialogue_lines = []
+        for m in msgs:
+            if m.get("user_message") and m["user_message"] != "[image]":
+                dialogue_lines.append(f"Пользователь: {m['user_message']}")
+            if m.get("ai_response"):
+                dialogue_lines.append(f"Ассистент: {m['ai_response'][:300]}")
+
+        if not dialogue_lines:
+            return
+
+        dialogue_text = "\n".join(dialogue_lines)
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+        # Load existing notes to merge (keep memory cumulative)
+        user_doc = await db.users.find_one({"_id": ObjectId(user_id)}, {"session_notes": 1})
+        prev_notes = (user_doc or {}).get("session_notes") or ""
+
+        summarise_messages = [
+            {"role": "system", "content": NOTES_SUMMARY_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    f"Дата сессии: {today}\n\n"
+                    f"Диалог:\n{dialogue_text}\n\n"
+                    + (f"Контекст предыдущих сессий (уже сохранён):\n{prev_notes}\n\n" if prev_notes else "")
+                    + "Напиши обновлённые заметки, включая новую информацию из этого диалога."
+                ),
+            },
+        ]
+
+        new_notes = await call_openrouter(
+            summarise_messages,
+            model="anthropic/claude-sonnet-4.5",
+        )
+
+        # Cap notes at 1500 chars to keep system prompt lean
+        new_notes = new_notes.strip()[:1500]
+
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {
+                "session_notes": new_notes,
+                "session_notes_updated_at": datetime.now(timezone.utc).isoformat(),
+            }},
+        )
+        logger.info(f"Session notes updated for user {user_id} (session {session_id})")
+    except Exception as e:
+        logger.warning(f"Session notes update failed for user {user_id}: {e}")
+
+
 async def get_ai_response(
     session_id: str,
     user_message: str,
@@ -251,6 +331,13 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         if update_fields:
             await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
 
+        # Every 6th user message → update session notes in the background (non-blocking)
+        user_messages_count = sum(
+            1 for m in chat_histories.get(session_id, []) if m.get("role") == "user"
+        )
+        if user_messages_count > 0 and user_messages_count % 6 == 0:
+            asyncio.create_task(update_session_notes(user_id, req.session_id))
+
         return {
             "message": ai_response,
             "type": "ai_response",
@@ -346,6 +433,31 @@ async def get_chat_history(session_id: str, request: Request):
         {"_id": 0}
     ).sort("timestamp", 1).to_list(200)
     return {"messages": messages}
+
+
+@router.get("/chat/notes")
+async def get_session_notes(request: Request):
+    """Return the user's persistent session notes (cross-session memory)."""
+    user = await get_current_user(request)
+    doc = await db.users.find_one(
+        {"_id": ObjectId(user["_id"])},
+        {"_id": 0, "session_notes": 1, "session_notes_updated_at": 1},
+    )
+    return {
+        "notes": (doc or {}).get("session_notes") or "",
+        "updated_at": (doc or {}).get("session_notes_updated_at") or None,
+    }
+
+
+@router.delete("/chat/notes")
+async def clear_session_notes(request: Request):
+    """Clear the user's persistent session notes (fresh start)."""
+    user = await get_current_user(request)
+    await db.users.update_one(
+        {"_id": ObjectId(user["_id"])},
+        {"$unset": {"session_notes": "", "session_notes_updated_at": ""}},
+    )
+    return {"message": "Session notes cleared"}
 
 
 @router.get("/chat/sessions")
