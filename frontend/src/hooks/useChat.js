@@ -42,7 +42,7 @@ export default function useChat(user, lang, refreshUser, onAIMessage) {
           }
         }
       } catch {
-        // No history — fresh session
+        if (process.env.NODE_ENV === 'development') console.error('No chat history found');
       }
       setHistoryLoaded(true);
     };

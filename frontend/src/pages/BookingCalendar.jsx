@@ -32,7 +32,7 @@ export default function BookingCalendar() {
       setPrice(data.price);
       setAdvancePercent(data.advance_percent);
     } catch {
-      // Failed to load
+      if (process.env.NODE_ENV === 'development') console.error('Failed to load booking slots');
     }
   }, []);
 
