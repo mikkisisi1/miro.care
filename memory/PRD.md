@@ -90,10 +90,10 @@ MIRO.CARE — гибридная платформа психологическо
 - [ ] Implement actual Stripe Webhooks for payment verification
 
 ### P1 (Next)
-- [ ] Real-time timer countdown in chat
+- [x] Real-time timer countdown in chat (last 5 min)
+- [x] Female voice TTS (Fish Audio voice ID: fd40a0d632964604b26c5be764da3ea2)
+- [x] Chat history persistence across sessions (auto-loads last session)
 - [ ] Google Sign-In integration
-- [ ] Chat history persistence across sessions
-- [ ] Female voice TTS (needs Fish Audio voice ID)
 
 ### P2 (Upcoming)
 - [ ] Live specialist booking calendar

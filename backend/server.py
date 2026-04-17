@@ -838,6 +838,29 @@ async def get_chat_history(session_id: str, request: Request):
     ).sort("timestamp", 1).to_list(200)
     return {"messages": messages}
 
+@api_router.get("/chat/sessions")
+async def get_chat_sessions(request: Request):
+    """Get user's recent chat sessions with last message preview."""
+    user = await get_current_user(request)
+    pipeline = [
+        {"$match": {"user_id": user["_id"]}},
+        {"$sort": {"timestamp": -1}},
+        {"$group": {
+            "_id": "$session_id",
+            "last_timestamp": {"$first": "$timestamp"},
+            "last_message": {"$first": "$user_message"},
+            "message_count": {"$sum": 1},
+        }},
+        {"$sort": {"last_timestamp": -1}},
+        {"$limit": 10},
+    ]
+    sessions = await db.chat_messages.aggregate(pipeline).to_list(10)
+    return {"sessions": [
+        {"session_id": s["_id"], "last_timestamp": s["last_timestamp"],
+         "preview": (s.get("last_message") or "")[:60], "count": s["message_count"]}
+        for s in sessions
+    ]}
+
 # ---------- TTS (Fish Audio) — STREAMING ----------
 def clean_text_for_tts(text: str) -> str:
     """Очистка текста для озвучки — убираем маркеры, оставляем паузы"""

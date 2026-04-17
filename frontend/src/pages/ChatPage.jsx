@@ -45,7 +45,15 @@ export default function ChatPage() {
     }
   }, [ttsEnabled, playTTS]);
 
-  const { messages, sendMessage, loading, sessionId, setMessages } = useChat(user, lang, refreshUser, handleAIMessage);
+  const { messages, sendMessage, loading, sessionId, setMessages, historyLoaded } = useChat(user, lang, refreshUser, handleAIMessage);
+
+  // If history loaded with messages, skip voice selection
+  useEffect(() => {
+    if (historyLoaded && messages.length > 0 && !voiceChosen) {
+      setVoiceChosen(true);
+      setActiveVoice(user?.selected_voice || 'male');
+    }
+  }, [historyLoaded, messages.length, voiceChosen, user?.selected_voice]);
 
   // Pre-cache greeting TTS audio for both voices
   useEffect(() => {
