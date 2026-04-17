@@ -42,7 +42,7 @@ export default function ChatHeader({
           </button>
         </div>
         <div>
-          <h3 className="xc-chat-agent-name">MIRO.CARE</h3>
+          <h3 className="xc-chat-agent-name" translate="no">MIRO.CARE</h3>
           <p className="xc-chat-agent-status">
             {isFreePhase && freeSessionLabel}
             {!isFreePhase && hasMinutes && !showCountdown && (

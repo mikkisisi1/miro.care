@@ -14,9 +14,9 @@ export default function LandingPage() {
     <div className="landing" data-testid="landing-page">
       <img src={MIRON_PHOTO} alt="Miron Shakira" className="landing-photo" />
 
-      <div className="landing-brand" data-testid="landing-title">
-        <span className="landing-brand-miro">MIRO</span>
-        <span className="landing-brand-care">CARE</span>
+      <div className="landing-brand" data-testid="landing-title" translate="no">
+        <span className="landing-brand-miro" lang="en">MIRO</span>
+        <span className="landing-brand-care" lang="en">CARE</span>
       </div>
 
       <button data-testid="landing-menu-btn" onClick={() => setMenuOpen(true)} className="landing-burger">

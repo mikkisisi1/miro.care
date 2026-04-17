@@ -48,7 +48,7 @@ export default function ProblemSelection() {
     <div className="problem-page" data-testid="problem-selection-page">
       <div className="problem-header">
         <h1 className="problem-title">{t('chooseProblems')}</h1>
-        <p className="problem-subtitle">Miro.Care</p>
+        <p className="problem-subtitle" translate="no">Miro.Care</p>
       </div>
       <div className="problem-grid" data-testid="problem-grid">
         {PROBLEM_IDS.map((id, index) => {

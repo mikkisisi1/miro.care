@@ -51,7 +51,7 @@ export default function AuthPage() {
           <div className="auth-logo-icon">
             <Heart className="auth-heart-icon" />
           </div>
-          <h1 className="auth-title">Miro.Care</h1>
+          <h1 className="auth-title" translate="no">Miro.Care</h1>
           <p className="auth-subtitle">{t('subtitle')}</p>
         </div>
 
