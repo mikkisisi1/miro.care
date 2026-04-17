@@ -104,5 +104,11 @@ MIRO.CARE — гибридная платформа психологическо
 ### P3 (Future)
 - [ ] Mobile PWA, WebSocket chat, Admin dashboard, Analytics
 
-## Refactoring Needed
-- [ ] Split server.py (~950 lines) into: auth.py, chat.py, tts.py, payments.py
+## Refactoring Completed
+- [x] ChatPage.jsx split: 463 → 219 lines (53% reduction)
+  - ChatHeader, VoiceSelector, MessageList, ChatInputArea, ImagePreview, ImagePickerModal
+  - useSpeechRecognition, useImageUpload hooks extracted
+- [x] server.py helpers extracted: find_problem_context, load_personal_context, extract_user_name, call_openrouter
+- [x] Empty catch blocks: all now log errors
+- [x] Console cleanup: production console.error guarded with NODE_ENV check
+- [ ] Split server.py (~1000 lines) into: auth.py, chat.py, tts.py, payments.py
