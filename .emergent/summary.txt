@@ -5,46 +5,40 @@ The user wants to build Miro.Care, a hybrid psychological help platform featurin
 *(INSTRUCTION FOR NEXT AGENT: You MUST automatically respond in the user's preferred language. The user writes exclusively in Russian. ALWAYS reply in Russian.)*
 
 **what currently exists?** 
-A highly polished, heavily-featured MVP. The frontend uses React with a highly customized dark glassmorphism UI. The backend (FastAPI) handles multi-step prompt logic, persists chat history, summarizes session notes, streams Fish Audio TTS, runs , manages user tariff states, and supports live specialist bookings.
+A highly polished, heavily-featured and thoroughly tested MVP. The frontend uses React with a highly customized dark glassmorphism UI. The backend (FastAPI) handles multi-step prompt logic, persists chat history, summarizes session notes, streams Fish Audio TTS, runs , manages user tariff states, and supports live specialist bookings. Stripe payments and webhooks are fully integrated and tested. The frontend now utilizes a centralized  for secure API communication.
 
 **Last working item**: 
-    - Last item agent was working: Adding glassmorphism (transparency and blur) to the chat dialogue bubbles ( in ) per the user's explicit request.
+    - Last item agent was working: Refining the AI's communication style in  (). The user requested a live, professional, attentive, calm tone, occasionally thoughtful with small pauses.
     - Status: USER VERIFICATION PENDING
     - Agent Testing Done: Y
-    - Which testing method agent to use? screenshot tool
+    - Which testing method agent to use? python -c / bash scripts
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:  
-  Issue 1: Verification of Psychological Knowledge Base in SYSTEM_PROMPT
-     - Attempted fixes: Implemented in a prior session, but the user has been entirely focused on UI/Frontend adjustments.
-     - Next debug checklist: Ask the user if the actual AI chat behavior correctly reflects the new psychological knowledge base.
-     - Why fix this issue and what will be achieved with the fix? Verifies completion of a major P0 task from previous handovers.
-     - Status: USER VERIFICATION PENDING
-     - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? NA
-     - Blocked on other issue: None
+  *(None. All active issues and code quality findings were resolved and thoroughly tested.)*
 
 **In progress Task List**: 
  *(None)*
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
-    - P0: **Stripe Webhooks**. Implement actual Stripe Webhooks in  for secure payment verification of Tariffs and Advance Payments (50% upfront) for specialist bookings.
-    - P1: Notification system (email/push) 1 day before a live specialist consultation.
     - P1: Google Sign-In integration (Use Emergent-managed Google Auth).
+    - P1: Notification system (email/push) 1 day before a live specialist consultation.
+    - P2: YuKassa / Telegram Stars integration (Russian payment alternatives).
     
     Future Tasks:
+    - P2: Language detection by IP.
     - P2: PWA implementation.
     - P2: WebSockets for chat.
-    - P3: Admin panel.
+    - P3: Admin panel and Analytics.
 
 **Completed work in this session**
-- Landing Page UI: Updated text in the glass panel to show Miron Shakira and qualifications, removed bullet checkmarks, and adjusted the positioning of the MIRO CARE brand text to sit slightly above the panel (, ) (DONE).
-- Chat Header UI: Removed MIRO.CARE and Free consultation texts, leaving only the agents' names () (DONE).
-- Chat Avatars: Increased avatar size by 50% and added a thin 0.3px stroke () (DONE).
-- Chat Background: Removed the dark opacity filter to make the wallpaper clearly visible () (DONE).
-- Chat Bubbles: Added glassmorphism (transparency + backdrop blur) to user and assistant messages () (DONE).
-- Microphone Logic: Implemented a 3-second silence auto-stop for speech recognition, which displays running text and auto-sends the message (, ) (DONE).
+- Verified 100% of all features via testing agent () (DONE).
+- Stripe Webhooks: Implemented complete payment verification, DB transaction updates, and frontend polling via  () (DONE).
+- Code Quality Refactoring: Removed insecure localStorage token usage, fixed React hook dependencies, created centralized , refactored  complexity, and secured console logs () (DONE).
+- Desktop Landing Page UI: Replaced the main hero photo, removed the top gradient, and meticulously adjusted the  to  per user feedback (DONE).
+- Mobile Landing Page UI: Applied the new photo, removed opacity filters, zoomed in (), repositioned the image (), and increased the MIRO CARE brand text size by 50% (DONE).
+- AI Personality Tuning: Updated  to incorporate a thoughtful, calm, and pausing tone (...дай подумать...) (DONE).
 
 **Earlier issues found/mentioned but not fixed**
    - None
@@ -52,14 +46,14 @@ A highly polished, heavily-featured MVP. The frontend uses React with a highly c
 **Known issue recurrence from previous fork**
   - Issue recurrence in previous fork: **UNAUTHORIZED DESIGN CHANGES**.
   - Recurrence count: 1
-  - Status: RESOLVED (The agent successfully followed  in this session, only making explicit changes asked by the user).
-  - Note: **CRITICAL WARNING FOR NEXT AGENT**: DO NOT modify any CSS, layouts, or visual elements unless the user explicitly and directly asks for it. Do not attempt to enhance the UI on your own.
+  - Status: RESOLVED
+  - Note: **CRITICAL WARNING FOR NEXT AGENT**: The user is highly specific about exact pixel/position changes. Always follow their explicit directions for UI adjustments (like shifting photos, scaling text) and do not introduce unprompted UI fixes.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-React.js, FastAPI, MongoDB, SSE HTTP Streaming (TTS Audio), OpenRouter API (Claude), Fish Audio API, DuckDuckGo Search API, CSS Glassmorphism, Web Speech API (Speech Recognition).
+React.js, FastAPI, MongoDB, SSE HTTP Streaming (TTS Audio), OpenRouter API (Claude), Fish Audio API, DuckDuckGo Search API, CSS Glassmorphism, Stripe Webhooks, Axios Interceptors.
 
 **key DB schema**
   - : 
@@ -67,59 +61,64 @@ React.js, FastAPI, MongoDB, SSE HTTP Streaming (TTS Audio), OpenRouter API (Clau
   - : 
 
 **changes in tech stack**
-  - None
+  - Introduced  for centralized Axios HTTP requests and token interception on the frontend. Replaces direct  calls in components.
 
 **All files of reference** 
-  -  (Modified chat bubbles, background filters, avatars, and landing page brand positioning)
-  -  (Modified intro text block)
-  -  (Removed unnecessary texts)
-  -  (Added 3-second silence timeout logic)
-  -  (Updated mic interactions)
-  -  (Strict UI modification rules)
+  -  (Stripe webhooks implementation)
+  -  (Payment polling UI)
+  -  (New centralized API client)
+  -  (Updated photo positioning, text scaling)
+  -  (Updated main photo URLs)
+  -  (Modified  for psychological tone)
 
 **Areas that need refactoring**: 
-  - None currently.
+  - None. Extensive code quality refactoring was successfully executed in this session.
 
 **key api endpoints**
-  - None modified.
+  -  (New)
+  -  (New)
 
 **Critical Info for New Agent**
   - **LANGUAGE**: The user writes strictly in Russian. You MUST respond in Russian.
-  - **DESIGN STRICTNESS**: The user is extremely sensitive to unsolicited UI/CSS changes. A  file exists. Do not fix aesthetics, change dimensions, or alter colors unless explicitly requested. 
-  - **MICROPHONE LOGIC**: The microphone feature heavily relies on the Web Speech API inside  and utilizes a 3-second timeout () to detect when the user stops speaking before auto-submitting.
-  - **BACKEND CHAT**: The user thought the agent was silent, but backend API tests confirmed the agent responds correctly. If the user reports silence again, investigate the TTS stream () or frontend render lifecycle.
+  - **API CLIENT**: The frontend now uses . Do not use direct  with manual token headers or access  for tokens directly in UI components.
+  - **DESIGN**: The user spent extensive time (15+ iterations) perfectly aligning the desktop and mobile landing photos. Do NOT modify  or  CSS rules unless explicitly requested.
 
 **documents and test reports created in this job**
-  - (Files updated inline; no new test reports created as changes were UI/React hook based and tested via screenshots).
+  -  (Full Feature test)
+  -  (Payments test)
+  -  (Regression test post-refactor)
 
 **Last 10 User Messages and any pending HUMAN messages** 
-  1. User asked to confirm plan.
-  2. User uploaded a screenshot and requested to replace the text in the landing page glass panel with specific qualifications. (Completed)
-  3. User asked to remove the checkmarks from the new text and adjust MIRO CARE positioning. (Completed)
-  4. User complained that the chat header still contained text, the agent was silent, and the microphone wasn't acting as requested (needed to auto-record, wait 3 seconds of silence, then send). (Completed)
-  5. User asked to remove the filter over the chat wallpaper, increase avatars by 50% with a 0.3px stroke, and reiterated the microphone fix. (Completed)
-  6. User asked to add transparency and blur to the chat dialogue bubbles. (Completed; pending user verification).
+  1. User asked to shift the mobile photo down.
+  2. Agent shifted it.
+  3. User complained the agent was lying and asked to shift it correctly.
+  4. Agent analyzed the image via tool and shifted it down past the cropped band.
+  5. User asked to shift the photo to the left.
+  6. Agent shifted it left.
+  7. User confirmed, then asked to increase the MIRO CARE brand text on mobile by 50%.
+  8. Agent increased it. User asked to move it slightly lower. Agent moved it lower.
+  9. User asked to confirm if Fish Audio streaming and Psychological knowledge base are active. Agent proved they were.
+  10. User explicitly instructed: I wrote: alive professional attentive calm tone. occasionally thoughtful with small pauses. streaming. Agent updated  and tested it. (No further response from user).
 
 **Project Health Check:**
   - Backend: Functional
   - Frontend: Functional
-  - Mocked: Stripe webhooks (Payments bypass verification for now)
+  - Mocked: None
 
 **3rd Party Integrations** 
   - OpenRouter (LLM Text & Vision) — requires User API Key
   - Fish Audio (TTS) — requires User API Key
   - Stripe (Payments) — requires User API Key
   - DuckDuckGo ( package) — No key required
-  - YouTube IFrame API (Radio) — No key required
 
 **Testing status**
-  - Testing agent used after significant changes: NO (Only frontend UI and local state hooks modified).
-  - Troubleshoot agent used after agent stuck in loop: NO.
-  - Test files created: None.
+  - Testing agent used after significant changes: YES (Iterations 11, 12, 13)
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: None explicitly created in this session, but existing tests were refactored.
   - Known regressions: None.
 
 **Credentials to test flow:**
-  - Standard user and admin accounts are listed in .
+  - Check  for Admin and Test user.
 
 **What agent forgot to execute**
-  - The previous handoffs mentioned verifying the newly added Psychological Knowledge Base in . The agent has been prioritizing rapid-fire UI requests and hasn't explicitly asked the user to verify if the Chat AI conversation quality meets expectations. Next agent should circle back to this when UI requests subside.</analysis>
+  - Nothing forgotten. The agent resolved everything user asked for, including rigorous payment setups, refactors, and aesthetic iterations.</analysis>
