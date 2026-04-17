@@ -7,7 +7,7 @@ import requests
 import os
 import uuid
 
-BASE_URL: str = os.environ.get('REACT_APP_BACKEND_URL', 'https://care-voice-staging.preview.emergentagent.com').rstrip('/')
+BASE_URL: str = os.environ.get('REACT_APP_BACKEND_URL', 'https://psych-helper-8.preview.emergentagent.com').rstrip('/')
 
 # Test credentials
 ADMIN_EMAIL: str = "admin@miro.care"

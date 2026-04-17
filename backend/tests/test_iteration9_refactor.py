@@ -10,7 +10,7 @@ import uuid
 
 BASE_URL: str = os.environ.get(
     'REACT_APP_BACKEND_URL',
-    'https://care-voice-staging.preview.emergentagent.com'
+    'https://psych-helper-8.preview.emergentagent.com'
 ).rstrip('/')
 
 ADMIN_EMAIL = "admin@miro.care"
