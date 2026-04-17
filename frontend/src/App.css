@@ -434,6 +434,13 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
     background: none;
     margin-bottom: -8px;
   }
+  .xc-header-icon-btn {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 24px; height: 24px;
+    color: rgba(255,255,255,0.5);
+  }
   /* Main content takes remaining width */
   .xc-chat-body {
     flex: 1;
