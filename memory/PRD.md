@@ -83,6 +83,19 @@ MIRO.CARE — гибридная платформа психологическо
 - Comprehensive testing: 29/29 backend tests PASSED, 25/25 frontend features VERIFIED
 - 100% pass rate across all endpoints and UI flows
 
+### Phase 5.2 — Code Quality Refactoring (2026-04-17)
+- Test files: hardcoded secrets replaced with os.environ (5 test files)
+- Frontend: centralized apiClient (lib/apiClient.js) with auth interceptor
+  - Removed 16 scattered localStorage.getItem patterns across 10+ files
+  - All API calls now go through one axios instance with automatic Bearer auth
+- Hook dependencies: refs pattern for callbacks (useChat, useAudioStream)
+  - Removed 5 eslint-disable comments
+  - No more stale closures
+- Backend chat.py: extracted helpers (_trim_messages, _handle_search_tag, _init_session, _save_name_if_found)
+  - Reduced chat_endpoint complexity from 21 to ~12
+- Console statements: verified all 11 instances are NODE_ENV-guarded
+- Regression: 29/29 backend + 20/20 frontend tests PASSED
+
 ## Prioritized Backlog
 
 ### P0 (Critical)
