@@ -21,9 +21,9 @@ export default function LandingPage() {
         <div className="landing-credentials" data-testid="landing-credentials">
           <p className="landing-credentials-name">Miron Shakira</p>
           <ul className="landing-credentials-list">
-            <li><span className="cred-dot cred-dot--pink"></span>Диетолог, нутрициолог</li>
-            <li><span className="cred-dot cred-dot--green"></span>Психолог (специализация избыточный вес)</li>
-            <li><span className="cred-dot cred-dot--pink"></span>Эксперт научно-спортивной ассоциации №1 в мире | ISSA (USA)</li>
+            <li>Диетолог, нутрициолог</li>
+            <li>Психолог (специализация избыточный вес)</li>
+            <li>Эксперт научно-спортивной ассоциации №1 в мире | ISSA (USA)</li>
           </ul>
         </div>
         <p className="landing-glass-desc">{t('missionText')}</p>

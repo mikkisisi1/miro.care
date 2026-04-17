@@ -89,7 +89,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 /* Brand outside glass */
 .landing-brand {
   position: absolute; z-index: 5;
-  left: 40px; top: 50%; transform: translateY(-50%);
+  left: 40px; bottom: 320px;
   display: flex; flex-direction: column; line-height: 0.85;
 }
 .landing-brand-miro, .landing-brand-care {
@@ -99,7 +99,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   text-shadow: 0 4px 40px rgba(0,0,0,0.5);
 }
 @media (max-width: 768px) {
-  .landing-brand { left: 20px; top: auto; bottom: 280px; transform: none; }
+  .landing-brand { left: 20px; top: auto; bottom: 360px; transform: none; }
 }
 
 /* Glass panel — more transparent, less blur */
