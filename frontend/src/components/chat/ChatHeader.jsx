@@ -22,7 +22,7 @@ export default function ChatHeader({
           >
             <div className="xc-chat-avatar-wrapper">
               <img src="/miron-avatar.jpg" alt="Miron" className="xc-chat-avatar-img" />
-              <span className="xc-chat-online-dot" />
+              {activeVoice === 'male' && <span className="xc-chat-online-dot" />}
             </div>
             <span className="xc-avatar-name">Miron</span>
           </button>
@@ -34,7 +34,7 @@ export default function ChatHeader({
           >
             <div className="xc-chat-avatar-wrapper">
               <img src="/oksana-avatar.jpg" alt="Oksana" className="xc-chat-avatar-img" />
-              <span className="xc-chat-online-dot" />
+              {activeVoice === 'female' && <span className="xc-chat-online-dot" />}
             </div>
             <span className="xc-avatar-name">Oksana</span>
           </button>

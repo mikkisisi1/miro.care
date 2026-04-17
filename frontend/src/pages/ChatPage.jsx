@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import BurgerMenu from '@/components/BurgerMenu';
 import ChatHeader from '@/components/chat/ChatHeader';
-import VoiceSelector from '@/components/chat/VoiceSelector';
 import MessageList from '@/components/chat/MessageList';
 import ChatInputArea from '@/components/chat/ChatInputArea';
 import ImagePreview from '@/components/chat/ImagePreview';
@@ -168,7 +167,9 @@ export default function ChatPage() {
 
       <div className="xc-chat-messages" data-testid="chat-messages">
         {!voiceChosen && messages.length === 0 && (
-          <VoiceSelector onSelect={handleVoiceSelect} t={t} />
+          <div className="xc-voice-hint" data-testid="voice-hint">
+            <p>{t('chooseVoice')}</p>
+          </div>
         )}
         <MessageList
           messages={messages}

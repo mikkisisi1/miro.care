@@ -418,9 +418,11 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 }
 .xc-chat-online-dot {
   position: absolute; bottom: 1px; right: 1px;
-  width: 6px; height: 6px;
-  background: #22C55E; border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.5);
+  width: 8px; height: 8px;
+  background: #00FF88; border-radius: 50%;
+  border: 1.5px solid rgba(0, 0, 0, 0.6);
+  box-shadow: 0 0 6px #00FF88, 0 0 12px rgba(0, 255, 136, 0.5);
+  animation: neonPulse 2s ease-in-out infinite;
 }
 
 /* Avatars row — Miron + Oksana */
@@ -455,8 +457,8 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   color: var(--accent); font-weight: 600;
 }
 .xc-avatar-active .xc-chat-online-dot {
-  width: 8px; height: 8px;
-  box-shadow: 0 0 6px #22C55E;
+  width: 9px; height: 9px;
+  box-shadow: 0 0 8px #00FF88, 0 0 16px rgba(0, 255, 136, 0.6), 0 0 24px rgba(0, 255, 136, 0.3);
 }
 /* Dimmed (not selected) avatar */
 .xc-avatar-dim {
@@ -465,6 +467,10 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 @keyframes avatarPulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(60, 140, 255, 0); }
   50% { box-shadow: 0 0 16px 4px rgba(60, 140, 255, 0.25); }
+}
+@keyframes neonPulse {
+  0%, 100% { box-shadow: 0 0 6px #00FF88, 0 0 12px rgba(0, 255, 136, 0.5); }
+  50% { box-shadow: 0 0 10px #00FF88, 0 0 20px rgba(0, 255, 136, 0.7), 0 0 30px rgba(0, 255, 136, 0.3); }
 }
 .xc-avatar-name {
   font-family: var(--font-heading); font-size: 0.55rem;
@@ -572,6 +578,17 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 .xc-voice-select-hint {
   font-size: 0.8rem; color: var(--text-muted);
   font-weight: 300; letter-spacing: 0.3px;
+}
+
+.xc-voice-hint {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  animation: fadeUp 0.5s ease;
+}
+.xc-voice-hint p {
+  font-size: 0.85rem; color: var(--text-muted);
+  font-weight: 300; letter-spacing: 0.3px;
+  text-align: center;
+  opacity: 0.7;
 }
 
 .xc-chat-message {
