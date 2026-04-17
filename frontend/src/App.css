@@ -122,6 +122,29 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   font-family: var(--font-heading); font-size: 1rem; font-weight: 400;
   color: #FFFFFF; letter-spacing: 0.02em;
 }
+.landing-credentials-name {
+  font-family: var(--font-heading); font-size: 1.1rem; font-weight: 600;
+  color: #FFFFFF; margin-bottom: 10px;
+}
+.landing-credentials-list {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.landing-credentials-list li {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 0.85rem; color: #FFFFFF; font-weight: 300;
+  line-height: 1.4;
+}
+.cred-dot {
+  flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.cred-dot::after {
+  content: '✓'; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.9);
+}
+.cred-dot--pink { background: rgba(200, 130, 130, 0.7); }
+.cred-dot--green { background: rgba(100, 160, 100, 0.7); }
 .landing-glass-desc {
   font-size: 0.85rem; color: #FFFFFF; line-height: 1.6;
   max-width: 500px; font-weight: 300;
