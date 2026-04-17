@@ -41,40 +41,41 @@ MIRO.CARE — гибридная платформа психологическо
 
 ### Phase 3 — LLM + Design (2026-04-16)
 - Claude Sonnet 4.5 (primary) + Mistral (fallback) via OpenRouter
-- MindThera.ai methodology in system prompt
 - **Complete dark glassmorphism redesign**: all pages transformed
-- Miron's photo on auth page with gradient mask
-- Glass cards, dark inputs, blue accent system (#3C8CFF)
 
 ### Phase 3.1 — UI Polish (2026-04-16)
 - Thin blue border (0.5px, #3C8CFF) on glass panel and CTA button
 - Bold font-weight (800) for "MIRO CARE" brand title
-- Background gradient on bottom 2/3 of pages
 
 ### Phase 3.2 — Xicon-Style Chat Dialog (2026-04-17)
-- **Complete chat page redesign** based on Xicon.online dialog window:
-  - Full-screen chat modal with mountain wallpaper background
-  - Header with 2 real photo avatars (Miron + Oksana) + green online dots + names
-  - User messages: right-aligned, glassmorphism backdrop, blue border
-  - AI messages: left-aligned, dark background, blue border, speaker button for TTS
-  - **Exact xicon input area**: mic button (left) | input field with camera icon inside (center) | send button (right)
-  - Wave visualizer SVG animation for voice recording
-  - Running text (marquee) for speech recognition feedback
-  - **Image upload**: Camera/Gallery picker modal, image preview, send to AI
-  - **Backend /api/chat/image**: Claude Sonnet 4.5 vision analyzes user photos
-  - All CSS prefixed with xc- to avoid conflicts
+- Full-screen chat modal with mountain wallpaper background
+- Header with 2 photo avatars (Miron + Oksana) + green online dots
+- Exact xicon input area: mic | input+camera | send
+- Image upload + AI visual analysis via /api/chat/image
 
 ### Phase 3.3 — Inline Voice Selection + Greeting (2026-04-17)
-- **New user flow**: ProblemSelection → Chat (skip VoiceSelect page)
-- **Voice selection integrated into ChatPage**:
-  - Two large avatar cards (Miron & Oksana) shown in chat area before voice choice
-  - Header avatars also clickable with pulsing animation
-  - Selected avatar highlighted (blue border, blue name), other dimmed
-- **Cached TTS greeting**: greeting audio pre-fetched for both voices on page load
-- **Greeting message on voice select**:
-  - Miron: "Здравствуйте, я Мирон — ваш личный консультант..."
-  - Oksana: "Здравствуйте, я Оксана — ваш личный консультант..."
-- **Input disabled** until voice is chosen
+- ProblemSelection → Chat directly (skip VoiceSelect page)
+- Two large avatar cards in chat area for voice selection
+- Header avatars clickable with pulsing animation
+- Cached TTS greeting on voice select
+- Input disabled until voice chosen
+
+### Phase 4 — AI Agent ТЗ Implementation (2026-04-17)
+- **Complete SYSTEM_PROMPT rewrite** based on detailed psychological ТЗ:
+  - 4-level thinking architecture: State → Thinking → Emotion → Action
+  - 6-step dialog algorithm
+  - Knowledge base: CBT, Porges polyvagal theory, Burnout, Body Keeps the Score, Power of Habit, Happiness Trap, Man's Search for Meaning
+  - Honesty principle: "Я не хочу дать неточный ответ"
+  - Empathy without cliches
+  - Adaptation to state: anxiety→simplify, apathy→minimal step, normal→standard
+  - Critical situations: recommend specialist
+  - Limitations: no diagnoses, no medical terms, no arguments
+- **Personalization & Memory**:
+  - Name extraction from messages (Russian/English patterns)
+  - user_display_name saved to MongoDB
+  - Session context loaded into system prompt for returning users
+  - get_ai_response now accepts user_id for personalization
+- **selected_voice defaults to null** for all new users
 
 ## Prioritized Backlog
 
@@ -91,9 +92,10 @@ MIRO.CARE — гибридная платформа психологическо
 - [ ] Live specialist booking calendar
 - [ ] YuKassa / Telegram Stars payments
 - [ ] IP-based language detection
+- [ ] Session notes auto-summary (save key context between sessions)
 
 ### P3 (Future)
 - [ ] Mobile PWA, WebSocket chat, Admin dashboard, Analytics
 
 ## Refactoring Needed
-- [ ] Split server.py (~760 lines) into: auth.py, chat.py, tts.py, payments.py
+- [ ] Split server.py (~950 lines) into: auth.py, chat.py, tts.py, payments.py
