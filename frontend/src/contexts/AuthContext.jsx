@@ -49,7 +49,7 @@ export function AuthProvider({ children }) {
     try {
       await axios.post(`${API}/auth/logout`, {}, { withCredentials: true });
     } catch (err) {
-      console.error('Logout request failed:', err.message);
+      if (process.env.NODE_ENV === 'development') console.error('Logout request failed:', err.message);
     }
     localStorage.removeItem('access_token');
     // After logout, create new guest session
@@ -69,7 +69,7 @@ export function AuthProvider({ children }) {
       const { data } = await axios.get(`${API}/auth/me`, { withCredentials: true, headers });
       setUser(data.user);
     } catch (err) {
-      console.error('User refresh failed:', err.message);
+      if (process.env.NODE_ENV === 'development') console.error('User refresh failed:', err.message);
     }
   }, []);
 

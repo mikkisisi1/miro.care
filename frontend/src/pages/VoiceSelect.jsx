@@ -23,8 +23,8 @@ export default function VoiceSelect() {
       });
       await refreshUser();
       navigate('/chat');
-    } catch {
-      // Voice update failed silently — user can retry
+    } catch (err) {
+      console.error('Voice update failed:', err.message);
     }
   };
 

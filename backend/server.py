@@ -433,32 +433,68 @@ SYSTEM_PROMPT = """ТЫ — КТО
 # Store conversation histories in memory (keyed by session_id)
 chat_histories: Dict[str, list] = {}
 
+def find_problem_context(problem: Optional[str]) -> str:
+    """Build problem context string from selected problem."""
+    if not problem:
+        return ""
+    for p in PROBLEMS:
+        if p["id"] == problem:
+            return f"\n\nПользователь выбрал проблему: {p['name']}. Учитывай это в диалоге."
+    return ""
+
+async def load_personal_context(user_id: Optional[str]) -> str:
+    """Load personalization context from DB for the user."""
+    if not user_id:
+        return ""
+    try:
+        user_doc = await db.users.find_one({"_id": ObjectId(user_id)}, {"user_display_name": 1, "session_notes": 1})
+        if not user_doc:
+            return ""
+        parts = []
+        name = user_doc.get("user_display_name")
+        if name:
+            parts.append(f"\n\nИмя пользователя: {name}. Обращайся по имени.")
+        notes = user_doc.get("session_notes")
+        if notes:
+            parts.append(f"\n\nКонтекст из прошлых сессий: {notes}")
+        return "".join(parts)
+    except Exception:
+        return ""
+
+def extract_user_name(message: str) -> Optional[str]:
+    """Try to extract a user's name from their message."""
+    msg_lower = message.lower().strip()
+    for pattern in ["меня зовут ", "я — ", "я - ", "зовите меня ", "my name is ", "i'm ", "i am "]:
+        if pattern in msg_lower:
+            after = message[msg_lower.index(pattern) + len(pattern):].strip()
+            candidate = after.split()[0].strip(".,!?;:") if after else None
+            if candidate and 1 < len(candidate) < 30:
+                return candidate.capitalize()
+    return None
+
+async def call_openrouter(messages: list, model: str = "anthropic/claude-sonnet-4.5") -> str:
+    """Call OpenRouter with fallback from Claude to Mistral."""
+    try:
+        response = await openrouter_client.chat.completions.create(
+            model=model, messages=messages, max_tokens=1500, temperature=0.7,
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        if model == "anthropic/claude-sonnet-4.5":
+            logger.warning(f"Claude Sonnet error, falling back to Mistral: {e}")
+            response = await openrouter_client.chat.completions.create(
+                model="mistralai/mistral-small-3.1-24b-instruct",
+                messages=messages, max_tokens=1500, temperature=0.7,
+            )
+            return response.choices[0].message.content
+        raise
+
 async def get_ai_response(session_id: str, user_message: str, problem: Optional[str] = None, language: str = "ru", user_id: Optional[str] = None) -> str:
     """Get AI response from OpenRouter with conversation history and personalization"""
     if session_id not in chat_histories:
-        problem_context = ""
-        if problem:
-            for p in PROBLEMS:
-                if p["id"] == problem:
-                    problem_context = f"\n\nПользователь выбрал проблему: {p['name']}. Учитывай это в диалоге."
-                    break
+        problem_context = find_problem_context(problem)
+        personal_context = await load_personal_context(user_id)
         lang_instruction = f"\n\nОтвечай на языке: {language}"
-
-        # Load personalization context from DB
-        personal_context = ""
-        if user_id:
-            try:
-                user_doc = await db.users.find_one({"_id": ObjectId(user_id)}, {"user_display_name": 1, "session_notes": 1})
-                if user_doc:
-                    name = user_doc.get("user_display_name")
-                    notes = user_doc.get("session_notes")
-                    if name:
-                        personal_context += f"\n\nИмя пользователя: {name}. Обращайся по имени."
-                    if notes:
-                        personal_context += f"\n\nКонтекст из прошлых сессий: {notes}"
-            except Exception:
-                pass
-
         system_msg = SYSTEM_PROMPT + problem_context + personal_context + lang_instruction
         chat_histories[session_id] = [{"role": "system", "content": system_msg}]
 
@@ -469,32 +505,9 @@ async def get_ai_response(session_id: str, user_message: str, problem: Optional[
     if len(messages) > 31:
         messages = [messages[0]] + messages[-30:]
 
-    try:
-        response = await openrouter_client.chat.completions.create(
-            model="anthropic/claude-sonnet-4.5",
-            messages=messages,
-            max_tokens=1500,
-            temperature=0.7,
-        )
-        ai_text = response.choices[0].message.content
-        chat_histories[session_id].append({"role": "assistant", "content": ai_text})
-        return ai_text
-    except Exception as e:
-        logger.warning(f"Claude Sonnet error, falling back to Mistral: {e}")
-        # Fallback to Mistral (free) on OpenRouter
-        try:
-            response = await openrouter_client.chat.completions.create(
-                model="mistralai/mistral-small-3.1-24b-instruct",
-                messages=messages,
-                max_tokens=1500,
-                temperature=0.7,
-            )
-            ai_text = response.choices[0].message.content
-            chat_histories[session_id].append({"role": "assistant", "content": ai_text})
-            return ai_text
-        except Exception as e2:
-            logger.error(f"Mistral fallback also failed: {e2}")
-        raise
+    ai_text = await call_openrouter(messages)
+    chat_histories[session_id].append({"role": "assistant", "content": ai_text})
+    return ai_text
 
 # ---------- AUTH ENDPOINTS ----------
 @api_router.post("/auth/guest")
@@ -505,7 +518,7 @@ async def create_guest(response: Response):
     user_doc = {
         "email": guest_email,
         "password_hash": "",
-        "name": f"Guest",
+        "name": "Guest",
         "role": "guest",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "tariff": None,
@@ -672,17 +685,9 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             "problem": req.problem or user.get("selected_problem"),
         })
 
-        # Extract user name if introduced (e.g. "Меня зовут Анна" / "Я Дима" / "My name is...")
+        # Extract and save user name if not yet known
         if not user.get("user_display_name"):
-            msg_lower = req.message.lower().strip()
-            name_extracted = None
-            for pattern in ["меня зовут ", "я — ", "я - ", "зовите меня ", "my name is ", "i'm ", "i am "]:
-                if pattern in msg_lower:
-                    after = req.message[msg_lower.index(pattern) + len(pattern):].strip()
-                    candidate = after.split()[0].strip(".,!?;:") if after else None
-                    if candidate and 1 < len(candidate) < 30:
-                        name_extracted = candidate.capitalize()
-                        break
+            name_extracted = extract_user_name(req.message)
             # Also check short replies like just a name (1-2 words, after greeting question)
             if not name_extracted and len(req.message.split()) <= 2 and free_count >= 1:
                 candidate = req.message.strip().strip(".,!?;:")
@@ -720,82 +725,59 @@ async def chat_image_endpoint(req: ChatImageRequest, request: Request):
     lang = req.language or user.get("selected_language", "ru")
 
     # Build vision message
-    image_data_url = f"data:image/jpeg;base64,{req.image}"
     vision_msg = {
         "role": "user",
         "content": [
-            {"type": "image_url", "image_url": {"url": image_data_url}},
+            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{req.image}"}},
             {"type": "text", "text": f"Пользователь отправил фото. Опиши что видишь и дай психологический комментарий. Отвечай на языке: {lang}"}
         ]
     }
 
-    # Get or init history
+    # Initialize history if needed
     if session_id not in chat_histories:
-        problem = req.problem or user.get("selected_problem")
-        problem_context = ""
-        if problem:
-            for p in PROBLEMS:
-                if p["id"] == problem:
-                    problem_context = f"\n\nПользователь выбрал проблему: {p['name']}."
-                    break
+        problem_context = find_problem_context(req.problem or user.get("selected_problem"))
         system_msg = SYSTEM_PROMPT + problem_context + f"\n\nОтвечай на языке: {lang}"
         chat_histories[session_id] = [{"role": "system", "content": system_msg}]
 
-    # Add to history as text placeholder (can't store full images in memory)
     chat_histories[session_id].append({"role": "user", "content": "[Пользователь отправил фото]"})
 
-    # Build messages for API call
     messages = chat_histories[session_id][:-1] + [vision_msg]
     if len(messages) > 31:
         messages = [messages[0]] + messages[-30:]
 
     try:
-        response = await openrouter_client.chat.completions.create(
-            model="anthropic/claude-sonnet-4.5",
-            messages=messages,
-            max_tokens=1500,
-            temperature=0.7,
-        )
-        ai_text = response.choices[0].message.content
-        chat_histories[session_id].append({"role": "assistant", "content": ai_text})
-
-        await db.chat_messages.insert_one({
-            "user_id": user_id,
-            "session_id": req.session_id,
-            "user_message": "[image]",
-            "ai_response": ai_text,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "problem": req.problem or user.get("selected_problem"),
-        })
-
-        update_fields = build_counter_updates(user, is_free_phase, free_count, ai_text)
-        if update_fields:
-            await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
-
-        return {
-            "response": ai_text,
-            "type": "ai_response",
-            "needs_tariff": free_count + 2 >= 12 and not has_minutes,
-        }
+        ai_text = await call_openrouter(messages)
     except Exception as e:
         logger.error(f"Image chat error: {e}")
-        # Fallback to Mistral
+        # Fallback: Mistral may not support vision, acknowledge the image
         try:
-            # Mistral may not support vision, so just acknowledge the image
             fallback_msgs = [m for m in chat_histories[session_id] if isinstance(m.get("content"), str)]
             fallback_msgs.append({"role": "user", "content": f"Пользователь отправил фото. Поблагодари за доверие и спроси, что на фото. Отвечай на языке: {lang}"})
-            response = await openrouter_client.chat.completions.create(
-                model="mistralai/mistral-small-3.1-24b-instruct",
-                messages=fallback_msgs[-20:],
-                max_tokens=1500,
-                temperature=0.7,
-            )
-            ai_text = response.choices[0].message.content
-            chat_histories[session_id].append({"role": "assistant", "content": ai_text})
-            return {"response": ai_text, "type": "ai_response", "needs_tariff": False}
+            ai_text = await call_openrouter(fallback_msgs[-20:], model="mistralai/mistral-small-3.1-24b-instruct")
         except Exception as e2:
             logger.error(f"Image chat fallback error: {e2}")
             raise HTTPException(500, f"Image analysis error: {str(e)}")
+
+    chat_histories[session_id].append({"role": "assistant", "content": ai_text})
+
+    await db.chat_messages.insert_one({
+        "user_id": user_id,
+        "session_id": req.session_id,
+        "user_message": "[image]",
+        "ai_response": ai_text,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "problem": req.problem or user.get("selected_problem"),
+    })
+
+    update_fields = build_counter_updates(user, is_free_phase, free_count, ai_text)
+    if update_fields:
+        await db.users.update_one({"_id": ObjectId(user_id)}, {"$set": update_fields})
+
+    return {
+        "response": ai_text,
+        "type": "ai_response",
+        "needs_tariff": free_count + 2 >= 12 and not has_minutes,
+    }
 
 @api_router.get("/chat/history/{session_id}")
 async def get_chat_history(session_id: str, request: Request):

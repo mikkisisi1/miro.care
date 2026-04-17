@@ -39,7 +39,7 @@ export default function PaymentSuccess() {
           return;
         }
       } catch (err) {
-        console.error('Payment status check failed:', err.message);
+        if (process.env.NODE_ENV === 'development') console.error('Payment status check failed:', err.message);
       }
       attemptsRef.current += 1;
       if (!cancelled) setTimeout(poll, 2000);

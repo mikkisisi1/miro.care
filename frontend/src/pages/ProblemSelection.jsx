@@ -39,8 +39,8 @@ export default function ProblemSelection() {
       });
       await refreshUser();
       navigate('/chat');
-    } catch {
-      // Problem selection update failed silently — user can retry
+    } catch (err) {
+      console.error('Problem selection failed:', err.message);
     }
   };
 

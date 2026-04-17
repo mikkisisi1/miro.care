@@ -69,7 +69,7 @@ export default function useAudioStream(user) {
           };
           pump();
         } catch (err) {
-          console.error('MediaSource streaming error:', err.message);
+          if (process.env.NODE_ENV === 'development') console.error('MediaSource streaming error:', err.message);
         }
       });
 
@@ -77,7 +77,7 @@ export default function useAudioStream(user) {
       audio.onerror = () => { setPlayingTTS(null); URL.revokeObjectURL(audioUrl); };
       audio.play().catch(() => {});
     } catch (err) {
-      console.error('TTS playback error:', err.message);
+      if (process.env.NODE_ENV === 'development') console.error('TTS playback error:', err.message);
       setPlayingTTS(null);
     }
   }, [ttsEnabled, user, stopTTS]);
