@@ -85,7 +85,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   object-fit: cover; object-position: center 35%;
 }
 @media (max-width: 768px) {
-  .landing-photo { left: 0; width: 100%; opacity: 1; object-position: center 45%; transform: scale(1.8); transform-origin: center 45%; }
+  .landing-photo { left: 0; width: 100%; opacity: 1; object-position: 65% 45%; transform: scale(1.8); transform-origin: 65% 45%; }
 }
 
 /* Brand outside glass */
