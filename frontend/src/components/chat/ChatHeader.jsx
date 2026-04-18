@@ -6,7 +6,7 @@ export default function ChatHeader({
   ttsEnabled, toggleTTS,
   isFreePhase, hasMinutes, minutesLeft, formatTime,
   onBack, freeSessionLabel, countdownSeconds,
-  onMenuOpen,
+  onMenuOpen, isBusy,
 }) {
   const showCountdown = countdownSeconds !== null && countdownSeconds >= 0;
 
@@ -26,6 +26,7 @@ export default function ChatHeader({
             <div className="xc-chat-avatar-wrapper">
               <img src="/miron-avatar.jpg" alt="Miron" className="xc-chat-avatar-img" />
               {activeVoice === 'male' && <span className="xc-chat-online-dot" />}
+              {activeVoice === 'male' && isBusy && <span className="xc-chat-thinking-dot" data-testid="thinking-dot-miron" />}
             </div>
             <span className="xc-avatar-name">Miron</span>
           </button>
@@ -38,6 +39,7 @@ export default function ChatHeader({
             <div className="xc-chat-avatar-wrapper">
               <img src="/oksana-avatar.jpg" alt="Oksana" className="xc-chat-avatar-img" />
               {activeVoice === 'female' && <span className="xc-chat-online-dot" />}
+              {activeVoice === 'female' && isBusy && <span className="xc-chat-thinking-dot" data-testid="thinking-dot-oksana" />}
             </div>
             <span className="xc-avatar-name">Oksana</span>
           </button>

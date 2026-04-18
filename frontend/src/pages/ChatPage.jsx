@@ -246,6 +246,7 @@ export default function ChatPage() {
         onMenuOpen={() => setMenuOpen(true)}
         freeSessionLabel={t('freeSession')}
         countdownSeconds={countdownSeconds}
+        isBusy={loading || playingTTS}
       />
 
       <div className="xc-chat-body">
