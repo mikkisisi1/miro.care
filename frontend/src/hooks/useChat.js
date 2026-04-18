@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import apiClient from '@/lib/apiClient';
 
-export default function useChat(user, lang, refreshUser, onAIMessage) {
+export default function useChat(user, lang, refreshUser, onAIMessage, activeVoice) {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
