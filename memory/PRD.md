@@ -80,6 +80,15 @@
 - LOCKED файлы (`voice_config.py`, landing page в `App.css`) не тронуты
 - Test report: `/app/test_reports/iteration_15.json`
 
+### ✓ 2026-04-18: TTS Streaming + Emotion Markers Bug Fix
+🔴 **Баг**: Fish Audio проговаривал `(calm)(soft tone)` вслух + большая задержка до первого звука.
+✅ **Исправления:**
+- `voice_config.py`: добавлены `FISH_BACKEND="s1"` и `FISH_LATENCY="balanced"`. Модель `s1` нативно интерпретирует emotion-маркеры как модуляцию голоса (speech-1.5 читала их как текст).
+- `routes/tts.py`: передаёт `backend="s1"` в `fish_session.tts()` и `latency="balanced"` в `TTSRequest`. Добавлен хедер `X-Accel-Buffering: no` для отключения буферизации в ingress.
+- `hooks/useAudioStream.js`: переписан на **MediaSource Extensions** — аудио играет по мере прихода чанков (TTFB ~81ms измерено), вместо ожидания полного blob. Fallback на blob для Safari iOS.
+- **Измерено**: TTFB 81ms, MP3 81KB за 1.8s (streaming рейт ~44KB/s). Пользователь слышит первый звук в ~200-400ms.
+- **Регресс-тест**: `/app/test_reports/iteration_16.json` — 12/12 пройдено.
+
 ### Backlog (P1)
 - Google Sign-In через Emergent Auth
 - Email/push-нотификации за сутки до консультации
