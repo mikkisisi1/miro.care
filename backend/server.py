@@ -5,6 +5,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 import os
+import asyncio
 import logging
 from datetime import datetime, timezone
 from fastapi import FastAPI, APIRouter
@@ -34,12 +35,32 @@ api_router.include_router(bookings_router)
 api_router.include_router(stt_router)
 
 
+# ---------- HEALTH CHECK ENDPOINTS ----------
+# Lightweight health endpoints for Kubernetes / Cloudflare probes.
+# Served at BOTH `/health` and `/api/health` so deployments can hit either.
+@app.get("/health")
+@app.get("/api/health")
+async def health():
+    return {"status": "ok"}
+
+
 # ---------- STARTUP / SHUTDOWN ----------
 @app.on_event("startup")
 async def startup():
-    await db.users.create_index("email", unique=True)
-    await seed_admin()
+    # Run DB init in the background so the server becomes ready immediately.
+    # In production (Mongo Atlas) the first connection can take 10-60s due to
+    # DNS/SRV lookup + TLS; blocking on it caused Cloudflare 520 on health checks.
+    asyncio.create_task(_init_db_background())
     logger.info("Miro.Care backend started")
+
+
+async def _init_db_background():
+    try:
+        await db.users.create_index("email", unique=True)
+        await seed_admin()
+        logger.info("Background DB init complete")
+    except Exception as e:
+        logger.error(f"Background DB init failed: {e}")
 
 
 async def seed_admin():
