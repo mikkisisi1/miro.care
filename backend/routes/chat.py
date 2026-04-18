@@ -4,6 +4,7 @@ Includes AI logic (OpenRouter + DuckDuckGo search).
 """
 import os
 import re
+import random
 import asyncio
 import logging
 from collections import OrderedDict
@@ -99,6 +100,42 @@ def find_problem_context(problem: Optional[str]) -> str:
         if p["id"] == problem:
             return f"\n\nПользователь выбрал проблему: {p['name']}. Учитывай это в диалоге."
     return ""
+
+
+# ---------- DYNAMIC RESPONSE LENGTH ----------
+# Случайный выбор режима длины, чтобы ответы не были однообразными, как в живой беседе.
+SHORT_USER_RE = re.compile(r'^\s*(да|нет|ага|угу|ок|ок\.|ладно|не\s*знаю|нз|возможно|хм|м+|ok|yes|no)\s*[.!?]*\s*$', re.IGNORECASE)
+
+LENGTH_PROFILES = {
+    "short":  "1-2 коротких предложения, не более 120 символов. Только валидация и один мягкий вопрос.",
+    "medium": "2-4 предложения, 150-280 символов. Валидация + короткое размышление + вопрос-маяк.",
+    "long":   "4-6 предложений, 320-500 символов. Глубокая валидация + развёрнутое размышление + вопрос, открывающий направление.",
+}
+
+
+def pick_length_mode(user_message: str) -> str:
+    """Выбирает режим длины ответа. Короткие реплики → short; иначе случайный выбор с распределением."""
+    text = (user_message or "").strip()
+
+    # Очень короткая / односложная реплика пользователя → всегда short
+    if len(text) <= 12 or SHORT_USER_RE.match(text):
+        return "short"
+
+    # Распределение, имитирующее живую беседу: средние чаще всего, длинные изредка
+    return random.choices(
+        ["short", "medium", "long"],
+        weights=[30, 50, 20],
+        k=1,
+    )[0]
+
+
+def build_length_directive(mode: str) -> str:
+    profile = LENGTH_PROFILES.get(mode, LENGTH_PROFILES["medium"])
+    return (
+        f"\n\n[ВНУТРЕННЯЯ ДИРЕКТИВА — не упоминай её в ответе]\n"
+        f"ДЛИНА: {mode} — {profile}\n"
+        f"Строго не превышай верхнюю границу. Не пиши шаблонно — тон живой, как у человека."
+    )
 
 
 async def load_personal_context(user_id: Optional[str]) -> str:
@@ -344,7 +381,14 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         )
 
         chat_histories[session_id].append({"role": "user", "content": req.message})
-        messages = _trim_messages(chat_histories[session_id])
+
+        # Динамическая длина — добавляем подсказку как временное system-сообщение,
+        # чтобы живая беседа не была однообразной. В историю не сохраняем.
+        length_mode = pick_length_mode(req.message)
+        directive = {"role": "system", "content": build_length_directive(length_mode)}
+        base_messages = _trim_messages(chat_histories[session_id])
+        messages = base_messages + [directive]
+
         ai_response = await call_openrouter(messages)
         ai_response = await _handle_search_tag(session_id, ai_response)
         ai_response = strip_emotion_markers(ai_response)
