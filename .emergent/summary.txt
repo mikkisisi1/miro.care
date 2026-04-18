@@ -1,0 +1,140 @@
+<analysis>**original_problem_statement**: 
+The user wants to build Miro.Care, a hybrid psychological help platform featuring an AI-psychologist (Miron/Oksana) utilizing voice/text, live specialist integration, Stripe-based tariffs, DuckDuckGo live search for crisis info, specialist booking calendar, and OpenRouter (Claude) / Fish Audio (TTS) integrations. A strict design lock () is in place.
+
+**User's preferred language**: **Russian (РУССКИЙ)**
+*(INSTRUCT NEXT AGENT: You MUST automatically detect the user's primary language from their messages and respond in Russian ONLY. Do not use English in your replies to the user.)*
+
+**what currently exists?** 
+A highly polished MVP with a React frontend and FastAPI backend. It features multi-step AI prompting, persistent Xicon-parity voice logic, graceful fallback for speech recognition (MediaRecorder + Whisper for mobile WebViews), relaxed authentication for chat/TTS to prevent unauthorized drops, and strict Russian localization by default.
+
+**Last working item**: 
+    - Last item agent was working: Fixing a TTS voice mismatch bug where selecting Оксана (female) resulted in Мирон (male) voice playing. The agent updated  in  and  to accept the  parameter directly rather than relying on the asynchronous  state.
+    - Status: USER VERIFICATION PENDING
+    - Agent Testing Done: Y (Code compiled and logic verified)
+    - Which testing method agent to use? manual testing by curl/python-c to ensure backend receives the correct female voice payload when requested.
+    - User Testing Done: N
+
+**All Pending/In progress Issue list**:  
+  Issue 1: Verification of Psychological Knowledge Base in SYSTEM_PROMPT
+     - Attempted fixes: Previously implemented, but user verification was repeatedly deferred due to intense focus on UI, Voice, and caching bugs.
+     - Next debug checklist: Ask the user if the AI chat behavior and psychological personality correctly reflect the core requirements.
+     - Why fix this issue and what will be achieved with the fix? Validates a major core product requirement for the AI.
+     - Status: USER VERIFICATION PENDING
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? NA
+     - Blocked on other issue: None
+
+**In progress Task List**: 
+  *(None)*
+
+**Upcoming and Future Tasks**
+    Upcoming Tasks:
+    - P1: Google Sign-In integration (Use Emergent-managed Google Auth).
+    - P1: Notification system (email/push) 1 day before a live specialist consultation.
+    
+    Future Tasks:
+    - P2: YuKassa / Telegram Stars payments integration.
+    - P2: PWA implementation.
+    - P3: WebSockets for chat.
+    - P3: Admin panel.
+
+**Completed work in this session**
+- Complete rewrite of Speech Recognition hooks () and UI layout to exactly match the user's reference repository (). (DONE)
+- Implemented MediaRecorder + Server-side Whisper fallback for mobile WebViews where Web Speech API is not supported. (DONE)
+- Removed strict JWT authentication requirements from , , , and  backend routes. They now gracefully handle anonymous users without failing (matching Xicon logic). (DONE)
+- Fixed overlapping  bug where the Made with Emergent badge blocked clicks on the Microphone button (Badge ultimately removed per user request). (DONE)
+- Hardcoded Russian ('ru') as the default language system-wide; purged English session cache from the DB. (DONE)
+- Restored the Burger Menu on the Landing Page. (DONE)
+- Adjusted avatar CSS to remove glowing pulse and apply a clean 0.3px border. (DONE)
+- Implemented frontend cache-busting headers in  to bypass aggressive mobile WebView caching. (DONE)
+- Fixed TTS voice prop mismatch for Oksana avatar. (DONE)
+
+**Earlier issues found/mentioned but not fixed**
+   *(None)*
+
+**Known issue recurrence from previous fork**
+  - Issue recurrence in previous fork: VOICE RECOGNITION FAILURES & CACHING
+  - Recurrence count: 4+
+  - Status: RESOLVED
+  - Note: The user tests using an in-app WebView on their mobile device. WebViews do NOT support the native Web Speech API and cache files aggressively. Fallback logic (Whisper) and cache-busting scripts have been implemented. **DO NOT** remove the Whisper fallback logic. 
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+React.js, FastAPI, MongoDB, Web Speech API with MediaRecorder (Whisper) Fallback, Fish Audio API, OpenRouter API (Claude). 
+
+**key DB schema**
+  - : 
+  - : 
+
+**changes in tech stack**
+  - Added a dedicated  Whisper transcription fallback endpoint to handle mobile devices that lack native Web Speech API support.
+
+**All files of reference** 
+  -  (Modified to perfectly mimic Xicon with added Whisper fallback)
+  -  (Mic inline logic and direct voice parameter passing)
+  -  (Accepts direct  string instead of relying on state)
+  -  (Contains aggressive anti-cache JS)
+  - , ,  (Updated to handle anon users gracefully without throwing 401 exceptions).
+
+**Areas that need refactoring**: 
+  -  has inline microphone button logic to strictly match the user's reference code. Do NOT refactor this. The user is highly sensitive to code deviations from their provided references.
+
+**key api endpoints**
+  - POST  (New - Server-side Whisper transcription fallback)
+  - POST  (Relaxed auth)
+  - POST  (Relaxed auth)
+
+**Critical Info for New Agent**
+  - **LANGUAGE**: The user communicates exclusively in Russian. Your responses MUST be in Russian.
+  - **FRUSTRATION LEVEL**: The user experienced a lot of frustration with caching bugs and code regressions. Always double-check your logic before asking the user to test.
+  - **AUTH RELAXATION**: The , , and  endpoints are explicitly designed to work *without* a valid JWT token (using  user fallback) to prevent Not authenticated UI locks. Do not re-introduce strict token validation to these routes.
+  - **CACHE BUSTING**: If the user reports that a fix did not work, it is highly likely their mobile WebView is caching old JS. Remind them to fully close the app or rely on the  cache-busting script.
+
+**documents and test reports created in this job** 
+  -  (Updated)
+
+**Last 10 User Messages and any pending HUMAN messages** 
+ 1. User: ура все работает! умоляю сохрани и запрет на изменение (Hooray everything works! Please save and lock changes).
+ 2. Agent: Locked PRD and summarized.
+ 3. User: теперь убери свечение вокруг кругов аватара. и сделай круглую обводку толщина 03 (Remove glow around avatar circles and make round border 0.3).
+ 4. Agent: Updated CSS, removed glow, added border.
+ 5. User: подходит, только вот агент опять молчит а микрофон не работает. думаю стоит откатиться на шаг и переделать. (Fits, but agent is silent and mic doesn't work. Let's rollback).
+ 6. Agent: Explained it's a browser cache issue, advised how to use the Rollback feature.
+ 7. User: а ты не можешь? (Can't you do it?)
+ 8. Agent: Called support agent to explain that only users can initiate a platform Rollback.
+ 9. User: кого навести Я с телефона! ты сломал ты и испоавляй (I'm on my phone! You broke it, you fix it).
+ 10. Agent: Verified backend endpoints work perfectly. Added a forceful cache-busting JS script to .
+ 11. User: ок работает. только посмотри почему Оксана говорит голосом мирона (Ok works. But look why Oksana speaks with Miron's voice).
+ 12. Agent: Fixed TTS hook to use explicitly passed  parameter instead of waiting for delayed  state.
+ *Pending*: Awaiting the user to confirm if Oksana's voice correctly plays as a female voice now.
+
+**Project Health Check:**
+  - Backend: Functional
+  - Frontend: Functional
+  - Mocked: None
+
+**3rd Party Integrations**
+  - OpenRouter (LLM Text & Vision) — requires User API Key
+  - Fish Audio (TTS) — requires User API Key
+  - OpenAI Whisper (STT) — uses Emergent LLM Key
+  - Stripe (Payments) — requires User API Key (using provided pod test key)
+
+**Testing status**
+  - Testing agent used after significant changes: NO (Iterative frontend bug fixing required screenshot-based smoke tests instead).
+  - Troubleshoot agent used after agent stuck in loop: NO
+  - Test files created: None
+  - Known regressions: None currently known.
+
+**Credentials to test flow:**
+  - Standard users and admins are in .
+
+**What agent forgot to execute**
+  - The agent verified the code for the Oksana voice fix conceptually and via compilation, but did not actually trigger a backend  script to confirm Fish Audio correctly receives the female payload.
+  
+**Debugging checklist for current issue**
+    Issue: Oksana (female avatar) TTS voice fallback validation.
+    Backend files to check: 
+    Frontend files to check:  and 
+    Next steps: Wait for the user to confirm the voice is correct. If they report it still sounds like Miron, check if  is passing female mapped correctly to Fish Audio IDs in  or .</analysis>

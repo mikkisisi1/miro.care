@@ -1,0 +1,5 @@
+memory/test_credentials.md
+**/__pycache__/
+**/*.pyc
+**/node_modules/
+**/.git/

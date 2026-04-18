@@ -1,0 +1,64 @@
+{
+  "summary": "CODE QUALITY REGRESSION TEST PASSED - All 29 backend tests passed (100%). Frontend loads correctly with no console errors. Code quality fixes (centralized getToken, refs pattern in hooks, Python test anti-patterns) verified working.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_full_features_iter11.py",
+    "/app/test_reports/pytest/pytest_results_iter14.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "getToken() export in apiClient.js working correctly - TTS endpoint returns 200 with audio",
+    "useAudioStream.js uses getToken from apiClient (line 30) - verified TTS streaming works",
+    "useImageUpload.js refs pattern working - reduced useCallback dependencies from 10 to 5",
+    "useSpeechRecognition.js eslint-disable removed - no lint errors",
+    "ChatPage.jsx uses getToken (line 61) for TTS greeting cache - working correctly",
+    "Python test files fixed: `is True` -> direct assertion, `== True` -> direct assertion",
+    "All console.error statements verified NODE_ENV-guarded"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (29/29 tests passed)",
+    "frontend": "100% (all pages load, no console errors)"
+  },
+  "test_credentials": {
+    "admin": "admin@miro.care / MiroCare2026!",
+    "test_user": "test@test.com / Test123!",
+    "guest": "Auto-created via POST /api/auth/guest"
+  },
+  "seed_data_creation": "Guest users created during tests for isolation",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "mocked_apis": {
+    "stripe": "MOCKED - Uses sk_test_emergent test key",
+    "fish_audio_tts": "LIVE - Returns audio (10KB file verified)",
+    "openrouter_llm": "LIVE - Returns AI responses"
+  },
+  "context_for_next_testing_agent": "Iteration 14 was a CODE QUALITY REGRESSION test after refactoring. Key changes verified: (1) getToken() centralized in apiClient.js - used by useAudioStream.js and ChatPage.jsx for TTS; (2) useImageUpload.js uses refs pattern to reduce useCallback dependencies; (3) Python test anti-patterns fixed (is True, == True); (4) eslint-disable comments removed from hooks. All features working: Landing page, Problems page (10 cards), Chat with voice selection, TTS audio streaming, Tariffs page (4 cards), Booking calendar.",
+  "features_tested": {
+    "1_landing_page": "PASS - Loads with PSYCHOLOGIST button",
+    "2_problems_page": "PASS - Shows 10 problem categories",
+    "3_chat_voice_selection": "PASS - MIRON/OKSANA selection works, greeting appears",
+    "4_chat_ai_response": "PASS - POST /api/chat returns AI response",
+    "5_tts_streaming": "PASS - POST /api/tts returns audio (10KB)",
+    "6_tariffs_page": "PASS - Shows 4 tariff cards (test, 1h, 7h, 30h)",
+    "7_booking_calendar": "PASS - Shows weekday slots",
+    "8_auth_guest": "PASS - Creates guest user",
+    "9_auth_login": "PASS - Admin login works",
+    "10_console_errors": "PASS - No console errors detected"
+  },
+  "code_quality_verification": {
+    "getToken_centralization": "VERIFIED - apiClient.js exports getToken(), used in useAudioStream.js (line 30) and ChatPage.jsx (line 61)",
+    "useImageUpload_refs": "VERIFIED - Uses refs for sessionId, lang, user, messages, ttsEnabled to reduce dependencies",
+    "eslint_disable_removed": "VERIFIED - No eslint-disable comments in useSpeechRecognition.js",
+    "python_test_fixes": "VERIFIED - test_iteration7_features.py, test_payments_iter12.py, test_full_features_iter11.py fixed",
+    "console_guards": "VERIFIED - All console.error guarded with process.env.NODE_ENV === 'development'"
+  }
+}

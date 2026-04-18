@@ -1,0 +1,348 @@
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Send, Mic, Camera } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import BurgerMenu from '@/components/BurgerMenu';
+import ChatHeader from '@/components/chat/ChatHeader';
+import MessageList from '@/components/chat/MessageList';
+import ImagePreview from '@/components/chat/ImagePreview';
+import ImagePickerModal from '@/components/chat/ImagePickerModal';
+import useAudioStream from '@/hooks/useAudioStream';
+import useChat from '@/hooks/useChat';
+import useSpeechRecognition from '@/hooks/useSpeechRecognition';
+import useImageUpload from '@/hooks/useImageUpload';
+import useCountdown from '@/hooks/useCountdown';
+import apiClient, { API_BASE, getToken } from '@/lib/apiClient';
+
+const GREETINGS = {
+  male: 'Здравствуйте, я Мирон — ваш личный консультант.\nРасскажите в двух словах, что вас беспокоит, и мы вместе попробуем разобраться.\nКак мне к вам обращаться?',
+  female: 'Здравствуйте, я Оксана — ваш личный консультант.\nРасскажите в двух словах, что вас беспокоит, и мы вместе попробуем разобраться.\nКак мне к вам обращаться?',
+};
+
+export default function ChatPage() {
+  const { user, refreshUser } = useAuth();
+  const { t, lang } = useLanguage();
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [input, setInput] = useState('');
+  const [showImagePicker, setShowImagePicker] = useState(false);
+  const [voiceChosen, setVoiceChosen] = useState(false);
+  const [activeVoice, setActiveVoice] = useState(null);
+  const [showRunningText, setShowRunningText] = useState(false);
+  const [runningText, setRunningText] = useState('');
+  const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const greetingCacheRef = useRef({ male: null, female: null });
+  const silenceTimerRef = useRef(null);
+  const lastTranscriptRef = useRef('');
+
+  // Persistent audio element ref (like Xicon) — better mobile compatibility
+  const audioElementRef = useRef(null);
+
+  const { playTTS, stopTTS, playingTTS, ttsEnabled, toggleTTS } = useAudioStream(user, audioElementRef);
+
+  const handleAIMessage = useCallback((message, msgIndex) => {
+    if (ttsEnabled) {
+      setTimeout(() => playTTS(message, msgIndex, activeVoice), 100);
+    }
+  }, [ttsEnabled, playTTS, activeVoice]);
+
+  const { messages, sendMessage, loading, sessionId, setMessages, historyLoaded } = useChat(user, lang, refreshUser, handleAIMessage);
+
+  // If history loaded with messages, skip voice selection
+  useEffect(() => {
+    if (historyLoaded && messages.length > 0 && !voiceChosen) {
+      setVoiceChosen(true);
+      setActiveVoice(user?.selected_voice || 'male');
+    }
+  }, [historyLoaded, messages.length, voiceChosen, user?.selected_voice]);
+
+  // Pre-cache greeting TTS audio for both voices
+  useEffect(() => {
+    if (voiceChosen) return;
+    let cancelled = false;
+
+    const preloadGreeting = async (voice) => {
+      try {
+        const token = getToken();
+        const response = await fetch(`${API_BASE}/tts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ text: GREETINGS[voice], voice }),
+        });
+        if (response.ok && !cancelled) {
+          const blob = await response.blob();
+          if (!cancelled) greetingCacheRef.current[voice] = URL.createObjectURL(blob);
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV === 'development') console.error('TTS greeting cache miss:', err.message);
+      }
+    };
+    preloadGreeting('male');
+    preloadGreeting('female');
+
+    return () => { cancelled = true; };
+  }, [voiceChosen]);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [messages, loading]);
+
+  // Voice selection handler
+  const handleVoiceSelect = async (voice) => {
+    if (voiceChosen) return;
+    setActiveVoice(voice);
+    setVoiceChosen(true);
+
+    try {
+      await apiClient.put('/user/voice', { voice });
+      await refreshUser();
+    } catch (err) {
+      if (process.env.NODE_ENV === 'development') console.error('Voice save failed:', err.message);
+    }
+
+    setMessages([{
+      role: 'ai',
+      content: GREETINGS[voice],
+      id: `greeting_${Date.now()}`,
+    }]);
+
+    // Play greeting from cache using persistent audio element (Xicon pattern)
+    const cachedUrl = greetingCacheRef.current[voice];
+    if (cachedUrl && audioElementRef.current) {
+      const audio = audioElementRef.current;
+      audio.src = cachedUrl;
+      audio.play().catch(() => {});
+    } else if (ttsEnabled) {
+      setTimeout(() => playTTS(GREETINGS[voice], 0, voice), 100);
+    }
+  };
+
+  // Text sending
+  const handleSend = useCallback((text) => {
+    const msg = text || input;
+    if (!msg || !msg.trim() || loading) return;
+    sendMessage(msg.trim());
+    setInput('');
+  }, [input, loading, sendMessage]);
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  // Speech recognition — ТОЧНАЯ КОПИЯ из Xicon.online
+  const { isListening, transcript, isSupported, startListening, stopListening } = useSpeechRecognition(lang);
+
+  // Логика паузы 3 сек — показать бегущую строку (из Xicon)
+  useEffect(() => {
+    if (isListening && transcript) {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      if (transcript !== lastTranscriptRef.current) {
+        lastTranscriptRef.current = transcript;
+        setShowRunningText(false);
+        silenceTimerRef.current = setTimeout(() => {
+          if (transcript && transcript.trim()) {
+            setRunningText(transcript);
+            setShowRunningText(true);
+          }
+        }, 3000);
+      }
+    }
+    return () => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    };
+  }, [isListening, transcript]);
+
+  // Сброс при остановке записи (из Xicon)
+  useEffect(() => {
+    if (!isListening && !transcript) {
+      setShowRunningText(false);
+      setRunningText('');
+      lastTranscriptRef.current = '';
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    }
+  }, [isListening, transcript]);
+
+  // Когда распознавание завершено — показать бегущую строку и отправить (из Xicon)
+  const sentTranscriptRef = useRef('');
+  useEffect(() => {
+    if (!isListening && transcript && transcript.trim() && transcript !== sentTranscriptRef.current) {
+      sentTranscriptRef.current = transcript;
+      setRunningText(transcript);
+      setShowRunningText(true);
+      handleSend(transcript);
+      const hideTimer = setTimeout(() => {
+        setShowRunningText(false);
+        setRunningText('');
+        sentTranscriptRef.current = '';
+      }, 8000);
+      return () => clearTimeout(hideTimer);
+    }
+  }, [isListening, transcript, handleSend]);
+
+  // handleMicClick — ТОЧНАЯ КОПИЯ из Xicon.online
+  const handleMicClick = useCallback(() => {
+    if (!isSupported) {
+      alert('Браузер не поддерживает распознавание речи. Используйте Chrome или Safari.');
+      return;
+    }
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  }, [isSupported, isListening, startListening, stopListening]);
+
+  // Image upload
+  const { selectedImage, setSelectedImage, handleImageSelect, sendImageMessage } = useImageUpload({
+    sessionId, lang, user, messages, setMessages, refreshUser, ttsEnabled, playTTS, loading,
+  });
+
+  const minutesLeft = user?.minutes_left || 0;
+  const isFreePhase = (user?.free_messages_count || 0) < 12;
+  const hasMinutes = minutesLeft > 0;
+  const countdownSeconds = useCountdown(minutesLeft, hasMinutes, isFreePhase);
+  const formatTime = (mins) => {
+    if (mins >= 60) return `${Math.floor(mins / 60)}${t('hours')} ${mins % 60}${t('min')}`;
+    return `${mins} ${t('min')}`;
+  };
+
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 769;
+  const chatBg = isDesktop
+    ? `${process.env.PUBLIC_URL}/chat-bg-desktop.jpg`
+    : `${process.env.PUBLIC_URL}/chat-bg.jpg`;
+
+  return (
+    <div className="xc-chat-modal" data-testid="chat-page">
+      <div className="xc-chat-bg" style={{ backgroundImage: `url(${chatBg})` }} />
+
+      {/* Persistent audio element for TTS (Xicon pattern — better mobile compatibility) */}
+      <audio ref={audioElementRef} playsInline preload="none" style={{ display: 'none' }} />
+
+      <ChatHeader
+        voiceChosen={voiceChosen}
+        activeVoice={activeVoice}
+        onVoiceSelect={handleVoiceSelect}
+        ttsEnabled={ttsEnabled}
+        toggleTTS={toggleTTS}
+        isFreePhase={isFreePhase}
+        hasMinutes={hasMinutes}
+        minutesLeft={minutesLeft}
+        formatTime={formatTime}
+        onBack={() => navigate('/problems')}
+        onMenuOpen={() => setMenuOpen(true)}
+        freeSessionLabel={t('freeSession')}
+        countdownSeconds={countdownSeconds}
+      />
+
+      <div className="xc-chat-body">
+        <div className="xc-chat-messages" data-testid="chat-messages">
+          {!voiceChosen && messages.length === 0 && (
+            <div className="xc-voice-hint" data-testid="voice-hint">
+              <p>{t('chooseVoice')}</p>
+            </div>
+          )}
+          <MessageList
+            messages={messages}
+            loading={loading}
+            playingTTS={playingTTS}
+            playTTS={playTTS}
+            stopTTS={stopTTS}
+            messagesEndRef={messagesEndRef}
+          />
+        </div>
+
+        <ImagePreview
+          selectedImage={selectedImage}
+          onRemove={() => setSelectedImage(null)}
+          onSend={sendImageMessage}
+          loading={loading}
+        />
+
+        <input type="file" ref={fileInputRef} accept="image/*" onChange={handleImageSelect} style={{ display: 'none' }} />
+        <input type="file" ref={cameraInputRef} accept="image/*" capture="environment" onChange={handleImageSelect} style={{ display: 'none' }} />
+
+        {/* Input Area — inline как в Xicon.online App.js */}
+        <div className="xc-chat-input-area" data-testid="chat-input-form">
+          <div className="xc-input-container">
+            {showRunningText && runningText ? (
+              <span className="xc-running-text-inner">{runningText}</span>
+            ) : isListening ? (
+              <div className="xc-wave-inner">
+                <svg viewBox="0 0 320 30" preserveAspectRatio="none">
+                  <path className="xc-wave-path-1" d="M0,15 Q20,5 40,15 Q60,25 80,15 Q100,5 120,15 Q140,25 160,15 Q180,5 200,15 Q220,25 240,15 Q260,5 280,15 Q300,25 320,15" />
+                  <path className="xc-wave-path-2" d="M0,15 Q20,25 40,15 Q60,5 80,15 Q100,25 120,15 Q140,5 160,15 Q180,25 200,15 Q220,5 240,15 Q260,25 280,15 Q300,5 320,15" />
+                </svg>
+              </div>
+            ) : (
+              <input
+                data-testid="chat-input"
+                type="text"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyPress}
+                placeholder={t('sendMessage')}
+                className="xc-chat-text-input-inner"
+                disabled={loading}
+              />
+            )}
+            {!isListening && !showRunningText && (
+              <button
+                className="xc-camera-inline-btn"
+                data-testid="camera-inline-btn"
+                onClick={() => setShowImagePicker(true)}
+                disabled={loading}
+              >
+                <Camera size={19} strokeWidth={1.5} />
+              </button>
+            )}
+          </div>
+
+          {!isListening && !showRunningText && (
+            <button
+              data-testid="send-btn"
+              onClick={() => handleSend()}
+              disabled={!input.trim() || loading}
+              className="xc-send-btn"
+            >
+              <Send size={16} strokeWidth={1.5} />
+            </button>
+          )}
+
+          <button
+            className={`xc-mic-btn ${isListening ? 'recording' : ''}`}
+            onClick={handleMicClick}
+            disabled={loading || !isSupported}
+            data-testid="mic-btn"
+            aria-label={isListening ? "Stop recording" : "Start recording"}
+          >
+            <Mic size={20} strokeWidth={1.5} />
+          </button>
+        </div>
+      </div>
+
+      {showImagePicker && (
+        <ImagePickerModal
+          onClose={() => setShowImagePicker(false)}
+          onCamera={() => cameraInputRef.current?.click()}
+          onGallery={() => fileInputRef.current?.click()}
+        />
+      )}
+
+      <BurgerMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
+    </div>
+  );
+}

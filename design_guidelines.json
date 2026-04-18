@@ -1,0 +1,92 @@
+{
+  "theme": "dark",
+  "archetype": "5 (Jewel & Luxury) - Modified for Dark Tech/Psychology",
+  "emotion": "Premium, Sophisticated, Trustworthy, Futuristic, Moody",
+  "colors": {
+    "background": {
+      "base": "#1C1C1E",
+      "gradient_start": "#1C1C1E",
+      "gradient_end": "#262629",
+      "css_classes": "bg-gradient-to-br from-[#1C1C1E] to-[#262629]"
+    },
+    "text": {
+      "primary": "#FFFFFF",
+      "secondary": "#E0E0E0",
+      "muted": "#A1A1AA"
+    },
+    "accents": {
+      "warm_red": "#FF453A",
+      "gold_stars": "#FFB800"
+    },
+    "glassmorphism": {
+      "background": "rgba(255, 255, 255, 0.05)",
+      "border": "rgba(255, 255, 255, 0.15)",
+      "blur": "20px",
+      "css_classes": "bg-white/5 backdrop-blur-[20px] border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+    }
+  },
+  "typography": {
+    "font_family": {
+      "heading": "Outfit, sans-serif",
+      "body": "Manrope, sans-serif"
+    },
+    "sizes": {
+      "h1": "text-5xl sm:text-6xl lg:text-[80px] leading-tight tracking-tight",
+      "h2": "text-3xl sm:text-4xl lg:text-5xl tracking-tight",
+      "h3": "text-2xl sm:text-3xl",
+      "body": "text-lg sm:text-xl",
+      "small": "text-sm sm:text-base"
+    }
+  },
+  "layout_and_spacing": {
+    "general": "Generous spacing, premium feel. Use p-6, p-8, p-12. Containers with borders must have internal padding.",
+    "hero_section": "Must feature Miron's photo prominently with red/warm ambient CSS lighting (e.g., radial gradients behind or overlaying the photo). Overlaid on the photo must be a large glassmorphism panel (window) containing the primary text.",
+    "grid_system": "Bento Grid protocol for features and info sections. Overlapping elements for artful tension.",
+    "navigation": "Minimalist. Sticky crystal glass header (backdrop-blur-xl bg-[#1C1C1E]/60 border-b border-white/10). Active links have white underline."
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-white text-[#1C1C1E] font-medium rounded-full px-8 py-3 hover:bg-gray-200 transition-colors",
+      "glass": "bg-white/10 backdrop-blur-md border border-white/20 text-white rounded-full px-8 py-3 hover:bg-white/20 transition-all",
+      "ghost": "text-white hover:text-white/70 underline-offset-4 hover:underline transition-all"
+    },
+    "cards": {
+      "style": "Glassmorphism panels strictly. rounded-2xl or rounded-3xl. bg-white/5 backdrop-blur-[20px] border border-white/15.",
+      "hover": "hover:bg-white/10 hover:-translate-y-1 transition-all duration-300"
+    }
+  },
+  "media": {
+    "hero_photos": [
+      {
+        "url": "https://customer-assets.emergentagent.com/job_xicon-preview-3/artifacts/da8jruwh_bbSt44ErT9oMjoxUeM0T1pEHQxCQwYb0Q9QsI9mn.webp",
+        "category": "hero",
+        "description": "Miron Shakira primary hero photo"
+      },
+      {
+        "url": "https://customer-assets.emergentagent.com/job_xicon-preview-3/artifacts/p4a7djrm_a2ceHzRs7mSOhk3UJsLG4RwEWT4PfMmLizx1oiZo.webp",
+        "category": "secondary_hero",
+        "description": "Miron Shakira secondary photo for about/specialists section"
+      }
+    ],
+    "icons": {
+      "library": "lucide-react",
+      "usage": "Use Lucide icons for UI elements. For the gold stars, use Star icon colored #FFB800 with fill-current where appropriate."
+    }
+  },
+  "motion_and_interactions": {
+    "hover_states": "All interactive elements must have smooth transitions (transition-all duration-300 ease-out).",
+    "scroll": "Smooth scrolling. Staggered fade-up animations for glass panels on scroll."
+  },
+  "instructions_to_main_agent": [
+    "COMPLETELY REMOVE the existing light/warm theme. The new design is strictly DARK MODE.",
+    "Apply the background gradient (bg-gradient-to-br from-[#1C1C1E] to-[#262629]) to the main layout.",
+    "Ensure all text is white (#FFFFFF) or light grey (#E0E0E0) for readability.",
+    "Implement the Hero Section exactly as requested: Miron's photo as the background/main visual, enhanced with CSS radial-gradient to add red/warm dramatic lighting. Place a prominent glassmorphism panel (bg-white/5, backdrop-blur-[20px], border-white/15) OVER the photo containing the main headline and text.",
+    "Use Outfit for headings and Manrope for body text. Add these via Google Fonts in index.html or CSS.",
+    "Redesign all pages (Auth, Profile, Chat, Tariffs, etc.) using the glassmorphism card style.",
+    "Ensure the navigation menu is minimalist, with a burger menu for mobile, and active states showing an underline.",
+    "Incorporate gold stars (#FFB800) as decorative elements or rating icons where appropriate.",
+    "DO NOT use placeholder images. Use the provided Miron Shakira photos.",
+    "Ensure all interactive elements have data-testid attributes for testing."
+  ]
+}
