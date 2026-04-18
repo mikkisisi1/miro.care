@@ -16,16 +16,15 @@
 ### ✓ Сделано в этой сессии
 - Клонирован репо `mikkisisi1/miro.care` в рабочее окружение
 - Установлены зависимости (requirements.txt + yarn)
-- Прописаны `JWT_SECRET`, `EMERGENT_LLM_KEY`, `STRIPE_API_KEY` в `backend/.env`
+- Прописаны `JWT_SECRET`, `EMERGENT_LLM_KEY`, `STRIPE_API_KEY`, `OPENROUTER_API_KEY`, `FISH_AUDIO_API_KEY` в `backend/.env`
 - Fixed: дублированный блок `check_user_access`/`session_id` в `/api/chat` (мёртвый код)
 - Fixed: устаревшее значение `minutes_left` в ответе `/api/chat` (теперь возвращается post-update)
 - Fixed: утечка памяти в `chat_histories` (теперь LRU-cap на 500 сессий через `OrderedDict`)
 - Fixed: невнятная 500-ка при отсутствии ключа LLM — теперь чистый 503 "AI provider key not configured"
+- **Обновлён SYSTEM_PROMPT** на «Empathic Engine» (валидация → эмпатия → один вопрос-маяк, правила для Fish Audio TTS: числа словами, без списков/звёздочек, эмоциональные междометия, лимит ~250 симв.)
+- Проверено вживую: нормальный диалог, короткий «не знаю», кризис/самовред — все три кейса обрабатываются по ТЗ
 - Админ-сид проверен, логин `admin@miro.care` работает
-
-### Известные ограничения (ждут ключи от юзера)
-- Чат с ИИ возвращает 503 пока не задан `OPENROUTER_API_KEY`
-- TTS не работает пока не задан `FISH_AUDIO_API_KEY`
+- E2E подтверждено curl'ом: Claude Sonnet 4.5 отвечает, Fish Audio отдаёт MP3
 
 ### Backlog (P1)
 - Google Sign-In через Emergent Auth
