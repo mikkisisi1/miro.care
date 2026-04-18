@@ -1,35 +1,36 @@
 <analysis>**original_problem_statement**: 
-The user originally requested locking Voice Settings and landing page CSS to prevent unprompted agent changes. Later, the user requested adding a pulsing neon cyan dot on the active avatar's rim when the AI is thinking or replying. Most recently, the user requested to check and fix responsiveness across all screens and ensure language switching works flawlessly in both voice and text formats, as well as the UI. PRODUCT REQUIREMENTS: Lock voice settings, lock landing page CSS styles, add thinking/replying UI indicator, and ensure full multi-language and responsive support.
+The user originally requested locking Voice Settings and landing page CSS to prevent unprompted agent changes. They requested adding a pulsing neon cyan dot on the active avatar's rim when the AI is thinking or replying. They also requested to check and fix responsiveness across all screens and ensure language switching works flawlessly in both voice and text formats, as well as the UI. 
+PRODUCT REQUIREMENTS: Lock voice settings, lock landing page CSS styles, add thinking/replying UI indicator, ensure full multi-language and responsive support.
 
 **User's preferred language**: Russian (You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in the user's preferred language only)
+*Instruction for next agent*: **All communication with the user MUST be in Russian.**
 
 **what currently exists?** 
-A hybrid AI-psychologist platform (React + FastAPI/MongoDB) featuring voice synthesis with emotional markers (Fish Audio). The system has strictly locked CSS for the landing page and locked voice configurations. A neon pulsing dot indicator has been successfully added for when the AI is thinking/speaking. The application is currently undergoing a refactor to eliminate hardcoded Russian strings (moving them to a new translation file) and ensuring mobile responsiveness across all views.
+A hybrid AI-psychologist platform (React + FastAPI/MongoDB) featuring voice synthesis with emotional markers (Fish Audio). Voice configs and landing page CSS are strictly locked. A backend utility now strips Fish Audio emotion markers (like ) from the text response so they aren't shown to the user. The avatar UI has been simplified to only show a pulsing neon cyan dot when the agent is thinking/speaking (the default green online dot was removed). The app is partially through a multi-language and responsiveness refactor.
 
 **Last working item**: 
-    - Last item agent was working: Fixing hardcoded Russian strings across frontend components, ensuring backend logic (STT/Chat) respects the chosen language, and verifying CSS responsiveness across all screens. 
-    - Status: IN PROGRESS
-    - Agent Testing Done: N
-    - Which testing method agent to use? testing_agent_v3_fork (Promised to user for regression testing after full fix)
+    - Last item agent was working: Removing the static green online indicator dot () from the avatar rim in  per user request, leaving only the neon cyan thinking/replying dot. 
+    - Status: USER VERIFICATION PENDING
+    - Agent Testing Done: Y (Self-tested via code review/search-replace, but no screenshot taken for the final UI state)
+    - Which testing method agent to use? screenshot tool (To quickly verify the avatar UI looks correct without the green dot)
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:  
-  Issue 1: Fix hardcoded strings, ensure language integration, and check screen responsiveness
-     - Attempted fixes: Created  to store additional translations. Updated , , and  to use the  hook and .
+  Issue 1: Complete Multi-language & Responsiveness audit (IGNORED IN CURRENT SESSION)
+     - Attempted fixes: Previously created  and updated some React components. 
      - Next debug checklist: 
-       -  (Integrate  if not fully merged).
        -  (Ensure Whisper mapping correctly identifies the selected language code).
        -  (Ensure LLM prompt instructions strictly follow the chosen language).
        -  (Audit  queries for overall app responsiveness, ensuring locked styles are NOT broken).
-     - Why fix this issue and what will be achieved with the fix? Ensures the app works perfectly in all supported languages (both text and speech logic) and on all mobile/desktop devices.
-     - Status: IN PROGRESS
+     - Why fix this issue and what will be achieved with the fix? Ensures the app works perfectly in all supported languages (both text and speech logic) and on all mobile/desktop devices. This was requested by the user but paused due to bug fixing.
+     - Status: IN PROGRESS (Priority: P0)
      - Is recurring issue? N
-     - Should Test frontend/backend/both after fix? Both (using testing_agent_v3_fork)
+     - Should Test frontend/backend/both after fix? Both (MUST invoke  once these translation/responsive changes are complete).
      - Blocked on other issue: None
 
 **In progress Task List**: 
-  Task 1: Complete the Multi-language & Responsiveness audit
-     - Where to resume: Continue replacing hardcoded texts in the remaining React pages. Check backend STT and Chat routes for language variables. Finally, review CSS media queries.
+  Task 1: Complete Multi-language & Responsiveness implementations
+     - Where to resume: Review the backend routes (, ) to ensure the language context is passed and used correctly. Check CSS media queries for mobile responsiveness.
      - What will be achieved with this? Full internationalization and mobile compatibility.
      - Status: IN PROGRESS
      - Should Test frontend/backend/both after fix? Both
@@ -44,12 +45,16 @@ A hybrid AI-psychologist platform (React + FastAPI/MongoDB) featuring voice synt
     - Task 6: Admin-panel (Priority: P2)
 
 **Completed work in this session**
-- Added a pulsing neon cyan dot () on the active avatar's rim when the AI is thinking/responding in  and . (DONE)
-- Updated  with the new feature. (DONE)
-- Created  and began moving hardcoded texts. (DONE)
+- Fixed an issue where the LLM spoke/typed Fish Audio settings (like , ) in the text. Created  in . (DONE)
+- Created unit tests for the regex stripper in  and ran them successfully via pytest. (DONE)
+- Removed the static green online dot from the avatar rim in  to leave only the neon thinking dot. (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-   None.
+   Issue 1: Agent missed completing the translation/responsiveness tasks
+   - Debug checklist: Review STT, Chat routes for language vars, and App.css for media queries.
+   - Why to solve this issue and what will be achieved with this? User explicitly requested this in the previous session and it was left pending.
+   - Should Test frontend/backend/both after fix: Both (via )
+   - Is recurring issue? N
 
 **Known issue recurrence from previous fork**
   - Issue recurrence in previous fork: None
@@ -59,19 +64,17 @@ A hybrid AI-psychologist platform (React + FastAPI/MongoDB) featuring voice synt
 **Code Architecture**
 - 
   -  (FastAPI entry point)
-  -  (Contains the master SYSTEM_PROMPT with TTS emotion rules)
+  -  (Contains the master SYSTEM_PROMPT)
   -  (READ-ONLY constant file for Fish Audio settings)
-  - , , 
-  -  (Test suite)
+  -  (Handles chat submission, now includes )
+  - , 
+  - 
 - 
   -  (Contains locked landing page styles)
-  -  (, )
-  -  (, , etc.)
-  -  (, , , etc.)
-  - 
+  -  (Avatar UI)
 
 **Key Technical Concepts**
-React, FastAPI, MongoDB, CSS glassmorphism styling, OpenRouter (Anthropic Claude models), Fish Audio SDK, Web Speech API / Whisper STT.
+React, FastAPI, MongoDB, CSS glassmorphism styling, OpenRouter (Anthropic Claude models), Fish Audio SDK, Web Speech API / Whisper STT. Regex for string sanitization. Pytest for backend testing.
 
 **key DB schema**
   - : {_id, email, hashed_password, role, minutes_left}
@@ -81,39 +84,36 @@ React, FastAPI, MongoDB, CSS glassmorphism styling, OpenRouter (Anthropic Claude
 None.
 
 **All files of reference** 
-  -  (Updated with neon dot CSS; CRITICAL: landing page styles locked)
-  -  (Updated with pulsing dot logic)
-  -  (Language state management)
-  -  (NEW: Contains extracted hardcoded strings)
-  -  (Updated for translations)
-  -  (Updated for translations)
-  -  (Updated for translations)
-  -  (Needs language mapping check)
-  -  (Needs language mapping check)
-  -  (CRITICAL: locked configs. DO NOT TOUCH)
-  -  (CRITICAL: locked configs. DO NOT TOUCH)
-  -  
+  -  (Updated to strip emotion markers from text)
+  -  (Created for unit testing regex logic)
+  -  (Updated to remove green dot)
+  -  (Contains locked styles, needs responsive audit)
+  -  (Pending language integration)
+  -  (Updated with completion of emotion marker bug)
 
 **Areas that need refactoring**: 
- and  have high cyclomatic complexity. Do not refactor them right now to avoid regressions, focus only on ensuring language variables are passed correctly.
+ has high cyclomatic complexity. Do not refactor right now to avoid regressions, focus on ensuring language variables are passed correctly.
 
 **key api endpoints**
-  -  (Handles message submission to LLM, must accept )
-  -  (Handles audio generation from text with Prosody control)
-  -  (Handles Whisper transcription, must accept )
+  -  (Handles message submission to LLM, now strips emotion markers)
+  -  (Handles audio generation)
+  -  (Handles Whisper transcription)
 
 **Critical Info for New Agent** 
-1. **STRICT UI LOCK**: The styling for the landing page in  (, , , ) has been perfectly tuned by the user and marked with  comments. **DO NOT MODIFY** these classes. 
+1. **STRICT UI LOCK**: The styling for the landing page in  is marked with . **DO NOT MODIFY** these classes. 
 2. **STRICT VOICE CONFIG LOCK**:  and TTS emotion rules in / are strictly protected from changes.
-3. **LANGUAGE & RESPONSIVENESS IN PROGRESS**: You are currently in the middle of executing option e (approved by user) to fix hardcoded strings, fix backend language mapping for STT/Chat, and ensure responsive design. Finish these changes across the files, then **MUST** invoke  to run regression testing before finishing.
+3. **RESUME PREVIOUS TASK**: The agent in the last session got sidetracked by bugs and UI tweaks and entirely forgot to finish the multi-language & responsiveness audit. You MUST prioritize finishing this audit (checking STT, Chat routes, and media queries) and then run .
 
 **documents and test reports created in this job**
   -  (Updated)
+  -  (Created)
 
 **Last 10 User Messages and any pending HUMAN messages** 
- - можно когда агент думает и отвечает сделать маленькую неонову бы точку на ободке руга пульсирует -> COMPLETED
- - проверь адаптивность всех экранов. проверь переключение языков. должны работать и в голосовом и текстовом формате диалогов и интерфейс -> IN PROGRESS
- - е (User explicitly approved the plan to apply full translation and responsiveness fixes) -> IN PROGRESS
+ - User: все работает хорошо. только баг в ответах агента. он проговаривает в тексте настройки фиш (Bug: Agent speaks out Fish settings in text) -> COMPLETED
+ - User: да минитест если поможет добавь (Add mini-test if it helps) -> COMPLETED
+ - User: ты 7 минут уже подключить минитест? на фиг он мне тогда нужно? расходы токенов. экономичный режим без самодеятельности (Complained about test taking too long, requested economical mode) -> ACKNOWLEDGED/COMPLETED
+ - User uploaded image: на ободе аватара 2 точки. неон и выше бирюзовая. убери неон зелёную только (On the avatar rim there are 2 dots. Remove only the neon green one) -> AGENT MISTAKE (removed wrong dot)
+ - User: написал убери только зелёную. переделай заново (I wrote remove only green. Redo it) -> COMPLETED (Green dot removed)
 
 **Project Health Check:**
 Broken: None
@@ -124,13 +124,24 @@ Mocked: None
  - Fish Audio (Voice Synthesis) — requires User API Key
 
 **Testing status**
-  - Testing agent used after significant changes: NO (Pending execution after the current fixes are implemented)
+  - Testing agent used after significant changes: NO (Still pending for the multi-language/responsive updates)
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None
+  - Test files created: 
   - Known regressions: None
 
 **Credentials to test flow:**
 Check .
 
 **What agent forgot to execute**
-The agent started the translation updates but still needs to verify STT/Chat backend logic for the  variables and verify/update  media queries for responsiveness. Once done, the agent **forgot to call ** as planned. The new agent must complete the code edits and immediately trigger the testing subagent.</analysis>
+The agent completely forgot to resume the  that was listed as the main active task in the previous handoff. The backend STT/Chat routes still need language mapping verification, and the CSS media queries need auditing. Once that is done, the agent *must* invoke .
+
+**Debugging checklist for current issue**
+    Issue: Multi-language & Responsiveness audit pending
+
+    Frontend files to check: 
+    -  (Check media queries for responsiveness without breaking locked styles)
+    - 
+  
+    Backend files to check:
+    -  (Ensure language context applies correctly)
+    -  (Ensure language context applies correctly)</analysis>
