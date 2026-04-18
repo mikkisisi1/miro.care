@@ -5,16 +5,13 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 import os
-import asyncio
 import logging
-import time
 from datetime import datetime, timezone
 from fastapi import FastAPI, APIRouter
 from starlette.middleware.cors import CORSMiddleware
 
 from database import client, db
 from auth_utils import hash_password
-from metrics import stats as metrics_stats, uptime_s
 from routes.auth import router as auth_router
 from routes.chat import router as chat_router
 from routes.tts import router as tts_router
@@ -37,66 +34,12 @@ api_router.include_router(bookings_router)
 api_router.include_router(stt_router)
 
 
-# ---------- HEALTH CHECK ENDPOINTS ----------
-# Lightweight health endpoints for Kubernetes / Cloudflare probes.
-# MUST be bulletproof: no DB, no network, no external deps.
-# Served at BOTH `/health` and `/api/health` so deployments can hit either.
-@app.get("/health")
-@app.get("/api/health")
-async def health():
-    return {"status": "ok"}
-
-
-# ---------- DETAILED METRICS (separate endpoint, may touch DB) ----------
-@app.get("/api/metrics")
-async def metrics_endpoint():
-    # Ping Mongo with a short timeout; never let it break the response.
-    db_ms = None
-    db_ok = False
-    try:
-        t0 = time.perf_counter()
-        await asyncio.wait_for(client.admin.command("ping"), timeout=1.5)
-        db_ms = int((time.perf_counter() - t0) * 1000)
-        db_ok = True
-    except Exception:
-        pass
-    return {
-        "status": "ok",
-        "uptime_s": uptime_s(),
-        "db_ok": db_ok,
-        "db_ms": db_ms,
-        "chat": {
-            "ok": metrics_stats["chat_ok"],
-            "err": metrics_stats["chat_err"],
-            "last_ok": metrics_stats["chat_last_ok"],
-            "last_ms": metrics_stats["chat_last_ms"],
-        },
-        "tts": {
-            "ok": metrics_stats["tts_ok"],
-            "err": metrics_stats["tts_err"],
-            "last_ok": metrics_stats["tts_last_ok"],
-            "last_ms": metrics_stats["tts_last_ms"],
-        },
-    }
-
-
 # ---------- STARTUP / SHUTDOWN ----------
 @app.on_event("startup")
 async def startup():
-    # Run DB init in the background so the server becomes ready immediately.
-    # In production (Mongo Atlas) the first connection can take 10-60s due to
-    # DNS/SRV lookup + TLS; blocking on it caused Cloudflare 520 on health checks.
-    asyncio.create_task(_init_db_background())
+    await db.users.create_index("email", unique=True)
+    await seed_admin()
     logger.info("Miro.Care backend started")
-
-
-async def _init_db_background():
-    try:
-        await db.users.create_index("email", unique=True)
-        await seed_admin()
-        logger.info("Background DB init complete")
-    except Exception as e:
-        logger.error(f"Background DB init failed: {e}")
 
 
 async def seed_admin():

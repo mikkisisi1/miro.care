@@ -7,6 +7,7 @@ import logging
 import tempfile
 from fastapi import APIRouter, HTTPException, Request, UploadFile, File, Form
 from typing import Optional
+from emergentintegrations.llm.openai import OpenAISpeechToText
 
 from auth_utils import get_current_user
 
@@ -57,9 +58,6 @@ async def speech_to_text(
     whisper_lang = LANG_MAP.get(language, "ru")
 
     try:
-        # Lazy import — avoids paying the ~1.7s `emergentintegrations.llm.openai`
-        # cost on every server cold start.
-        from emergentintegrations.llm.openai import OpenAISpeechToText
         stt = OpenAISpeechToText(api_key=api_key)
 
         # Write to temp file for Whisper

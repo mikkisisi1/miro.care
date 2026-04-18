@@ -104,8 +104,6 @@ async def create_checkout(req: CheckoutRequest, request: Request):
         return await activate_test_tariff(user["_id"])
 
     stripe_checkout = _get_stripe_checkout(request)
-    # CheckoutSessionRequest is imported lazily alongside StripeCheckout
-    from emergentintegrations.payments.stripe.checkout import CheckoutSessionRequest
     checkout_req = CheckoutSessionRequest(
         amount=float(tariff["price"]),
         currency="usd",
