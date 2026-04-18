@@ -14,7 +14,6 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
-from fish_audio_sdk import Session as FishSession, TTSRequest, Prosody
 
 from auth_utils import get_current_user
 from metrics import record_tts_ok, record_tts_err
@@ -133,6 +132,9 @@ async def text_to_speech(req: TTSRequestModel, request: Request):
         t0 = time.perf_counter()
         first_chunk_sent = False
         try:
+            # Lazy import — fish_audio_sdk takes ~400ms to import; deferring
+            # keeps uvicorn cold-start under the deploy health-check window.
+            from fish_audio_sdk import Session as FishSession, TTSRequest, Prosody
             # 🔒 Создание сессии Fish Audio
             fish_session = FishSession(FISH_API_KEY)
             
