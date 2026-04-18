@@ -83,6 +83,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   position: absolute; left: 0; top: 0; z-index: 1;
   width: 100%; height: 100%;
   object-fit: cover; object-position: center 35%;
+  transform: scale(1.1);
 }
 @media (max-width: 768px) {
   .landing-photo { left: 0; width: 100%; opacity: 1; object-position: 65% 45%; transform: scale(1.8); transform-origin: 65% 45%; }
