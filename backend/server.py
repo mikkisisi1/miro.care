@@ -5,6 +5,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 import os
+import asyncio
 import logging
 from datetime import datetime, timezone
 from fastapi import FastAPI, APIRouter
@@ -47,11 +48,21 @@ api_router.include_router(stt_router)
 
 
 # ---------- STARTUP / SHUTDOWN ----------
+async def _bg_init():
+    """Non-blocking background init so K8s health probes pass immediately."""
+    try:
+        await db.users.create_index("email", unique=True)
+        await seed_admin()
+        logger.info("Miro.Care backend init complete")
+    except Exception as e:
+        logger.error(f"Background init failed (will retry on demand): {e}")
+
+
 @app.on_event("startup")
 async def startup():
-    await db.users.create_index("email", unique=True)
-    await seed_admin()
-    logger.info("Miro.Care backend started")
+    # Kick off DB init in the background so uvicorn marks the app ready immediately.
+    asyncio.create_task(_bg_init())
+    logger.info("Miro.Care backend started (bg init dispatched)")
 
 
 async def seed_admin():
