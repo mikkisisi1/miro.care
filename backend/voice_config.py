@@ -18,6 +18,15 @@ import os
 # 🔒 НЕ ИЗМЕНЯТЬ: API ключ из переменных окружения
 FISH_API_KEY = os.environ.get("FISH_AUDIO_API_KEY", "")
 
+# ========== FISH AUDIO BACKEND MODEL ==========
+# 🔒 КРИТИЧНО: модель, поддерживающая эмоциональные маркеры (calm)(soft tone).
+# speech-1.5 (default) читает маркеры как текст — НЕЛЬЗЯ.
+# s1-mini — быстрая, поддерживает natural-language emotion control.
+FISH_BACKEND = os.environ.get("FISH_BACKEND", "s1")
+
+# Latency mode: "balanced" (~300ms TTFB) для стриминга / "normal" (~500ms, выше качество).
+FISH_LATENCY = os.environ.get("FISH_LATENCY", "balanced")
+
 # ========== ГОЛОСА АГЕНТОВ ==========
 # 🔒 НЕ ИЗМЕНЯТЬ: ID референсных голосов для агентов
 VOICE_IDS = {

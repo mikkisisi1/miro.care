@@ -19,6 +19,8 @@ from auth_utils import get_current_user
 # 🔒 ЗАЩИЩЁННЫЙ ИМПОРТ: Все голосовые настройки из voice_config.py
 from voice_config import (
     FISH_API_KEY,
+    FISH_BACKEND,
+    FISH_LATENCY,
     VOICE_IDS,
     PROSODY_CONFIG,
     EMOTION_MARKERS,
@@ -118,7 +120,7 @@ async def text_to_speech(req: TTSRequestModel, request: Request):
     # 🔒 Валидация voice ID
     voice_id = validate_voice_id(req.voice or "male")
 
-    logger.info(f"TTS Request | Voice: {req.voice} | Text length: {len(text)} | Emotion-enhanced: Yes | Speed: {PROSODY_CONFIG['speed']}")
+    logger.info(f"TTS Request | Voice: {req.voice} | Text length: {len(text)} | Backend: {FISH_BACKEND} | Latency: {FISH_LATENCY} | Speed: {PROSODY_CONFIG['speed']}")
 
     def generate_audio():
         """
@@ -142,10 +144,11 @@ async def text_to_speech(req: TTSRequestModel, request: Request):
                 reference_id=voice_id,
                 prosody=prosody,      # 🔒 ЗАЩИЩЕНО: параметры из voice_config.py
                 format="mp3",
+                latency=FISH_LATENCY,  # "balanced" для низкой задержки стриминга
             )
             
-            # Стриминг аудио чанков
-            for chunk in fish_session.tts(tts_request):
+            # Стриминг аудио чанков (backend=s1-mini поддерживает (calm)(soft tone))
+            for chunk in fish_session.tts(tts_request, backend=FISH_BACKEND):
                 if chunk:
                     yield chunk
                     
@@ -158,10 +161,11 @@ async def text_to_speech(req: TTSRequestModel, request: Request):
         media_type="audio/mpeg",
         headers={
             "Content-Disposition": "inline; filename=tts.mp3",
-            "Cache-Control": "no-cache",
+            "Cache-Control": "no-cache, no-store",
             "Transfer-Encoding": "chunked",
-            # 🔒 Добавляем заголовки для отладки
-            "X-Voice-Config": f"speed={PROSODY_CONFIG['speed']},volume={PROSODY_CONFIG['volume']}",
+            "X-Accel-Buffering": "no",  # отключаем буферизацию в nginx/ingress для мгновенного стриминга
+            # 🔒 Заголовки для отладки
+            "X-Voice-Config": f"backend={FISH_BACKEND},latency={FISH_LATENCY},speed={PROSODY_CONFIG['speed']},volume={PROSODY_CONFIG['volume']}",
             "X-Emotion-Mode": "empathic-psychologist",
         },
     )

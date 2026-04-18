@@ -1,0 +1,71 @@
+{
+  "summary": "Iteration 16 - TTS Streaming with Fish Audio s1 Backend: All 11 backend tests PASSED. Frontend chat and TTS playback verified. TTS endpoint returns audio/mpeg with X-Voice-Config header confirming backend=s1, latency=balanced. TTFB < 1s verified. Chat responses have NO emotion markers visible to users.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "TTS MediaSource streaming",
+        "issue": "Console error 'Failed to execute postMessage on Window: Request object could not be cloned' when MSE fallback triggers. Audio still plays via blob fallback.",
+        "affected_selectors": ["useAudioStream.js"],
+        "priority": "LOW"
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration16_tts_streaming.py",
+    "/app/test_reports/pytest/pytest_results_iter16.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "TTS endpoint correctly uses Fish Audio s1 backend with latency=balanced for low TTFB streaming",
+    "X-Voice-Config header properly exposes backend=s1,latency=balanced,speed=0.88,volume=4",
+    "strip_emotion_markers() in chat.py continues to work - AI responses have no (calm), (soft tone) markers",
+    "useAudioStream.js implements MediaSource Extensions for true streaming with blob fallback for Safari",
+    "Minor: playViaBlob fallback receives consumed response object when MSE fails - causes non-critical console error"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration16_tts_streaming.py"
+  ],
+  "success_rate": {
+    "backend": "100% (11/11 tests passed)",
+    "frontend": "100% (chat flow and TTS playback verified)"
+  },
+  "test_credentials": {
+    "admin": "admin@miro.care / MiroCare2026!",
+    "guest": "Auto-created via POST /api/auth/guest"
+  },
+  "seed_data_creation": "Guest users created during tests",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "mocked_apis": {
+    "stripe": "MOCKED - Uses sk_test_emergent test key",
+    "fish_audio_tts": "LIVE - Returns audio with s1 backend (verified)",
+    "openrouter_llm": "LIVE - Returns AI responses (Claude Sonnet 4.5)"
+  },
+  "context_for_next_testing_agent": "Iteration 16 verified TTS streaming improvements: (1) Fish Audio s1 backend with latency=balanced confirmed via X-Voice-Config header; (2) TTFB < 1s verified; (3) Audio size >10KB for sentences; (4) Chat responses have NO emotion markers (strip_emotion_markers working); (5) Frontend MediaSource streaming works in Chromium with blob fallback; (6) All auth endpoints working (guest, admin login); (7) Static endpoints (/api/problems, /api/tariffs, /api/specialists) working.",
+  "features_tested": {
+    "1_tts_s1_backend": "PASS - X-Voice-Config header contains backend=s1,latency=balanced",
+    "2_tts_ttfb": "PASS - TTFB < 1s for streaming",
+    "3_tts_audio_size": "PASS - Audio >10KB for sentences",
+    "4_tts_male_voice": "PASS - Miron voice works",
+    "5_tts_female_voice": "PASS - Oksana voice works",
+    "6_chat_no_emotion_markers": "PASS - AI responses have no (calm), (soft tone) markers",
+    "7_auth_guest": "PASS - Guest creation works",
+    "8_auth_admin": "PASS - Admin login works",
+    "9_chat_with_token": "PASS - Chat with guest token works",
+    "10_static_endpoints": "PASS - /api/problems, /api/tariffs, /api/specialists return data",
+    "11_frontend_chat": "PASS - Chat page loads, message sent, AI response received",
+    "12_frontend_tts": "PASS - TTS button clicked, audio element created with blob URL"
+  },
+  "verified_files": {
+    "voice_config.py": "FISH_BACKEND='s1', FISH_LATENCY='balanced' configured",
+    "tts.py": "Uses backend=FISH_BACKEND, latency=FISH_LATENCY, X-Voice-Config header added",
+    "chat.py": "strip_emotion_markers() at line 74 working correctly",
+    "useAudioStream.js": "MediaSource streaming with blob fallback implemented"
+  }
+}
