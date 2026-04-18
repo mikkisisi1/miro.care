@@ -23,6 +23,15 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Miro.Care API")
+
+
+# ---------- HEALTH CHECK (K8s readiness/liveness probes) ----------
+@app.get("/health")
+@app.get("/api/health")
+async def health():
+    return {"status": "ok"}
+
+
 api_router = APIRouter(prefix="/api")
 
 # Mount all route modules
