@@ -39,7 +39,8 @@ export const useSpeechRecognition = (language = 'ru') => {
     
     const langMap = {
       'ru': 'ru-RU', 'en': 'en-US', 'uk': 'uk-UA',
-      'de': 'de-DE', 'fr': 'fr-FR', 'es': 'es-ES', 'id': 'id-ID'
+      'de': 'de-DE', 'fr': 'fr-FR', 'es': 'es-ES', 'id': 'id-ID',
+      'zh': 'zh-CN', 'ar': 'ar-SA', 'hi': 'hi-IN',
     };
     recognition.lang = langMap[languageRef.current] || 'ru-RU';
 

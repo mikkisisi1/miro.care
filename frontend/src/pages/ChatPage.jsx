@@ -1,8 +1,9 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Send, Mic, Camera } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getGreeting } from '@/contexts/translations-extra';
 import BurgerMenu from '@/components/BurgerMenu';
 import ChatHeader from '@/components/chat/ChatHeader';
 import MessageList from '@/components/chat/MessageList';
@@ -19,6 +20,8 @@ const GREETINGS = {
   male: 'Здравствуйте, я Мирон — ваш личный консультант.\nРасскажите в двух словах, что вас беспокоит, и мы вместе попробуем разобраться.\nКак мне к вам обращаться?',
   female: 'Здравствуйте, я Оксана — ваш личный консультант.\nРасскажите в двух словах, что вас беспокоит, и мы вместе попробуем разобраться.\nКак мне к вам обращаться?',
 };
+
+const getLangGreeting = (lang, voice) => getGreeting(lang, voice) || GREETINGS[voice];
 
 export default function ChatPage() {
   const { user, refreshUser } = useAuth();
