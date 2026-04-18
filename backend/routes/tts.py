@@ -1,5 +1,10 @@
 """
-TTS route: /tts — Fish Audio streaming synthesis.
+TTS route: /tts — Fish Audio streaming synthesis with emotion control.
+
+🔒 ЗАЩИЩЕНО ОТ ИЗМЕНЕНИЙ 🔒
+Этот файл содержит критичную логику для голосовой озвучки.
+Все настройки (эмоции, скорость, голоса) хранятся в voice_config.py
+⚠️ НЕ ИЗМЕНЯТЬ БЕЗ СОГЛАСОВАНИЯ ⚠️
 """
 import os
 import re
@@ -8,16 +13,22 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
-from fish_audio_sdk import Session as FishSession, TTSRequest
+from fish_audio_sdk import Session as FishSession, TTSRequest, Prosody
 
 from auth_utils import get_current_user
+# 🔒 ЗАЩИЩЁННЫЙ ИМПОРТ: Все голосовые настройки из voice_config.py
+from voice_config import (
+    FISH_API_KEY,
+    VOICE_IDS,
+    PROSODY_CONFIG,
+    EMOTION_MARKERS,
+    MAX_TTS_LENGTH,
+    validate_voice_id,
+    get_emotion_prefix,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
-
-fish_api_key = os.environ.get("FISH_AUDIO_API_KEY", "")
-fish_voice_male = os.environ.get("FISH_VOICE_MALE", "5cfccfb8aae14938be283ea6400b4a8a")
-fish_voice_female = os.environ.get("FISH_VOICE_FEMALE", "6745990b975d4041a23ad713bcee69f5")
 
 
 class TTSRequestModel(BaseModel):
@@ -26,6 +37,13 @@ class TTSRequestModel(BaseModel):
 
 
 def clean_text_for_tts(text: str) -> str:
+    """
+    Очистка текста для TTS озвучки.
+    
+    🔒 НЕ ИЗМЕНЯТЬ: Правила оптимизированы для Fish Audio.
+    Удаляем только то, что ломает озвучку (markdown, списки).
+    Сохраняем эмоциональные маркеры в скобках: (calm), (soft tone) и т.д.
+    """
     # Убираем маркеры форматирования, но СОХРАНЯЕМ содержимое
     text = re.sub(r'\*+', '', text)                          # **bold** / *italic* → текст остаётся
     text = re.sub(r'^(Нежно|Мягко|Шёпотом|Тихо|Уверенно)\s*,?\s*', '', text)
@@ -33,34 +51,107 @@ def clean_text_for_tts(text: str) -> str:
     text = re.sub(r'^\d+\.\s*', '', text, flags=re.MULTILINE)
     text = re.sub(r'[#_~`>]', '', text)                      # markdown символы
     text = re.sub(r'\n{3,}', '\n\n', text)                   # лишние переносы
+    
+    # 🔒 Ограничение длины для стабильной озвучки
+    if len(text) > MAX_TTS_LENGTH:
+        text = text[:MAX_TTS_LENGTH] + "..."
+    
     return text.strip()
+
+
+def add_emotion_markers(text: str) -> str:
+    """
+    Добавляет эмоциональные маркеры Fish Audio к тексту.
+    
+    🔒 НЕ ИЗМЕНЯТЬ: Автоматическая эмоциональная окраска для эмпатичной речи.
+    
+    Логика:
+    - Базовая эмоция (calm)(soft tone) добавляется в начало
+    - Если есть "хм", "эх", "ох" → добавляем (sighing) для естественных пауз
+    - Если есть многоточие (...) → добавляем (thoughtful) для задумчивости
+    """
+    # Если уже есть эмоциональные маркеры, не дублируем
+    if text.startswith("(") and ")" in text[:30]:
+        return text
+    
+    # Базовая эмоция: спокойный, мягкий тон (всегда)
+    base_emotion = get_emotion_prefix("base")
+    
+    # Добавляем паузы для междометий
+    if any(word in text.lower() for word in ["хм", "эх", "ох", "ну"]):
+        # Вставляем (sighing) перед междометием
+        text = re.sub(r'\b(Хм|Эх|Ох|Ну)\b', r'(sighing) \1', text, count=1, flags=re.IGNORECASE)
+    
+    # Добавляем задумчивость для многоточий
+    if "..." in text:
+        text = text.replace("...", " (thoughtful) ...", 1)
+    
+    # Добавляем базовую эмоцию в начало
+    return f"{base_emotion} {text}"
 
 
 @router.post("/tts")
 async def text_to_speech(req: TTSRequestModel, request: Request):
+    """
+    Потоковая TTS озвучка с Fish Audio.
+    
+    🔒 ЗАЩИЩЕНО: Используется стриминг + Prosody (speed, volume) + эмоции.
+    ⚠️ НЕ ИЗМЕНЯТЬ параметры без тестирования на реальных пользователях.
+    """
     # Auth optional — как в Xicon.online
     try:
         await get_current_user(request)
     except Exception:
         pass
 
-    if not fish_api_key:
+    if not FISH_API_KEY:
         raise HTTPException(500, "Fish Audio API key not configured")
 
+    # 🔒 Очистка текста для TTS
     text = clean_text_for_tts(req.text)
     if not text:
         raise HTTPException(400, "No text to synthesize")
 
-    voice_id = fish_voice_female if req.voice == "female" else fish_voice_male
+    # 🔒 Добавление эмоциональных маркеров
+    text = add_emotion_markers(text)
+
+    # 🔒 Валидация voice ID
+    voice_id = validate_voice_id(req.voice or "male")
+
+    logger.info(f"TTS Request | Voice: {req.voice} | Text length: {len(text)} | Emotion-enhanced: Yes | Speed: {PROSODY_CONFIG['speed']}")
 
     def generate_audio():
+        """
+        Генератор стриминга аудио с Fish Audio.
+        
+        🔒 НЕ ИЗМЕНЯТЬ: Использует Prosody для контроля скорости и громкости.
+        """
         try:
-            fish_session = FishSession(fish_api_key)
-            for chunk in fish_session.tts(TTSRequest(text=text, reference_id=voice_id)):
+            # 🔒 Создание сессии Fish Audio
+            fish_session = FishSession(FISH_API_KEY)
+            
+            # 🔒 КРИТИЧНО: Создание объекта Prosody для контроля речи
+            prosody = Prosody(
+                speed=PROSODY_CONFIG["speed"],    # 0.88 = медленнее для спокойной речи
+                volume=PROSODY_CONFIG["volume"]   # 4 dB для комфортной громкости
+            )
+            
+            # 🔒 Создание TTS запроса с эмоциями и Prosody
+            tts_request = TTSRequest(
+                text=text,
+                reference_id=voice_id,
+                prosody=prosody,      # 🔒 ЗАЩИЩЕНО: параметры из voice_config.py
+                format="mp3",
+            )
+            
+            # Стриминг аудио чанков
+            for chunk in fish_session.tts(tts_request):
                 if chunk:
                     yield chunk
+                    
         except Exception as e:
             logger.error(f"Fish Audio TTS streaming error: {e}")
+            # В случае ошибки возвращаем пустой чанк (чтобы не ломать стрим)
 
     return StreamingResponse(
         generate_audio(),
@@ -69,5 +160,8 @@ async def text_to_speech(req: TTSRequestModel, request: Request):
             "Content-Disposition": "inline; filename=tts.mp3",
             "Cache-Control": "no-cache",
             "Transfer-Encoding": "chunked",
+            # 🔒 Добавляем заголовки для отладки
+            "X-Voice-Config": f"speed={PROSODY_CONFIG['speed']},volume={PROSODY_CONFIG['volume']}",
+            "X-Emotion-Mode": "empathic-psychologist",
         },
     )
