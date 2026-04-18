@@ -74,20 +74,9 @@ def add_emotion_markers(text: str) -> str:
     # Если уже есть эмоциональные маркеры, не дублируем
     if text.startswith("[") and "]" in text[:50]:
         return text
-    
-    # Базовая эмоция: профессиональный, внимательный, уверенный, спокойный, тёплый тон (всегда)
+
+    # Базовая эмоция: профессиональный, спокойный, внимательный. Больше ничего.
     base_emotion = get_emotion_prefix("base")
-    
-    # Добавляем паузы для междометий
-    if any(word in text.lower() for word in ["хм", "эх", "ох", "ну"]):
-        # Вставляем [sighing] перед междометием
-        text = re.sub(r'\b(Хм|Эх|Ох|Ну)\b', r'[sighing] \1', text, count=1, flags=re.IGNORECASE)
-    
-    # Добавляем задумчивость для многоточий
-    if "..." in text:
-        text = text.replace("...", " [thoughtful] ...", 1)
-    
-    # Добавляем базовую эмоцию в начало
     return f"{base_emotion} {text}"
 
 
