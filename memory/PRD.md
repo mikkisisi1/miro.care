@@ -64,6 +64,7 @@
 - **Индикатор "думает/отвечает"** — маленькая неоновая cyan точка пульсирует на ободке активного аватара (Miron/Oksana), пока `loading || playingTTS`.
   - Файлы: `ChatPage.jsx` (пропс `isBusy`), `ChatHeader.jsx` (рендер `.xc-chat-thinking-dot`), `App.css` (keyframes `thinkingNeonPulse`).
   - Проверено вживую в превью: точка появляется при отправке сообщения и исчезает после ответа.
+- **Fix (Feb 2026): Fish emotion-маркеры в тексте ответа** — LLM иногда вставлял `(calm)`, `(soft tone)`, `(warm)(gentle)`, `(sighing)`, `(thoughtful)` в видимый текст. Добавлен `strip_emotion_markers()` в `routes/chat.py`, который вырезает короткие ASCII-маркеры в скобках из `ai_response` перед сохранением в историю/БД и возвратом на фронт. TTS продолжает добавлять свои маркеры независимо через `tts.py`. Русские/многословные вставки в скобках не затрагиваются.
 
 ### Backlog (P1)
 - Google Sign-In через Emergent Auth

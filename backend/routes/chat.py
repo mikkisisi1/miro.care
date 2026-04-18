@@ -63,6 +63,25 @@ class ChatImageRequest(BaseModel):
 # ---------- HELPERS ----------
 SEARCH_TAG_RE = re.compile(r'\[SEARCH:\s*(.+?)\]')
 
+# Маркеры эмоций Fish Audio (`(calm)`, `(soft tone)`, `(warm)(gentle)`, ...),
+# которые LLM иногда вставляет в ответ, хотя это служебные теги для TTS.
+# Вырезаем их из текста, который уходит пользователю — TTS добавит свои в tts.py.
+# Матчит только короткие ASCII-фразы в скобках (1-3 слова, буквы+пробел+дефис),
+# чтобы не задеть легитимные русские/английские вставки с заглавными буквами или цифрами.
+EMOTION_MARKER_RE = re.compile(r'\(\s*[a-z][a-z\s\-]{0,30}\)', re.IGNORECASE)
+
+
+def strip_emotion_markers(text: str) -> str:
+    """Убирает Fish Audio emotion-маркеры из текста для пользователя."""
+    if not text:
+        return text
+    cleaned = EMOTION_MARKER_RE.sub('', text)
+    # Схлопываем лишние пробелы, появившиеся после удаления маркеров
+    cleaned = re.sub(r'[ \t]{2,}', ' ', cleaned)
+    cleaned = re.sub(r' +([.,!?…:;])', r'\1', cleaned)
+    cleaned = re.sub(r'\n{3,}', '\n\n', cleaned)
+    return cleaned.strip()
+
 SEARCH_INSTRUCTION = """
 
 ИНСТРУМЕНТ ПОИСКА:
@@ -328,6 +347,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         messages = _trim_messages(chat_histories[session_id])
         ai_response = await call_openrouter(messages)
         ai_response = await _handle_search_tag(session_id, ai_response)
+        ai_response = strip_emotion_markers(ai_response)
         chat_histories[session_id].append({"role": "assistant", "content": ai_response})
 
         # DB операции только для авторизованных (не анонимов)
@@ -422,6 +442,7 @@ async def chat_image_endpoint(req: ChatImageRequest, request: Request):
             logger.error(f"Image chat fallback error: {e2}")
             raise HTTPException(500, f"Image analysis error: {str(e)}")
 
+    ai_text = strip_emotion_markers(ai_text)
     chat_histories[session_id].append({"role": "assistant", "content": ai_text})
 
     if user_id:
