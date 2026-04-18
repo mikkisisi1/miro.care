@@ -15,6 +15,7 @@ from pydantic import BaseModel
 from typing import Optional
 
 from auth_utils import get_current_user
+from stress_dict import apply_stress
 # 🔒 ЗАЩИЩЁННЫЙ ИМПОРТ: Все голосовые настройки из voice_config.py
 from voice_config import (
     FISH_API_KEY,
@@ -102,6 +103,9 @@ async def text_to_speech(req: TTSRequestModel, request: Request):
     if not text:
         raise HTTPException(400, "No text to synthesize")
 
+    # Ударения для русского — расставляем до эмоций, чтобы Unicode `́` попал в Fish как есть.
+    text = apply_stress(text)
+
     # 🔒 Добавление эмоциональных маркеров
     text = add_emotion_markers(text)
 
@@ -129,12 +133,15 @@ async def text_to_speech(req: TTSRequestModel, request: Request):
             )
             
             # 🔒 Создание TTS запроса с эмоциями и Prosody
+            # normalize=False — КРИТИЧНО для русского: сохраняет Unicode-ударения `́`
+            # (иначе Fish вырежет диакритику при нормализации текста).
             tts_request = TTSRequest(
                 text=text,
                 reference_id=voice_id,
                 prosody=prosody,      # 🔒 ЗАЩИЩЕНО: параметры из voice_config.py
                 format="mp3",
                 latency=FISH_LATENCY,  # "balanced" для низкой задержки стриминга
+                normalize=False,
             )
             
             # Стриминг аудио чанков (backend=s1-mini поддерживает (calm)(soft tone))
