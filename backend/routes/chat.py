@@ -6,6 +6,7 @@ import os
 import re
 import asyncio
 import logging
+from collections import OrderedDict
 from datetime import datetime, timezone
 from typing import Optional, Dict
 from fastapi import APIRouter, HTTPException, Request
@@ -31,8 +32,17 @@ openrouter_client = AsyncOpenAI(
     }
 )
 
-# ---------- IN-MEMORY SESSION HISTORIES ----------
-chat_histories: Dict[str, list] = {}
+# ---------- IN-MEMORY SESSION HISTORIES (LRU-capped) ----------
+MAX_SESSIONS = 500
+chat_histories: "OrderedDict[str, list]" = OrderedDict()
+
+
+def _touch_session(session_id: str) -> None:
+    """Mark session as most-recently-used and evict oldest if over cap."""
+    if session_id in chat_histories:
+        chat_histories.move_to_end(session_id)
+    while len(chat_histories) > MAX_SESSIONS:
+        chat_histories.popitem(last=False)
 
 # ---------- MODELS ----------
 class ChatRequest(BaseModel):
@@ -176,9 +186,11 @@ async def _init_session(session_id: str, problem: Optional[str], language: str, 
     if session_id in chat_histories:
         # Update system prompt if language changed
         chat_histories[session_id][0] = {"role": "system", "content": system_msg}
+        _touch_session(session_id)
         return
 
     chat_histories[session_id] = [{"role": "system", "content": system_msg}]
+    _touch_session(session_id)
 
 
 async def _save_name_if_found(user_id: str, message: str, free_count: int) -> None:
@@ -304,16 +316,6 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         }
 
     session_id = f"{user_id or 'anon'}_{req.session_id}"
-
-    is_free_phase, has_minutes, free_count = check_user_access(user)
-    if not is_free_phase and not has_minutes:
-        return {
-            "message": "Ваши бесплатные сообщения закончились. Пожалуйста, выберите тариф для продолжения.",
-            "type": "tariff_prompt",
-            "needs_tariff": True,
-        }
-
-    session_id = f"{user_id or 'anon'}_{req.session_id}"
     try:
         await _init_session(
             session_id,
@@ -350,16 +352,26 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             if user_msg_count > 0 and user_msg_count % 6 == 0:
                 asyncio.create_task(update_session_notes(user_id, req.session_id))
 
+        # Determine fresh minutes_left for response (post-update value)
+        if is_free_phase:
+            minutes_left_out = None
+        else:
+            minutes_left_out = max(0, (user.get("minutes_left", 0) or 0) - 1)
+
         return {
             "message": ai_response,
             "type": "ai_response",
             "needs_tariff": free_count + 2 >= 12 and not has_minutes,
-            "minutes_left": user.get("minutes_left", 0) if has_minutes else None,
+            "minutes_left": minutes_left_out,
             "is_free_phase": is_free_phase,
         }
     except Exception as e:
         logger.error(f"Chat error: {e}")
-        raise HTTPException(500, f"Chat error: {str(e)}")
+        err_str = str(e)
+        # Bubble up a cleaner message for unconfigured/invalid provider keys
+        if "401" in err_str or "No cookie auth credentials" in err_str or "Unauthorized" in err_str:
+            raise HTTPException(503, "AI provider key not configured. Please set OPENROUTER_API_KEY.")
+        raise HTTPException(500, f"Chat error: {err_str}")
 
 
 @router.post("/chat/image")
