@@ -39,11 +39,18 @@ api_router.include_router(stt_router)
 
 # ---------- HEALTH CHECK ENDPOINTS ----------
 # Lightweight health endpoints for Kubernetes / Cloudflare probes.
+# MUST be bulletproof: no DB, no network, no external deps.
 # Served at BOTH `/health` and `/api/health` so deployments can hit either.
 @app.get("/health")
 @app.get("/api/health")
 async def health():
-    # Ping Mongo with a short timeout; never let it break the probe.
+    return {"status": "ok"}
+
+
+# ---------- DETAILED METRICS (separate endpoint, may touch DB) ----------
+@app.get("/api/metrics")
+async def metrics_endpoint():
+    # Ping Mongo with a short timeout; never let it break the response.
     db_ms = None
     db_ok = False
     try:
