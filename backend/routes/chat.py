@@ -13,7 +13,6 @@ from typing import Optional, Dict
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from bson import ObjectId
-from openai import AsyncOpenAI
 
 from database import db
 from auth_utils import get_current_user
@@ -23,15 +22,23 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# ---------- OPENROUTER CLIENT ----------
-openrouter_client = AsyncOpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.environ.get("OPENROUTER_API_KEY", ""),
-    default_headers={
-        "HTTP-Referer": "https://miro.care",
-        "X-OpenRouter-Title": "Miro.Care",
-    }
-)
+# ---------- OPENROUTER CLIENT (lazy import to speed up cold start) ----------
+_openrouter_client = None
+
+
+def get_openrouter_client():
+    global _openrouter_client
+    if _openrouter_client is None:
+        from openai import AsyncOpenAI
+        _openrouter_client = AsyncOpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=os.environ.get("OPENROUTER_API_KEY", ""),
+            default_headers={
+                "HTTP-Referer": "https://miro.care",
+                "X-OpenRouter-Title": "Miro.Care",
+            },
+        )
+    return _openrouter_client
 
 # ---------- IN-MEMORY SESSION HISTORIES (LRU-capped) ----------
 MAX_SESSIONS = 500
@@ -185,15 +192,16 @@ def ddg_search(query: str, max_results: int = 3) -> str:
 
 
 async def call_openrouter(messages: list, model: str = "anthropic/claude-sonnet-4.5") -> str:
+    client = get_openrouter_client()
     try:
-        response = await openrouter_client.chat.completions.create(
+        response = await client.chat.completions.create(
             model=model, messages=messages, max_tokens=1500, temperature=0.7,
         )
         return response.choices[0].message.content
     except Exception as e:
         if model == "anthropic/claude-sonnet-4.5":
             logger.warning(f"Claude Sonnet error, falling back to Mistral: {e}")
-            response = await openrouter_client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model="mistralai/mistral-small-3.1-24b-instruct",
                 messages=messages, max_tokens=1500, temperature=0.7,
             )

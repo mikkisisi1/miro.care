@@ -13,7 +13,6 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
-from fish_audio_sdk import Session as FishSession, TTSRequest, Prosody
 
 from auth_utils import get_current_user
 # 🔒 ЗАЩИЩЁННЫЙ ИМПОРТ: Все голосовые настройки из voice_config.py
@@ -129,6 +128,8 @@ async def text_to_speech(req: TTSRequestModel, request: Request):
         🔒 НЕ ИЗМЕНЯТЬ: Использует Prosody для контроля скорости и громкости.
         """
         try:
+            # Ленивый импорт Fish Audio SDK — ускоряет cold-start backend.
+            from fish_audio_sdk import Session as FishSession, TTSRequest, Prosody
             # 🔒 Создание сессии Fish Audio
             fish_session = FishSession(FISH_API_KEY)
             

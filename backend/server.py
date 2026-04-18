@@ -29,9 +29,13 @@ app = FastAPI(title="Miro.Care API")
 # ---------- HEALTH CHECK (K8s readiness/liveness probes) ----------
 @app.get("/")
 @app.get("/health")
+@app.get("/healthz")
+@app.get("/ready")
+@app.get("/readyz")
 @app.get("/api")
 @app.get("/api/")
 @app.get("/api/health")
+@app.get("/api/healthz")
 async def health():
     return {"status": "ok"}
 

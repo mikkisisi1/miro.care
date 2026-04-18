@@ -8,7 +8,6 @@ from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from bson import ObjectId
-from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest
 
 from database import db
 from auth_utils import get_current_user
@@ -23,7 +22,9 @@ class CheckoutRequest(BaseModel):
     origin_url: str
 
 
-def _get_stripe_checkout(request: Request) -> StripeCheckout:
+def _get_stripe_checkout(request: Request):
+    # Ленивый импорт emergentintegrations — ускоряет cold-start backend.
+    from emergentintegrations.payments.stripe.checkout import StripeCheckout
     host_url = str(request.base_url).rstrip("/") + "/"
     webhook_url = f"{host_url}api/webhook/stripe"
     return StripeCheckout(
@@ -103,6 +104,7 @@ async def create_checkout(req: CheckoutRequest, request: Request):
             raise HTTPException(400, "Test tariff already used")
         return await activate_test_tariff(user["_id"])
 
+    from emergentintegrations.payments.stripe.checkout import CheckoutSessionRequest
     stripe_checkout = _get_stripe_checkout(request)
     checkout_req = CheckoutSessionRequest(
         amount=float(tariff["price"]),

@@ -22,6 +22,7 @@ Hybrid AI-psychologist platform (React + FastAPI + MongoDB) with Fish Audio s1 s
 - 2026-04-18: Rolled back unauthorized deployment fixes (metrics, lazy loading) at user's request
 - 2026-04-18: Added minimal `/health` and `/api/health` endpoints (5 lines) to fix K8s readiness probe / Cloudflare 520 on deploy. TTS verified working (200, valid MP3).
 - 2026-04-18: Moved DB init (`create_index`, `seed_admin`) into a background task via `asyncio.create_task` so uvicorn signals "Application startup complete" immediately. This fixes the Cloudflare 520 during deploy where Atlas connection at startup was blocking readiness past the 120s wrapper timeout. Verified: all health endpoints return 200 locally and on preview URL.
+- 2026-04-18: **Root-cause fix for deployment 520** — pod logs showed backend took 33s of module-import time before uvicorn started, exceeding the pod wrapper's startup wait. Moved heavy SDK imports to lazy (inside functions): `openai.AsyncOpenAI` (chat.py), `fish_audio_sdk` (tts.py), `emergentintegrations.llm.openai.OpenAISpeechToText` (stt.py), `emergentintegrations.payments.stripe.checkout` (payments.py). Cold-start import time now **0.45s (was 33s, 70x speedup)**. Added extra health paths for probe safety: `/healthz`, `/readyz`, `/api/healthz`. Verified: 8 health paths → 200, chat → 200, no functional regressions.
 
 ## Backlog (P2)
 - Email/push notifications 24h before consultation
