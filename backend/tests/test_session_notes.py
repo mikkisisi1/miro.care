@@ -11,7 +11,7 @@ import uuid
 
 BASE_URL: str = os.environ.get(
     'REACT_APP_BACKEND_URL',
-    'https://psych-assistant-app.preview.emergentagent.com'
+    'https://empathic-engine.preview.emergentagent.com'
 ).rstrip('/')
 
 TEST_USER_EMAIL = os.environ.get("TEST_USER_EMAIL", "test@test.com")
