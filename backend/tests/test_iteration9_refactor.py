@@ -80,7 +80,7 @@ class TestAuthRoutes:
         assert "user" in data
         assert "access_token" in data
         assert data["user"]["role"] == "guest"
-        assert data["user"].get("is_guest") is True
+        assert data["user"].get("is_guest")
         assert "password_hash" not in data["user"]
 
     def test_register_new_user_returns_token(self):

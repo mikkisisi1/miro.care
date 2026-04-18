@@ -105,7 +105,9 @@ export default function useChat(user, lang, refreshUser, onAIMessage) {
           });
           setLoading(false);
           return;
-        } catch (_) {} // eslint-disable-line no-empty
+        } catch (retryErr) {
+          if (process.env.NODE_ENV === 'development') console.error('Chat 401 retry failed:', retryErr?.message);
+        }
       }
       setMessages(prev => [...prev, {
         role: 'ai',

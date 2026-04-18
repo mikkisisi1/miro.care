@@ -151,7 +151,9 @@ export const useSpeechRecognition = (language = 'ru') => {
     if (isListening) return;
 
     if (recognitionRef.current) {
-      try { recognitionRef.current.abort(); } catch (_) {} // eslint-disable-line no-empty
+      try { recognitionRef.current.abort(); } catch (err) {
+        if (process.env.NODE_ENV === 'development') console.debug('[STT] abort ignored:', err?.message);
+      }
     }
     setTranscript('');
 
@@ -167,10 +169,14 @@ export const useSpeechRecognition = (language = 'ru') => {
 
   const stopListening = useCallback(() => {
     if (modeRef.current === 'native' && recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch (_) {} // eslint-disable-line no-empty
+      try { recognitionRef.current.stop(); } catch (err) {
+        if (process.env.NODE_ENV === 'development') console.debug('[STT] stop ignored:', err?.message);
+      }
     }
     if (modeRef.current === 'whisper' && mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      try { mediaRecorderRef.current.stop(); } catch (_) {} // eslint-disable-line no-empty
+      try { mediaRecorderRef.current.stop(); } catch (err) {
+        if (process.env.NODE_ENV === 'development') console.debug('[STT] recorder stop ignored:', err?.message);
+      }
       return; // onstop обработает setIsListening(false)
     }
     setIsListening(false);
