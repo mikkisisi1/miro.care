@@ -56,6 +56,7 @@ export default function useChat(user, lang, refreshUser, onAIMessage) {
         session_id: sessionIdRef.current,
         problem: user?.selected_problem,
         language: lang,
+        voice: activeVoice || user?.selected_voice || 'male',
       });
 
       const aiMsg = {
@@ -89,6 +90,7 @@ export default function useChat(user, lang, refreshUser, onAIMessage) {
             session_id: sessionIdRef.current,
             problem: user?.selected_problem,
             language: lang,
+            voice: activeVoice || user?.selected_voice || 'male',
           });
           const aiMsg = {
             role: 'ai',
@@ -117,7 +119,7 @@ export default function useChat(user, lang, refreshUser, onAIMessage) {
     } finally {
       setLoading(false);
     }
-  }, [user?.selected_problem, lang]);
+  }, [user?.selected_problem, user?.selected_voice, lang, activeVoice]);
 
   const startNewSession = useCallback(() => {
     sessionIdRef.current = `session_${Date.now()}`;

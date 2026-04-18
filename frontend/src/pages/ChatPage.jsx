@@ -52,7 +52,7 @@ export default function ChatPage() {
     }
   }, [ttsEnabled, playTTS, activeVoice]);
 
-  const { messages, sendMessage, loading, sessionId, setMessages, historyLoaded } = useChat(user, lang, refreshUser, handleAIMessage);
+  const { messages, sendMessage, loading, sessionId, setMessages, historyLoaded } = useChat(user, lang, refreshUser, handleAIMessage, activeVoice);
 
   // If history loaded with messages, skip voice selection
   useEffect(() => {

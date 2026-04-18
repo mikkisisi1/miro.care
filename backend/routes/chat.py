@@ -59,6 +59,7 @@ class ChatRequest(BaseModel):
     agent_id: Optional[str] = None
     language: Optional[str] = "ru"
     problem: Optional[str] = None
+    voice: Optional[str] = None  # "male" (Мирон) | "female" (Оксана) — для корректного рода в ответе
 
 
 class ChatImageRequest(BaseModel):
@@ -240,16 +241,37 @@ async def _handle_search_tag(session_id: str, ai_text: str) -> str:
     return await call_openrouter(messages)
 
 
-async def _init_session(session_id: str, problem: Optional[str], language: str, user_id: Optional[str]) -> None:
+async def _init_session(session_id: str, problem: Optional[str], language: str, user_id: Optional[str], voice: Optional[str] = None) -> None:
     """Initialize or update chat session with system prompt."""
     language = language or "ru"
     problem_context = find_problem_context(problem)
     personal_context = await load_personal_context(user_id)
     lang_instruction = f"\n\nОтвечай на языке: {language}"
-    system_msg = SYSTEM_PROMPT + SEARCH_INSTRUCTION + problem_context + personal_context + lang_instruction
+
+    # Гендерная директива — чтобы Мирон не говорил о себе в женском роде, а Оксана в мужском.
+    # Ставим В НАЧАЛО системного промпта — Claude лучше следует первым инструкциям.
+    voice = (voice or "male").lower()
+    if voice == "female":
+        persona_directive = (
+            "🔒 ТВОЯ ЛИЧНОСТЬ (САМОЕ ВАЖНОЕ ПРАВИЛО):\n"
+            "Тебя зовут ОКСАНА. Ты — ЖЕНЩИНА-психолог.\n"
+            "О СЕБЕ ГОВОРИ ТОЛЬКО В ЖЕНСКОМ РОДЕ: «я рада», «я поняла», «я услышала», «я подумала», «я хотела бы».\n"
+            "Если пользователь спросит как тебя зовут — отвечай: «Меня зовут Оксана».\n"
+            "ЗАПРЕЩЕНО: называть себя Мироном или говорить о себе в мужском роде.\n\n"
+        )
+    else:
+        persona_directive = (
+            "🔒 ТВОЯ ЛИЧНОСТЬ (САМОЕ ВАЖНОЕ ПРАВИЛО):\n"
+            "Тебя зовут МИРОН. Ты — МУЖЧИНА-психолог.\n"
+            "О СЕБЕ ГОВОРИ ТОЛЬКО В МУЖСКОМ РОДЕ: «я рад», «я понял», «я услышал», «я подумал», «я хотел бы».\n"
+            "Если пользователь спросит как тебя зовут — отвечай: «Меня зовут Мирон».\n"
+            "ЗАПРЕЩЕНО: называть себя Оксаной или говорить о себе в женском роде.\n\n"
+        )
+
+    system_msg = persona_directive + SYSTEM_PROMPT + SEARCH_INSTRUCTION + problem_context + personal_context + lang_instruction
 
     if session_id in chat_histories:
-        # Update system prompt if language changed
+        # Update system prompt if language/voice changed
         chat_histories[session_id][0] = {"role": "system", "content": system_msg}
         _touch_session(session_id)
         return
@@ -387,16 +409,20 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             req.problem or user.get("selected_problem"),
             req.language or user.get("selected_language", "ru"),
             user_id,
+            req.voice or user.get("selected_voice") or "male",
         )
 
         chat_histories[session_id].append({"role": "user", "content": req.message})
 
-        # Динамическая длина — добавляем подсказку как временное system-сообщение,
-        # чтобы живая беседа не была однообразной. В историю не сохраняем.
+        # Динамическая длина — добавляем подсказку НА КОНЕЦ основного system-промпта,
+        # чтобы не создавать второе system-сообщение, которое может перебить персонажа.
         length_mode = pick_length_mode(req.message)
-        directive = {"role": "system", "content": build_length_directive(length_mode)}
+        length_hint = build_length_directive(length_mode)
         base_messages = _trim_messages(chat_histories[session_id])
-        messages = base_messages + [directive]
+        messages = [dict(m) for m in base_messages]
+        # Модифицируем первое system-сообщение — добавляем ориентир длины в конец.
+        if messages and messages[0].get("role") == "system":
+            messages[0]["content"] = messages[0]["content"] + length_hint
 
         ai_response = await call_openrouter(messages)
         ai_response = await _handle_search_tag(session_id, ai_response)
@@ -466,7 +492,7 @@ async def chat_image_endpoint(req: ChatImageRequest, request: Request):
     session_id = f"{user_id or 'anon'}_{req.session_id}"
     lang = req.language or user.get("selected_language", "ru")
 
-    await _init_session(session_id, req.problem or user.get("selected_problem"), lang, user_id)
+    await _init_session(session_id, req.problem or user.get("selected_problem"), lang, user_id, user.get("selected_voice") or "male")
     chat_histories[session_id].append({"role": "user", "content": "[Пользователь отправил фото]"})
 
     vision_msg = {
