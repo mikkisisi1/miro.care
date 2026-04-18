@@ -1,112 +1,47 @@
 # Miro.Care — PRD
 
-## Problem Statement
-Приложение «ИИ-психолог онлайн» (Miro.Care) — гибридная платформа психологической помощи: ИИ-ассистент (Мирон/Оксана) + живые специалисты, голосовой ввод/вывод, тарифы через Stripe, бронирование консультаций.
+## Original Problem Statement
+Hybrid AI-psychologist platform (React + FastAPI/MongoDB) with voice synthesis (Fish Audio s1 streaming), emotional markers, locked landing page CSS, multi-language support, responsive UI, and "thinking/replying" indicator.
 
-## Stack
-- Frontend: React 19 + Craco + Tailwind + shadcn/ui + react-router-dom 7
-- Backend: FastAPI + Motor (MongoDB)
-- LLM: OpenRouter (Claude Sonnet 4.5 / Mistral fallback) — **требует OPENROUTER_API_KEY**
-- TTS: Fish Audio — **требует FISH_AUDIO_API_KEY**
-- STT: Whisper через `emergentintegrations` + `EMERGENT_LLM_KEY` ✓
-- Payments: Stripe через `emergentintegrations` (test key задан)
-- Web search: duckduckgo_search (для кризисных запросов)
+Recent refinement: Replace Oksana's voice ID with new "Girl" voice (`fd40a0d632964604b26c5be764da3ea2`).
 
-## Status (2026-04-18)
-### ✓ Сделано в этой сессии
-- Клонирован репо `mikkisisi1/miro.care` в рабочее окружение
-- Установлены зависимости (requirements.txt + yarn)
-- Прописаны `JWT_SECRET`, `EMERGENT_LLM_KEY`, `STRIPE_API_KEY`, `OPENROUTER_API_KEY`, `FISH_AUDIO_API_KEY` в `backend/.env`
-- Fixed: дублированный блок `check_user_access`/`session_id` в `/api/chat` (мёртвый код)
-- Fixed: устаревшее значение `minutes_left` в ответе `/api/chat` (теперь возвращается post-update)
-- Fixed: утечка памяти в `chat_histories` (теперь LRU-cap на 500 сессий через `OrderedDict`)
-- Fixed: невнятная 500-ка при отсутствии ключа LLM — теперь чистый 503 "AI provider key not configured"
-- **Обновлён SYSTEM_PROMPT** на «Empathic Engine» (валидация → эмпатия → один вопрос-маяк, правила для Fish Audio TTS: числа словами, без списков/звёздочек, эмоциональные междометия, лимит ~250 симв.)
-- Проверено вживую: нормальный диалог, короткий «не знаю», кризис/самовред — все три кейса обрабатываются по ТЗ
-- Админ-сид проверен, логин `admin@miro.care` работает
-- E2E подтверждено curl'ом: Claude Sonnet 4.5 отвечает, Fish Audio отдаёт MP3
+## User's Preferred Language
+Russian (RU). Always respond in Russian.
 
-### ✅ Новое: ЗАЩИЩЁННАЯ ГОЛОСОВАЯ КОНФИГУРАЦИЯ (18 апреля 2026)
-🔒 **КРИТИЧНО: НЕ ИЗМЕНЯТЬ БЕЗ СОГЛАСОВАНИЯ** 🔒
+## Key Architecture
+- `/app/backend/` — FastAPI entry (`server.py`), `config.py` (SYSTEM_PROMPT), `voice_config.py` (Fish Audio settings, DESIGN-LOCKED), `routes/chat.py`, `routes/tts.py`
+- `/app/frontend/` — React, locked landing CSS in `App.css`, `pages/ChatPage.jsx`, `hooks/useAudioStream.js` (MediaSource API streaming)
 
-**Реализовано:**
-- **Эмоциональный контроль Fish Audio** — автоматическое добавление маркеров `(calm)(soft tone)` для эмпатичной манеры речи
-- **Prosody управление** — speed=0.88 (медленнее на 12% для спокойной речи), volume=4 dB
-- **Естественные паузы** — автоматическое добавление `(sighing)` перед междометиями (хм, ох, эх)
-- **Задумчивость** — `(thoughtful)` для многоточий "..."
-- **Защита конфигурации** — создан `/app/backend/voice_config.py` (защищённый от изменений)
-- **Обновлён System Prompt** — добавлены правила для генерации текста, совместимого с эмоциями Fish Audio
-- **Стриминг TTS** — сохранён полный функционал потоковой озвучки
+## Locked Areas (DO NOT MODIFY)
+- `/app/frontend/src/App.css` landing page styles
+- `voice_config.py` voice IDs, prosody, emotion markers
 
-**Характеристики голоса (достигнуты):**
-- ✅ Профессиональный (через calm + медленную скорость)
-- ✅ Спокойный (через calm + soft tone)
-- ✅ Живой (через междометия с sighing)
-- ✅ Внимательный (через thoughtful)
-- ✅ Естественные паузы (через sighing + многоточия)
-- ✅ Эмпатичный (через warm + gentle)
-- ✅ Тёплый (через soft tone + warm)
+## DB Schema
+- `users`: {_id, email, hashed_password, role, minutes_left, free_messages_count, user_display_name, session_notes}
+- `chat_messages`: {user_id, session_id, user_message, ai_response, timestamp, problem}
 
-**Защищённые файлы:**
-- `/app/backend/voice_config.py` 🔒 (конфигурация голосов, Prosody, эмоций)
-- `/app/backend/routes/tts.py` 🔒 (логика TTS с эмоциями и Prosody)
-- `/app/backend/config.py` 🔒 (SYSTEM_PROMPT с правилами для TTS)
-- `/app/VOICE_CONFIG_README.md` 📖 (полная документация)
+## 3rd-Party Integrations
+- OpenRouter (Claude Sonnet 4.5) — `OPENROUTER_API_KEY`
+- Fish Audio (voice synthesis, s1 model) — `FISH_AUDIO_API_KEY`
+- Stripe (test key in env)
+- Emergent LLM key (universal)
 
-**Тестирование:**
-- ✅ Мужской голос (Мирон) с эмоциями — работает
-- ✅ Женский голос (Оксана) с эмоциями — работает
-- ✅ Prosody (speed=0.88, volume=4) — применяется
-- ✅ Автоматические паузы для "Хм...", "Эх..." — добавляются
-- ✅ Полный флоу: Чат → LLM → TTS с эмоциями — работает
+## Completed (Feb 2026)
+- [2026-02] Fish Audio female voice ID changed from Oksana to "Girl" (`fd40a0d632964604b26c5be764da3ea2`) in `voice_config.py` + `.env`. TTS verified via curl.
+- [2026-02] **DEPLOYMENT FIX**: Cleaned `/app/.gitignore` — removed 9 duplicate blocks that were blocking `.env` files from being deployed, causing Cloudflare 520 errors on miro.care. User needs to redeploy.
 
-### ✓ Добавлено 2026-02-18
-- **Индикатор "думает/отвечает"** — маленькая неоновая cyan точка пульсирует на ободке активного аватара (Miron/Oksana), пока `loading || playingTTS`.
-  - Файлы: `ChatPage.jsx` (пропс `isBusy`), `ChatHeader.jsx` (рендер `.xc-chat-thinking-dot`), `App.css` (keyframes `thinkingNeonPulse`).
-  - Проверено вживую в превью: точка появляется при отправке сообщения и исчезает после ответа.
-- **Fix (Feb 2026): Fish emotion-маркеры в тексте ответа** — LLM иногда вставлял `(calm)`, `(soft tone)`, `(warm)(gentle)`, `(sighing)`, `(thoughtful)` в видимый текст. Добавлен `strip_emotion_markers()` в `routes/chat.py`, который вырезает короткие ASCII-маркеры в скобках из `ai_response` перед сохранением в историю/БД и возвратом на фронт. TTS продолжает добавлять свои маркеры независимо через `tts.py`. Русские/многословные вставки в скобках не затрагиваются.
-- **Убрана статическая зелёная точка** `.xc-status-online` с ободка аватара в `ChatHeader.jsx`. Осталась только пульсирующая неоновая cyan точка «думает/отвечает».
+## Known Notes
+- UI still shows "Оксана" name — user decided to keep the name unchanged, only the voice was swapped.
+- `routes/chat.py` has high cyclomatic complexity; postpone refactor to avoid regressions.
 
-### ✓ Полный регресс-тест 2026-02-19
-Прошло **29/29 тестов** (19 iteration15 + 10 strip_emotion_markers). Подтверждено:
-- AI-ответы без emotion-маркеров в видимом тексте (strip_emotion_markers работает)
-- Мультиязычность чата: ru/en/es/de/fr/zh подтверждены (ответ на языке запроса)
-- Whisper STT: LANG_MAP на 8 языков (ru/en/zh/es/ar/fr/de/hi) пробрасывается корректно
-- Empathic Engine: валидация → эмпатия → один вопрос-маяк, ≤250 симв., без списков/звёздочек
-- Этический фильтр: кризисные сообщения триггерят упоминание горячей линии 8-800-2000-122
-- Multi-turn session context сохраняется между сообщениями
-- TTS (Fish Audio) возвращает audio/mpeg
-- Responsive: 375x667 (mobile), 768x1024 (tablet), 1920x1080 (desktop)
-- LOCKED файлы (`voice_config.py`, landing page в `App.css`) не тронуты
-- Test report: `/app/test_reports/iteration_15.json`
+## Backlog / Future Tasks (P2)
+- Email/push notifications 24h before consultation
+- YuKassa / Telegram Stars payments
+- PWA support
+- WebSockets for chat
+- Admin panel
 
-### ✓ 2026-04-18: TTS Streaming + Emotion Markers Bug Fix
-🔴 **Баг**: Fish Audio проговаривал `(calm)(soft tone)` вслух + большая задержка до первого звука.
-✅ **Исправления:**
-- `voice_config.py`: добавлены `FISH_BACKEND="s1"` и `FISH_LATENCY="balanced"`. Модель `s1` нативно интерпретирует emotion-маркеры как модуляцию голоса (speech-1.5 читала их как текст).
-- `routes/tts.py`: передаёт `backend="s1"` в `fish_session.tts()` и `latency="balanced"` в `TTSRequest`. Добавлен хедер `X-Accel-Buffering: no` для отключения буферизации в ingress.
-- `hooks/useAudioStream.js`: переписан на **MediaSource Extensions** — аудио играет по мере прихода чанков (TTFB ~81ms измерено), вместо ожидания полного blob. Fallback на blob для Safari iOS.
-- **Измерено**: TTFB 81ms, MP3 81KB за 1.8s (streaming рейт ~44KB/s). Пользователь слышит первый звук в ~200-400ms.
-- **Регресс-тест**: `/app/test_reports/iteration_16.json` — 12/12 пройдено.
-
-### ✓ 2026-04-18 (update): Приоритет — контекстная логика, а не длина
-- Переформулирован `SYSTEM_PROMPT` секция 6: главное — контекст. Длина может быть от 3 слов до развёрнутого абзаца.
-- `LENGTH_PROFILES` теперь описывают настроение, а не диапазоны символов. Директива формулируется как ОРИЕНТИР, не жёсткое правило.
-- Вопрос-маяк больше не обязателен в каждом ответе — разрешено просто «быть рядом».
-- Измерено: «Привет» → 25 симв., «спасибо» → 210, глубокая тема → 587. Ответы естественные.
-
-### ✓ 2026-04-18: Динамическая длина ответов (как в живой беседе)
-- `config.py` секция 6 переписана: SHORT (≤120 симв.) / MEDIUM (150-280) / LONG (320-500). Жёсткий лимит 250 убран.
-- `routes/chat.py` `pick_length_mode()`: выбирает режим случайно с весами 30/50/20 (short/medium/long). Очень короткая реплика пользователя («да», «не знаю», ≤12 симв.) → всегда short.
-- Директива длины инжектируется как system-сообщение только на текущий вызов, в историю не сохраняется — не засоряет контекст.
-- **Проверено**: 6 подряд ответов — 58/218/97/236/163/301 символов. Работает.
-
-### Backlog (P1)
-- Google Sign-In через Emergent Auth
-- Email/push-нотификации за сутки до консультации
-
-### Backlog (P2)
-- YuKassa / Telegram Stars платежи
-- PWA
-- WebSockets для чата
-- Admin-панель
+## Testing
+- `test_credentials.md`: see `/app/memory/test_credentials.md`
+- Backend smoke test: `curl $REACT_APP_BACKEND_URL/api/chat ...`
+- Preview URL (from frontend/.env `REACT_APP_BACKEND_URL`)
