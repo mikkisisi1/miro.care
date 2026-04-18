@@ -72,12 +72,11 @@ class ChatImageRequest(BaseModel):
 # ---------- HELPERS ----------
 SEARCH_TAG_RE = re.compile(r'\[SEARCH:\s*(.+?)\]')
 
-# Маркеры эмоций Fish Audio (`(calm)`, `(soft tone)`, `(warm)(gentle)`, ...),
+# Маркеры эмоций Fish Audio (`(calm)`, `[calm]`, `[warm][gentle]`, ...),
 # которые LLM иногда вставляет в ответ, хотя это служебные теги для TTS.
 # Вырезаем их из текста, который уходит пользователю — TTS добавит свои в tts.py.
-# Матчит только короткие ASCII-фразы в скобках (1-3 слова, буквы+пробел+дефис),
-# чтобы не задеть легитимные русские/английские вставки с заглавными буквами или цифрами.
-EMOTION_MARKER_RE = re.compile(r'\(\s*[a-z][a-z\s\-]{0,30}\)', re.IGNORECASE)
+# Матчит короткие ASCII-фразы в круглых/квадратных скобках (поддержка S1 и S2-Pro).
+EMOTION_MARKER_RE = re.compile(r'[\(\[]\s*[a-z][a-z\s\-]{0,30}[\)\]]', re.IGNORECASE)
 
 
 def strip_emotion_markers(text: str) -> str:
