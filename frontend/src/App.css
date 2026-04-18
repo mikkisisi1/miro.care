@@ -79,6 +79,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 }
 
 /* Photo — full width on desktop, crop bottom only, top aligned */
+/* DESIGN LOCKED: Photo scaled to 20% to hide top border — DO NOT MODIFY */
 .landing-photo {
   position: absolute; left: 0; top: 0; z-index: 1;
   width: 100%; height: 100%;
@@ -115,6 +116,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 }
 
 /* Brand outside glass */
+/* DESIGN LOCKED: Logo positioned closer to glass panel — DO NOT MODIFY */
 .landing-brand {
   position: absolute; z-index: 5;
   left: 40px; bottom: 290px;
@@ -127,6 +129,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   text-shadow: 0 4px 40px rgba(0,0,0,0.5);
 }
 @media (max-width: 768px) {
+  /* DESIGN LOCKED: Mobile logo position — DO NOT MODIFY */
   .landing-brand { left: 20px; top: auto; bottom: 310px; transform: none; }
   .landing-brand-miro, .landing-brand-care {
     font-size: clamp(3.75rem, 15vw, 6rem);
@@ -157,6 +160,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   font-family: var(--font-heading); font-size: 1.1rem; font-weight: 600;
   color: #FFFFFF; margin-bottom: 10px;
 }
+/* DESIGN LOCKED: Compact spacing for credentials list — DO NOT MODIFY */
 .landing-credentials-list {
   list-style: none; padding: 0; margin: 0;
   display: flex; flex-direction: column; gap: 4px;
@@ -181,6 +185,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   max-width: 500px; font-weight: 300;
 }
 
+/* DESIGN LOCKED: Compact CTA button size (halved) — DO NOT MODIFY */
 .landing-glass-cta {
   position: relative; overflow: hidden;
   display: inline-flex; align-items: center; justify-content: center;
