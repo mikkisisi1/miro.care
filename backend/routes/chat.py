@@ -4,6 +4,7 @@ Includes AI logic (OpenRouter + DuckDuckGo search).
 """
 import os
 import re
+import time
 import random
 import asyncio
 import logging
@@ -18,6 +19,7 @@ from openai import AsyncOpenAI
 from database import db
 from auth_utils import get_current_user
 from config import SYSTEM_PROMPT, PROBLEMS
+from metrics import record_chat_ok, record_chat_err
 
 logger = logging.getLogger(__name__)
 
@@ -356,6 +358,7 @@ def build_counter_updates(user: dict, is_free_phase: bool, free_count: int, ai_r
 # ---------- ENDPOINTS ----------
 @router.post("/chat")
 async def chat_endpoint(req: ChatRequest, request: Request):
+    t0 = time.perf_counter()
     # Мягкая авторизация — как в Xicon.online
     try:
         user = await get_current_user(request)
@@ -423,6 +426,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
         else:
             minutes_left_out = max(0, (user.get("minutes_left", 0) or 0) - 1)
 
+        record_chat_ok(int((time.perf_counter() - t0) * 1000))
         return {
             "message": ai_response,
             "type": "ai_response",
@@ -431,6 +435,7 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             "is_free_phase": is_free_phase,
         }
     except Exception as e:
+        record_chat_err()
         logger.error(f"Chat error: {e}")
         err_str = str(e)
         # Bubble up a cleaner message for unconfigured/invalid provider keys

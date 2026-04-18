@@ -8,6 +8,7 @@ TTS route: /tts — Fish Audio streaming synthesis with emotion control.
 """
 import os
 import re
+import time
 import logging
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -16,6 +17,7 @@ from typing import Optional
 from fish_audio_sdk import Session as FishSession, TTSRequest, Prosody
 
 from auth_utils import get_current_user
+from metrics import record_tts_ok, record_tts_err
 # 🔒 ЗАЩИЩЁННЫЙ ИМПОРТ: Все голосовые настройки из voice_config.py
 from voice_config import (
     FISH_API_KEY,
@@ -128,6 +130,8 @@ async def text_to_speech(req: TTSRequestModel, request: Request):
         
         🔒 НЕ ИЗМЕНЯТЬ: Использует Prosody для контроля скорости и громкости.
         """
+        t0 = time.perf_counter()
+        first_chunk_sent = False
         try:
             # 🔒 Создание сессии Fish Audio
             fish_session = FishSession(FISH_API_KEY)
@@ -150,9 +154,13 @@ async def text_to_speech(req: TTSRequestModel, request: Request):
             # Стриминг аудио чанков (backend=s1-mini поддерживает (calm)(soft tone))
             for chunk in fish_session.tts(tts_request, backend=FISH_BACKEND):
                 if chunk:
+                    if not first_chunk_sent:
+                        record_tts_ok(int((time.perf_counter() - t0) * 1000))
+                        first_chunk_sent = True
                     yield chunk
                     
         except Exception as e:
+            record_tts_err()
             logger.error(f"Fish Audio TTS streaming error: {e}")
             # В случае ошибки возвращаем пустой чанк (чтобы не ломать стрим)
 
