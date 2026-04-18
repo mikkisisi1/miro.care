@@ -65,6 +65,20 @@
   - Файлы: `ChatPage.jsx` (пропс `isBusy`), `ChatHeader.jsx` (рендер `.xc-chat-thinking-dot`), `App.css` (keyframes `thinkingNeonPulse`).
   - Проверено вживую в превью: точка появляется при отправке сообщения и исчезает после ответа.
 - **Fix (Feb 2026): Fish emotion-маркеры в тексте ответа** — LLM иногда вставлял `(calm)`, `(soft tone)`, `(warm)(gentle)`, `(sighing)`, `(thoughtful)` в видимый текст. Добавлен `strip_emotion_markers()` в `routes/chat.py`, который вырезает короткие ASCII-маркеры в скобках из `ai_response` перед сохранением в историю/БД и возвратом на фронт. TTS продолжает добавлять свои маркеры независимо через `tts.py`. Русские/многословные вставки в скобках не затрагиваются.
+- **Убрана статическая зелёная точка** `.xc-status-online` с ободка аватара в `ChatHeader.jsx`. Осталась только пульсирующая неоновая cyan точка «думает/отвечает».
+
+### ✓ Полный регресс-тест 2026-02-19
+Прошло **29/29 тестов** (19 iteration15 + 10 strip_emotion_markers). Подтверждено:
+- AI-ответы без emotion-маркеров в видимом тексте (strip_emotion_markers работает)
+- Мультиязычность чата: ru/en/es/de/fr/zh подтверждены (ответ на языке запроса)
+- Whisper STT: LANG_MAP на 8 языков (ru/en/zh/es/ar/fr/de/hi) пробрасывается корректно
+- Empathic Engine: валидация → эмпатия → один вопрос-маяк, ≤250 симв., без списков/звёздочек
+- Этический фильтр: кризисные сообщения триггерят упоминание горячей линии 8-800-2000-122
+- Multi-turn session context сохраняется между сообщениями
+- TTS (Fish Audio) возвращает audio/mpeg
+- Responsive: 375x667 (mobile), 768x1024 (tablet), 1920x1080 (desktop)
+- LOCKED файлы (`voice_config.py`, landing page в `App.css`) не тронуты
+- Test report: `/app/test_reports/iteration_15.json`
 
 ### Backlog (P1)
 - Google Sign-In через Emergent Auth
