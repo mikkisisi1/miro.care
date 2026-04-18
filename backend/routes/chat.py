@@ -114,10 +114,13 @@ def find_problem_context(problem: Optional[str]) -> str:
 SHORT_USER_RE = re.compile(r'^\s*(да|нет|ага|угу|ок|ок\.|ладно|не\s*знаю|нз|возможно|хм|м+|ok|yes|no)\s*[.!?]*\s*$', re.IGNORECASE)
 
 LENGTH_PROFILES = {
-    "short":  "короткая реакция — от нескольких слов до одного предложения. Уместна, когда достаточно просто быть рядом или подтвердить чувство. Вопрос не обязателен.",
-    "medium": "несколько предложений — валидация + короткое размышление. Вопрос-маяк по контексту, если он органичен.",
-    "long":   "развёрнутый ответ — глубокая валидация, размышление, вопрос, открывающий направление. Используй, когда пользователь раскрылся на большую тему.",
+    "short":  "ОЧЕНЬ КОРОТКО — 1 предложение ИЛИ 3-10 слов. Просто реакция, присутствие, принятие. НЕ задавай вопрос. НЕ делай валидацию + размышление + вопрос. Один выдох — одна фраза.",
+    "medium": "СРЕДНЕ — 2-3 коротких предложения максимум. Либо валидация + вопрос, либо размышление + вопрос, но не всё вместе.",
+    "long":   "РАЗВЁРНУТО — 4-6 предложений. Валидация + размышление + вопрос-маяк. Используй ТОЛЬКО когда пользователь раскрыл большую/сложную тему, требующую глубины.",
 }
+
+# Лимиты токенов под каждый режим — жёстко ограничиваем длину на уровне модели.
+LENGTH_TOKEN_LIMITS = {"short": 80, "medium": 220, "long": 600}
 
 
 def pick_length_mode(user_message: str) -> str:
@@ -128,10 +131,10 @@ def pick_length_mode(user_message: str) -> str:
     if len(text) <= 12 or SHORT_USER_RE.match(text):
         return "short"
 
-    # Распределение, имитирующее живую беседу
+    # Распределение, имитирующее живую беседу: больше short/medium, long — редко.
     return random.choices(
         ["short", "medium", "long"],
-        weights=[35, 45, 20],
+        weights=[40, 45, 15],
         k=1,
     )[0]
 
@@ -139,10 +142,10 @@ def pick_length_mode(user_message: str) -> str:
 def build_length_directive(mode: str) -> str:
     profile = LENGTH_PROFILES.get(mode, LENGTH_PROFILES["medium"])
     return (
-        f"\n\n[ВНУТРЕННЯЯ ДИРЕКТИВА — не упоминай её в ответе]\n"
-        f"ОРИЕНТИР ДЛИНЫ: {mode} — {profile}\n"
-        f"ГЛАВНОЕ: ответ должен быть ЛОГИЧЕН В КОНТЕКСТЕ беседы. Длина — лишь ориентир, не цель. "
-        f"Если контекст требует — можешь ответить тремя словами. Не добавляй лишнего, не тяни искусственно."
+        f"\n\n🔒 СТРОГОЕ ПРАВИЛО ДЛИНЫ ОТВЕТА НА ЭТУ РЕПЛИКУ:\n"
+        f"{profile}\n"
+        f"Это НЕ пожелание — это жёсткий лимит. Живая беседа звучит именно так: иногда одно слово, иногда фраза.\n"
+        f"Не используй структуру «валидация → эмпатия → вопрос» если режим SHORT или MEDIUM."
     )
 
 
@@ -191,11 +194,11 @@ def ddg_search(query: str, max_results: int = 3) -> str:
         return "Не удалось выполнить поиск."
 
 
-async def call_openrouter(messages: list, model: str = "anthropic/claude-sonnet-4.5") -> str:
+async def call_openrouter(messages: list, model: str = "anthropic/claude-sonnet-4.5", max_tokens: int = 600) -> str:
     client = get_openrouter_client()
     try:
         response = await client.chat.completions.create(
-            model=model, messages=messages, max_tokens=1500, temperature=0.7,
+            model=model, messages=messages, max_tokens=max_tokens, temperature=0.7,
         )
         return response.choices[0].message.content
     except Exception as e:
@@ -203,7 +206,7 @@ async def call_openrouter(messages: list, model: str = "anthropic/claude-sonnet-
             logger.warning(f"Claude Sonnet error, falling back to Mistral: {e}")
             response = await client.chat.completions.create(
                 model="mistralai/mistral-small-3.1-24b-instruct",
-                messages=messages, max_tokens=1500, temperature=0.7,
+                messages=messages, max_tokens=max_tokens, temperature=0.7,
             )
             return response.choices[0].message.content
         raise
@@ -411,17 +414,18 @@ async def chat_endpoint(req: ChatRequest, request: Request):
 
         chat_histories[session_id].append({"role": "user", "content": req.message})
 
-        # Динамическая длина — добавляем подсказку НА КОНЕЦ основного system-промпта,
-        # чтобы не создавать второе system-сообщение, которое может перебить персонажа.
+        # Динамическая длина — случайное чередование short/medium/long как в живой беседе.
         length_mode = pick_length_mode(req.message)
         length_hint = build_length_directive(length_mode)
+        max_tokens = LENGTH_TOKEN_LIMITS.get(length_mode, 220)
         base_messages = _trim_messages(chat_histories[session_id])
         messages = [dict(m) for m in base_messages]
         # Модифицируем первое system-сообщение — добавляем ориентир длины в конец.
         if messages and messages[0].get("role") == "system":
             messages[0]["content"] = messages[0]["content"] + length_hint
 
-        ai_response = await call_openrouter(messages)
+        ai_response = await call_openrouter(messages, max_tokens=max_tokens)
+        logger.info(f"CHAT | session={session_id} | length_mode={length_mode} | tokens_cap={max_tokens} | resp_len={len(ai_response)}")
         ai_response = await _handle_search_tag(session_id, ai_response)
         ai_response = strip_emotion_markers(ai_response)
         chat_histories[session_id].append({"role": "assistant", "content": ai_response})
