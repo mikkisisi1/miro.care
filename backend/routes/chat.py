@@ -17,6 +17,7 @@ from bson import ObjectId
 from database import db
 from auth_utils import get_current_user
 from config import SYSTEM_PROMPT, PROBLEMS
+from problem_prompts import get_problem_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -103,10 +104,12 @@ SEARCH_INSTRUCTION = """
 def find_problem_context(problem: Optional[str]) -> str:
     if not problem:
         return ""
+    # Имя проблемы + полный методический под-промпт (КПТ / ACT / EFT / …)
     for p in PROBLEMS:
         if p["id"] == problem:
-            return f"\n\nПользователь выбрал проблему: {p['name']}. Учитывай это в диалоге."
-    return ""
+            name_line = f"\n\nПользователь выбрал проблему: {p['name']}. Учитывай это в диалоге."
+            return name_line + get_problem_prompt(problem)
+    return get_problem_prompt(problem)
 
 
 # ---------- DYNAMIC RESPONSE LENGTH ----------
@@ -196,14 +199,32 @@ def ddg_search(query: str, max_results: int = 3) -> str:
 
 async def call_openrouter(messages: list, model: str = "anthropic/claude-sonnet-4.5", max_tokens: int = 600) -> str:
     client = get_openrouter_client()
+    # Prompt caching для Anthropic: помечаем первое system-сообщение как кэшируемое.
+    # OpenRouter пробрасывает cache_control в Anthropic, что экономит до 90% токенов system-промпта
+    # при повторных вызовах в течение 5 минут.
+    cached_messages = messages
+    if model.startswith("anthropic/") and messages and messages[0].get("role") == "system" and isinstance(messages[0].get("content"), str):
+        cached_messages = [
+            {
+                "role": "system",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": messages[0]["content"],
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ],
+            }
+        ] + messages[1:]
     try:
         response = await client.chat.completions.create(
-            model=model, messages=messages, max_tokens=max_tokens, temperature=0.7,
+            model=model, messages=cached_messages, max_tokens=max_tokens, temperature=0.7,
         )
         return response.choices[0].message.content
     except Exception as e:
         if model == "anthropic/claude-sonnet-4.5":
             logger.warning(f"Claude Sonnet error, falling back to Mistral: {e}")
+            # Mistral не поддерживает cache_control — передаём plain messages.
             response = await client.chat.completions.create(
                 model="mistralai/mistral-small-3.1-24b-instruct",
                 messages=messages, max_tokens=max_tokens, temperature=0.7,

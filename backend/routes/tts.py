@@ -135,6 +135,8 @@ async def text_to_speech(req: TTSRequestModel, request: Request):
             # 🔒 Создание TTS запроса с эмоциями и Prosody
             # normalize=False — КРИТИЧНО для русского: сохраняет Unicode-ударения `́`
             # (иначе Fish вырежет диакритику при нормализации текста).
+            # chunk_length=100 — меньший chunk ⇒ первый аудио-чанк приходит быстрее,
+            # воспроизведение стартует практически мгновенно (важно для «живой» беседы).
             tts_request = TTSRequest(
                 text=text,
                 reference_id=voice_id,
@@ -142,6 +144,7 @@ async def text_to_speech(req: TTSRequestModel, request: Request):
                 format="mp3",
                 latency=FISH_LATENCY,  # "balanced" для низкой задержки стриминга
                 normalize=False,
+                chunk_length=100,
             )
             
             # Стриминг аудио чанков (backend=s1-mini поддерживает (calm)(soft tone))
