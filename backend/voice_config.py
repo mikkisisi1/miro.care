@@ -31,7 +31,7 @@ FISH_LATENCY = os.environ.get("FISH_LATENCY", "balanced")
 # 🔒 НЕ ИЗМЕНЯТЬ: ID референсных голосов для агентов
 VOICE_IDS = {
     "male": os.environ.get("FISH_VOICE_MALE", "5cfccfb8aae14938be283ea6400b4a8a"),      # Мирон (мужской)
-    "female": os.environ.get("FISH_VOICE_FEMALE", "7a98513e3a7d439682fa68f8d4da34c0"),  # Оксана (женский, новый голос)
+    "female": os.environ.get("FISH_VOICE_FEMALE", "7a98513e3a7d439682fa68f8d4da34c0"),  # Оксана (женский)
 }
 
 # ========== PROSODY НАСТРОЙКИ ==========
