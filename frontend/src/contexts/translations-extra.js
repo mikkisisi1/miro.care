@@ -163,3 +163,45 @@ export function getGreeting(lang, voice) {
   const langGreets = GREETINGS[lang] || GREETINGS.en;
   return langGreets[voice] || langGreets.male;
 }
+
+// Приветствие при переключении агента посреди диалога — без повторного запроса имени,
+// коротко, с намёком что контекст сохранён и можно продолжать.
+const SWITCH_GREETINGS = {
+  ru: {
+    male: 'Здравствуйте, теперь с вами я — Мирон. Я вижу наш разговор. О чём продолжим?',
+    female: 'Здравствуйте, теперь с вами я — Оксана. Я вижу наш разговор. О чём продолжим?',
+  },
+  en: {
+    male: "Hello, I'm Miron — I'll be with you now. I can see our conversation. Where would you like to continue?",
+    female: "Hello, I'm Oksana — I'll be with you now. I can see our conversation. Where would you like to continue?",
+  },
+  zh: {
+    male: '您好，现在由我 — 米伦 — 来陪您。我已了解之前的对话，想从哪里继续？',
+    female: '您好，现在由我 — 奥克萨娜 — 来陪您。我已了解之前的对话，想从哪里继续？',
+  },
+  es: {
+    male: 'Hola, ahora estaré yo contigo — soy Mirón. Ya estoy al tanto de nuestra conversación. ¿Por dónde seguimos?',
+    female: 'Hola, ahora estaré yo contigo — soy Oksana. Ya estoy al tanto de nuestra conversación. ¿Por dónde seguimos?',
+  },
+  ar: {
+    male: 'مرحبًا، أنا ميرون — سأكون معك الآن. أطَّلعت على حديثنا، من أين نكمل؟',
+    female: 'مرحبًا، أنا أوكسانا — سأكون معك الآن. أطَّلعت على حديثنا، من أين نكمل؟',
+  },
+  fr: {
+    male: "Bonjour, c'est moi qui prends la suite — Miron. Je vois notre conversation. Par où continuons-nous ?",
+    female: "Bonjour, c'est moi qui prends la suite — Oksana. Je vois notre conversation. Par où continuons-nous ?",
+  },
+  de: {
+    male: 'Hallo, jetzt bin ich bei Ihnen — Miron. Ich kenne unser Gespräch. Wo machen wir weiter?',
+    female: 'Hallo, jetzt bin ich bei Ihnen — Oksana. Ich kenne unser Gespräch. Wo machen wir weiter?',
+  },
+  hi: {
+    male: 'नमस्ते, अब मैं — मिरोन — आपके साथ हूँ। हमारी बातचीत मेरे सामने है, कहाँ से जारी रखें?',
+    female: 'नमस्ते, अब मैं — ओक्साना — आपके साथ हूँ। हमारी बातचीत मेरे सामने है, कहाँ से जारी रखें?',
+  },
+};
+
+export function getSwitchGreeting(lang, voice) {
+  const langGreets = SWITCH_GREETINGS[lang] || SWITCH_GREETINGS.en;
+  return langGreets[voice] || langGreets.male;
+}

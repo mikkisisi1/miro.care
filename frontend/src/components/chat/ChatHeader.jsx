@@ -20,7 +20,6 @@ export default function ChatHeader({
           <button
             className={`xc-chat-avatar-item ${!voiceChosen ? 'xc-avatar-selectable' : ''} ${activeVoice === 'male' ? 'xc-avatar-active' : ''} ${voiceChosen && activeVoice !== 'male' ? 'xc-avatar-dim' : ''}`}
             onClick={() => onVoiceSelect('male')}
-            disabled={voiceChosen}
             data-testid="avatar-miron-btn"
           >
             <div className="xc-chat-avatar-wrapper">
@@ -32,7 +31,6 @@ export default function ChatHeader({
           <button
             className={`xc-chat-avatar-item ${!voiceChosen ? 'xc-avatar-selectable' : ''} ${activeVoice === 'female' ? 'xc-avatar-active' : ''} ${voiceChosen && activeVoice !== 'female' ? 'xc-avatar-dim' : ''}`}
             onClick={() => onVoiceSelect('female')}
-            disabled={voiceChosen}
             data-testid="avatar-oksana-btn"
           >
             <div className="xc-chat-avatar-wrapper">

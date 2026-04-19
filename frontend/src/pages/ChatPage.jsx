@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Send, Mic, Camera } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getGreeting } from '@/contexts/translations-extra';
+import { getGreeting, getSwitchGreeting } from '@/contexts/translations-extra';
 import BurgerMenu from '@/components/BurgerMenu';
 import ChatHeader from '@/components/chat/ChatHeader';
 import MessageList from '@/components/chat/MessageList';
@@ -101,9 +101,12 @@ export default function ChatPage() {
     return () => clearTimeout(timer);
   }, [messages, loading]);
 
-  // Voice selection handler
+  // Voice selection handler — первый выбор ИЛИ переключение агента посреди диалога.
   const handleVoiceSelect = async (voice) => {
-    if (voiceChosen) return;
+    // Клик по уже активному агенту — ничего не делаем.
+    if (voice === activeVoice) return;
+
+    const isSwitch = voiceChosen && messages.length > 0;
     setActiveVoice(voice);
     setVoiceChosen(true);
 
@@ -114,20 +117,37 @@ export default function ChatPage() {
       if (process.env.NODE_ENV === 'development') console.error('Voice save failed:', err.message);
     }
 
-    setMessages([{
-      role: 'ai',
-      content: GREETINGS[voice],
-      id: `greeting_${Date.now()}`,
-    }]);
+    // Текст приветствия: при первом выборе — полный, при переключении — короткий «продолжим».
+    const greetingText = isSwitch
+      ? getSwitchGreeting(lang, voice)
+      : (getGreeting(lang, voice) || GREETINGS[voice]);
 
-    // Play greeting from cache using persistent audio element (Xicon pattern)
-    const cachedUrl = greetingCacheRef.current[voice];
+    // Остановить текущую озвучку предыдущего агента, если играет.
+    stopTTS();
+
+    if (isSwitch) {
+      // Добавляем приветствие нового агента к существующей истории — диалог продолжается.
+      setMessages(prev => [
+        ...prev,
+        { role: 'ai', content: greetingText, id: `switch_${voice}_${Date.now()}` },
+      ]);
+    } else {
+      setMessages([{
+        role: 'ai',
+        content: greetingText,
+        id: `greeting_${Date.now()}`,
+      }]);
+    }
+
+    // Проигрываем приветствие новым голосом.
+    // При переключении используем live TTS (кэш в greetingCacheRef закэширован под полный текст первого приветствия).
+    const cachedUrl = !isSwitch ? greetingCacheRef.current[voice] : null;
     if (cachedUrl && audioElementRef.current) {
       const audio = audioElementRef.current;
       audio.src = cachedUrl;
       audio.play().catch(() => {});
     } else if (ttsEnabled) {
-      setTimeout(() => playTTS(GREETINGS[voice], 0, voice), 100);
+      setTimeout(() => playTTS(greetingText, isSwitch ? messages.length : 0, voice), 100);
     }
   };
 
