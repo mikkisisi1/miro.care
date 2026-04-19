@@ -15,6 +15,11 @@ Hybrid AI-psychologist platform (React + FastAPI + MongoDB) with Fish Audio S2-P
 - Multi-language (ru/en/zh/es/ar/fr/de/hi), responsive mobile + desktop UI
 - Deployment to Emergent platform (K8s + Cloudflare) — currently blocked by platform wrapper timeout
 
+## 🔒 PERMANENT PROJECT RULES (apply to ALL future updates)
+1. **Always-fresh PWA** — users MUST see the latest deployed version on every revisit. Service Worker `/frontend/public/sw.js` uses network-first for HTML + assets, passes-through `/api/*`. Registration in `index.html` calls `reg.update()` on load and auto-reloads on `controllerchange`. **Never** switch to cache-first for the shell. Bump `CACHE` version when sw.js logic changes.
+2. **Voice IDs are locked to two values only.** Мирон = `5cfccfb8aae14938be283ea6400b4a8a`, Оксана = `7a98513e3a7d439682fa68f8d4da34c0`. No other voice IDs allowed anywhere in code, env, docs, or tests.
+3. **Landing page CSS (`App.css` 🔒 LOCKED SECTION) and `voice_config.py` are NEVER edited** without explicit user request.
+
 ## Locked / Protected
 - `voice_config.py` — Fish Audio voice IDs, prosody, emotion markers, cleanup rules
 - Landing-page CSS (`App.css` lines 70–240) — marked with 🔒 LOCKED SECTION banner
