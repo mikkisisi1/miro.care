@@ -62,12 +62,14 @@ export default function ChatPage() {
     }
   }, [historyLoaded, messages.length, voiceChosen, user?.selected_voice]);
 
-  // Pre-cache greeting TTS audio for both voices — для текущего языка интерфейса
+  // Pre-cache greeting TTS audio for both voices — для текущего языка интерфейса.
+  // Для Оксаны (ru) приветствие уже в виде pre-rendered MP3 — не греем TTS.
   useEffect(() => {
     if (voiceChosen) return;
     let cancelled = false;
 
     const preloadGreeting = async (voice) => {
+      if (voice === 'female' && lang === 'ru') return; // статический файл, кэш не нужен
       try {
         const token = getToken();
         const text = getGreeting(lang, voice) || GREETINGS[voice];
@@ -138,7 +140,16 @@ export default function ChatPage() {
       id: `greeting_${voice}_${Date.now()}`,
     }]);
 
-    // Приветствие озвучиваем: при первом выборе — из кэша, при переключении — live (кэш устарел по языку).
+    // Приветствие озвучиваем: для Оксаны (ru) — используем pre-rendered MP3 с её закреплённым голосом.
+    // Для остальных случаев — либо кэш, либо live TTS.
+    const isOksanaRu = voice === 'female' && lang === 'ru';
+    if (isOksanaRu && audioElementRef.current) {
+      const audio = audioElementRef.current;
+      // Cache-bust на случай устаревшего кеша — версию меняем при обновлении MP3.
+      audio.src = `${API_BASE}/static/greetings/oksana_ru.mp3?v=1`;
+      audio.play().catch(() => {});
+      return;
+    }
     const cachedUrl = !isSwitch ? greetingCacheRef.current[voice] : null;
     if (cachedUrl && audioElementRef.current) {
       const audio = audioElementRef.current;

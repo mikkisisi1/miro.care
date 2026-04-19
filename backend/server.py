@@ -9,6 +9,7 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 from fastapi import FastAPI, APIRouter
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
 from database import client, db
@@ -103,6 +104,11 @@ async def shutdown_db_client():
 
 # ---------- CORS & ROUTER ----------
 app.include_router(api_router)
+
+# Static greetings (pre-rendered MP3 in Oksana/Miron voice, served via CDN cache)
+STATIC_DIR = ROOT_DIR / "static"
+if STATIC_DIR.exists():
+    app.mount("/api/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 cors_origins = os.environ.get("CORS_ORIGINS", "*").split(",")
 frontend_url = os.environ.get("FRONTEND_URL", "")
