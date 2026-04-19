@@ -1,0 +1,69 @@
+{
+  "summary": "Iteration 17 testing covered: (1) Chat response truncation (no mid-word cuts), (2) Multilingual chat in 8 languages, (3) Gender switching between Miron/Oksana in new sessions, (4) Confidentiality answer based on SYSTEM_PROMPT section 7, (5) At-rest Fernet encryption (ENC1:: prefix verified in MongoDB, decrypted on /chat/history), (6) Backward-compat for legacy plaintext rows, (7) TTS for male/female voices in ru+en (audio/mpeg, valid MP3 header, >1KB). All 10 backend tests PASS. Frontend smoke passed: Miron greeting, send message, switch to Oksana shows fresh greeting with cleared history, click on already-active avatar is a no-op.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [
+      {
+        "flow": "TTS playback (MediaSource)",
+        "issue": "Console error 'TTS playback error: Failed to execute postMessage on Window: Request object could not be cloned' appears after sending a chat message. Audio playback still works via blob fallback. This is a pre-existing issue reported in iteration 16.",
+        "affected_selectors": ["useAudioStream.js"],
+        "priority": "LOW"
+      }
+    ],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration17_features.py",
+    "/app/test_reports/pytest/pytest_results_iter17.xml"
+  ],
+  "action_items": [
+    "Pre-existing: Fix MSE fallback postMessage error in useAudioStream.js (non-blocking, blob fallback works)"
+  ],
+  "critical_code_review_comments": [
+    "crypto_utils.py: correctly uses Fernet with ENC1:: prefix; decrypt falls back to raw value for legacy plaintext — idempotent and safe.",
+    "chat.py _truncate_to_sentence(): correctly handles finish_reason=='length' — tested 10 messages across short/medium/long modes, all end with proper punctuation (including CJK ?。 and Arabic ؟).",
+    "chat.py _init_session(): persona directive prepended to SYSTEM_PROMPT for correct Russian gender forms — verified both male and female forms are used correctly.",
+    "config.py SYSTEM_PROMPT §7 КОНФИДЕНЦИАЛЬНОСТЬ: response correctly explains privacy (confirmed: 'защищ', 'зашифр', 'между нами', 'только ты' keywords appear in AI reply).",
+    "/api/chat/history correctly decrypts both encrypted and legacy plaintext records.",
+    "ChatHeader.jsx: both avatars have no disabled attribute — always clickable (verified).",
+    "ChatPage.jsx handleVoiceSelect(): correctly ignores click on already-active avatar AND clears history via startNewSession() on switch (verified via UI test)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration17_features.py"
+  ],
+  "success_rate": {
+    "backend": "100% (10/10 tests passed)",
+    "frontend": "100% (all 4 smoke scenarios verified: Miron greeting, send, switch to Oksana with cleared history, no-op on active avatar re-click)"
+  },
+  "test_credentials": {
+    "admin": "admin@miro.care / MiroCare2026!",
+    "test_users": "Created on demand via POST /api/auth/register with TEST_iter17_<uuid>@example.com"
+  },
+  "seed_data_creation": "Per-module fresh user created via /api/auth/register; quota reset via direct MongoDB update before each test to avoid free_messages_count cap; legacy plaintext record inserted directly and cleaned up in backward-compat test.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "mocked_apis": {
+    "stripe": "MOCKED (sk_test_emergent)",
+    "fish_audio_tts": "LIVE (voice_id 7a98513e... for female confirmed, returns valid MP3)",
+    "openrouter_llm": "LIVE (Claude Sonnet 4.5)"
+  },
+  "context_for_next_testing_agent": "Iteration 17 verified: chat no longer truncates mid-word across short/medium/long modes and 8 languages; new Oksana voice ID 7a98513e3a7d439682fa68f8d4da34c0 works in TTS; at-rest Fernet encryption (ENC1::) is applied to chat_messages.user_message and chat_messages.ai_response, and users.session_notes; decrypt_text is backward-compatible. Gender switch via voice=male/female in a fresh session_id yields correct Russian gender forms. Frontend UI: both avatars always clickable; switching triggers startNewSession() and fresh greeting from translations-extra.getGreeting(lang, voice). Pre-existing low-priority frontend TTS MSE postMessage error persists. Test quota reset fixture resets free_messages_count/minutes_left in MongoDB so chat tests don't hit tariff prompt.",
+  "features_tested": {
+    "1_chat_no_mid_word_truncation": "PASS (10 prompts, all end with .!?… or CJK/Arabic equivalents)",
+    "2_multilingual": "PASS (ru, en, es, fr, de, zh, ar, hi — all return non-empty replies ending with language-appropriate punctuation)",
+    "3_gender_switching": "PASS (Miron uses masculine forms, Oksana uses feminine forms; different session_ids simulate startNewSession)",
+    "4_confidentiality_prompt": "PASS (AI answer contains ≥2 privacy keywords from: конфиден, защищ, зашифр, между, только, никто, доступ, безопас, личн)",
+    "5_at_rest_encryption_db": "PASS (raw MongoDB chat_messages.user_message & ai_response start with ENC1::; plaintext does not leak)",
+    "6_at_rest_encryption_api": "PASS (/api/chat/history/{sid} returns decrypted plaintext, no ENC1:: prefix)",
+    "7_encryption_backward_compat": "PASS (legacy plaintext row inserted directly is returned as-is via /chat/history)",
+    "8_tts_male_ru": "PASS (audio/mpeg, >1KB, valid MP3 header)",
+    "9_tts_female_ru_new_voice_id": "PASS (voice_id 7a98513e... returns valid MP3)",
+    "10_tts_male_en": "PASS",
+    "11_tts_female_en": "PASS",
+    "12_frontend_chat_flow": "PASS (register → /chat → click Miron → greeting → send 'Привет как дела?' → AI reply received → click Oksana → new Oksana greeting on screen, 'как дела' removed from history → click Oksana again → messages unchanged)"
+  }
+}
