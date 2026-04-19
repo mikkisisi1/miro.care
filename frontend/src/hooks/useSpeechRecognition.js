@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { API_BASE, getToken } from '@/lib/apiClient';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 function getSpeechAPI() {
   if (typeof window === 'undefined') return null;
@@ -7,6 +8,7 @@ function getSpeechAPI() {
 }
 
 export const useSpeechRecognition = (language = 'ru') => {
+  const { t } = useLanguage();
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [isSupported] = useState(() => {
@@ -62,7 +64,7 @@ export const useSpeechRecognition = (language = 'ru') => {
     recognition.onerror = (event) => {
       console.error('[STT] Ошибка:', event.error);
       if (event.error === 'not-allowed') {
-        alert('Доступ к микрофону запрещён. Разрешите в настройках браузера.');
+        alert(t('micDenied'));
       }
       setIsListening(false);
     };
@@ -76,7 +78,7 @@ export const useSpeechRecognition = (language = 'ru') => {
       console.error('[STT] Ошибка запуска:', e);
       setIsListening(false);
     }
-  }, []);
+  }, [t]);
 
   // === Whisper fallback (MediaRecorder → /api/stt) ===
   const startWhisper = useCallback(async () => {
@@ -139,13 +141,13 @@ export const useSpeechRecognition = (language = 'ru') => {
       recorder.start();
     } catch (err) {
       if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        alert('Доступ к микрофону запрещён. Разрешите в настройках браузера.');
+        alert(t('micDenied'));
       } else {
-        alert('Микрофон недоступен.');
+        alert(t('micUnavailable'));
       }
       setIsListening(false);
     }
-  }, []);
+  }, [t]);
 
   // === Public API ===
   const startListening = useCallback(() => {
@@ -164,9 +166,9 @@ export const useSpeechRecognition = (language = 'ru') => {
     } else if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       startWhisper();
     } else {
-      alert('Браузер не поддерживает распознавание речи.');
+      alert(t('browserNoSpeech'));
     }
-  }, [isListening, startNative, startWhisper]);
+  }, [isListening, startNative, startWhisper, t]);
 
   const stopListening = useCallback(() => {
     if (modeRef.current === 'native' && recognitionRef.current) {

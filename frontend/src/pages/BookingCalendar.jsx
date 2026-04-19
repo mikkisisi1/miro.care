@@ -1,14 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getMonthName, getWeekdayLabels } from '@/contexts/translations-extra';
 import { ArrowLeft, Check, X } from 'lucide-react';
 import apiClient from '@/lib/apiClient';
-
-const WEEKDAYS = { en: ['Mon','Tue','Wed','Thu','Fri'], ru: ['Пн','Вт','Ср','Чт','Пт'] };
-const MONTHS = {
-  en: ['January','February','March','April','May','June','July','August','September','October','November','December'],
-  ru: ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
-};
 
 export default function BookingCalendar() {
   const { t, lang } = useLanguage();
@@ -39,18 +34,18 @@ export default function BookingCalendar() {
       await apiClient.post('/bookings/book', { date, time_slot: timeSlot });
       await loadSlots();
     } catch (err) {
-      const detail = err.response?.data?.detail || 'Booking failed';
-      alert(typeof detail === 'string' ? detail : 'Booking failed');
+      const detail = err.response?.data?.detail;
+      alert(typeof detail === 'string' ? detail : t('bookingFailed'));
     } finally {
       setBooking(false);
     }
   };
 
   const monthName = calendar.length > 0
-    ? (MONTHS[lang] || MONTHS.en)[new Date(calendar[0].date).getMonth()]
+    ? getMonthName(lang, new Date(calendar[0].date).getMonth())
     : '';
   const year = calendar.length > 0 ? new Date(calendar[0].date).getFullYear() : '';
-  const wdLabels = WEEKDAYS[lang] || WEEKDAYS.en;
+  const wdLabels = getWeekdayLabels(lang);
 
   return (
     <div className="booking-page" data-testid="booking-page">
@@ -65,14 +60,14 @@ export default function BookingCalendar() {
       </header>
 
       <div className="booking-info">
-        <span className="booking-price">${price}/{lang === 'ru' ? 'час' : 'hr'}</span>
-        <span className="booking-advance">{t('advance') || 'Advance'}: {advancePercent}% (${price * advancePercent / 100})</span>
+        <span className="booking-price">${price}/{t('perHour')}</span>
+        <span className="booking-advance">{t('advance')}: {advancePercent}% (${price * advancePercent / 100})</span>
       </div>
 
       <div className="booking-legend">
-        <span className="legend-item"><span className="legend-dot legend-available" /> {lang === 'ru' ? 'Свободно' : 'Available'}</span>
-        <span className="legend-item"><span className="legend-dot legend-booked" /> {lang === 'ru' ? 'Занято' : 'Booked'}</span>
-        <span className="legend-item"><span className="legend-dot legend-own" /><Check size={12} /> {lang === 'ru' ? 'Ваше' : 'Yours'}</span>
+        <span className="legend-item"><span className="legend-dot legend-available" /> {t('available')}</span>
+        <span className="legend-item"><span className="legend-dot legend-booked" /> {t('booked')}</span>
+        <span className="legend-item"><span className="legend-dot legend-own" /><Check size={12} /> {t('yours')}</span>
       </div>
 
       <div className="booking-weekday-row">
@@ -120,7 +115,7 @@ export default function BookingCalendar() {
         })}
       </div>
 
-      <p className="booking-tz">{lang === 'ru' ? 'Время: Москва (UTC+3)' : 'Time: Moscow (UTC+3)'}</p>
+      <p className="booking-tz">{t('timeLabel')}</p>
     </div>
   );
 }

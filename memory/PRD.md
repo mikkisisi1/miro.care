@@ -33,6 +33,7 @@ Hybrid AI-psychologist platform (React + FastAPI + MongoDB) with Fish Audio S2-P
 - 2026-04-19: **Typing indicator** enhanced — avatar + 3-dot animation + localized label (`typingMiron`/`typingOksana` in 8 languages)
 - 2026-04-19: **TTS stability** — rewrote `useAudioStream.js` with clean MSE→blob fallback, handlers cleanup, silenced benign `AbortError`/`DataCloneError` from CRA HMR. Also reduced cyclomatic complexity.
 - 2026-04-19: **Landing CSS lock** — wrapped lines 70–240 in explicit 🔒 LOCKED SECTION banner
+- 2026-04-19: **i18n pass #2** — fixed hardcoded Russian strings: ChatPage alert & greeting pre-cache (now uses current `lang`), useChat error message, useSpeechRecognition alerts (3 places), PaymentSuccess fallback strings, BookingCalendar (legend/tz/price unit/month/weekday names). Added translation keys: `errorTryAgain`, `bookingFailed` in all 8 languages. `ChatInputArea` now accepts `unsupportedTitle` prop.
 
 ## Testing Status
 - Iteration 17 (backend+frontend): **100% pass** — 12/12 scenarios including 8 languages, gender switching, encryption, TTS, UI flows

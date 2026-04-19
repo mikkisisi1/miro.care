@@ -59,42 +59,42 @@ export default function PaymentSuccess() {
       {status === 'checking' && (
         <div className="payment-status" data-testid="payment-checking">
           <Loader size={48} className="payment-spinner" />
-          <p>{t('paymentProcessing') || 'Проверяем оплату...'}</p>
+          <p>{t('paymentProcessing')}</p>
         </div>
       )}
       {status === 'paid' && (
         <div className="payment-status payment-success" data-testid="payment-paid">
           <CheckCircle size={48} />
-          <p>{t('paymentSuccess') || 'Оплата прошла успешно!'}</p>
+          <p>{t('paymentSuccess')}</p>
           <button data-testid="go-to-chat-btn" onClick={() => navigate('/chat')} className="payment-btn">
-            {t('startChat') || 'Начать общение'}
+            {t('goToChat')}
           </button>
         </div>
       )}
       {status === 'expired' && (
         <div className="payment-status" data-testid="payment-expired">
           <XCircle size={48} />
-          <p>Сессия оплаты истекла. Попробуйте снова.</p>
+          <p>{t('paymentExpired')}</p>
           <button data-testid="retry-payment-btn" onClick={() => navigate('/tariffs')} className="payment-btn">
-            {t('tariffs') || 'Тарифы'}
+            {t('tariffs')}
           </button>
         </div>
       )}
       {status === 'timeout' && (
         <div className="payment-status" data-testid="payment-timeout">
           <Loader size={48} />
-          <p>Не удалось подтвердить оплату. Если деньги списались — не волнуйтесь, тариф активируется автоматически.</p>
+          <p>{t('paymentTimeout')}</p>
           <button data-testid="go-to-chat-timeout-btn" onClick={() => navigate('/chat')} className="payment-btn">
-            {t('startChat') || 'Перейти в чат'}
+            {t('goToChat')}
           </button>
         </div>
       )}
       {status === 'error' && (
         <div className="payment-status" data-testid="payment-error">
           <XCircle size={48} />
-          <p>Ошибка проверки оплаты.</p>
+          <p>{t('paymentError')}</p>
           <button onClick={() => navigate('/tariffs')} className="payment-btn">
-            {t('tariffs') || 'Тарифы'}
+            {t('tariffs')}
           </button>
         </div>
       )}

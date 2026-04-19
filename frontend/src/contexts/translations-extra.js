@@ -72,6 +72,8 @@ export const TRANSLATIONS_EXTRA = {
     micDenied: 'Доступ к микрофону запрещён. Разрешите в настройках браузера.',
     micUnavailable: 'Микрофон недоступен.',
     typingMiron: 'Мирон печатает', typingOksana: 'Оксана печатает',
+    errorTryAgain: 'Произошла ошибка. Попробуйте ещё раз.',
+    bookingFailed: 'Не удалось забронировать время.',
   },
   en: {
     available: 'Available', booked: 'Booked', yours: 'Yours',
@@ -84,6 +86,8 @@ export const TRANSLATIONS_EXTRA = {
     micDenied: 'Microphone access denied. Please allow it in browser settings.',
     micUnavailable: 'Microphone unavailable.',
     typingMiron: 'Miron is typing', typingOksana: 'Oksana is typing',
+    errorTryAgain: 'Something went wrong. Please try again.',
+    bookingFailed: 'Booking failed.',
   },
   zh: {
     available: '可预约', booked: '已预约', yours: '您的',
@@ -96,6 +100,8 @@ export const TRANSLATIONS_EXTRA = {
     micDenied: '麦克风访问被拒绝，请在浏览器设置中允许。',
     micUnavailable: '麦克风不可用。',
     typingMiron: '米伦正在输入', typingOksana: '奥克萨娜正在输入',
+    errorTryAgain: '发生错误。请再试一次。',
+    bookingFailed: '预约失败。',
   },
   es: {
     available: 'Disponible', booked: 'Reservado', yours: 'Tuyo',
@@ -108,6 +114,8 @@ export const TRANSLATIONS_EXTRA = {
     micDenied: 'Acceso al micrófono denegado. Permítelo en la configuración del navegador.',
     micUnavailable: 'Micrófono no disponible.',
     typingMiron: 'Mirón está escribiendo', typingOksana: 'Oksana está escribiendo',
+    errorTryAgain: 'Ocurrió un error. Inténtalo de nuevo.',
+    bookingFailed: 'No se pudo reservar.',
   },
   ar: {
     available: 'متاح', booked: 'محجوز', yours: 'حجزك',
@@ -120,6 +128,8 @@ export const TRANSLATIONS_EXTRA = {
     micDenied: 'تمَّ رفض الوصول إلى الميكروفون. اسمح به من إعدادات المتصفح.',
     micUnavailable: 'الميكروفون غير متاح.',
     typingMiron: 'ميرون يكتب', typingOksana: 'أوكسانا تكتب',
+    errorTryAgain: 'حدث خطأ. الرجاء المحاولة مرة أخرى.',
+    bookingFailed: 'تعذَّر الحجز.',
   },
   fr: {
     available: 'Disponible', booked: 'Réservé', yours: 'À vous',
@@ -132,6 +142,8 @@ export const TRANSLATIONS_EXTRA = {
     micDenied: "Accès au microphone refusé. Autorisez-le dans les paramètres du navigateur.",
     micUnavailable: 'Microphone indisponible.',
     typingMiron: 'Miron est en train d\'écrire', typingOksana: 'Oksana est en train d\'écrire',
+    errorTryAgain: 'Une erreur est survenue. Veuillez réessayer.',
+    bookingFailed: 'La réservation a échoué.',
   },
   de: {
     available: 'Frei', booked: 'Belegt', yours: 'Ihr Termin',
@@ -144,6 +156,8 @@ export const TRANSLATIONS_EXTRA = {
     micDenied: 'Mikrofonzugriff verweigert. Bitte in den Browser-Einstellungen erlauben.',
     micUnavailable: 'Mikrofon nicht verfügbar.',
     typingMiron: 'Miron schreibt', typingOksana: 'Oksana schreibt',
+    errorTryAgain: 'Ein Fehler ist aufgetreten. Bitte erneut versuchen.',
+    bookingFailed: 'Buchung fehlgeschlagen.',
   },
   hi: {
     available: 'उपलब्ध', booked: 'बुक्ड', yours: 'आपका',
@@ -156,6 +170,8 @@ export const TRANSLATIONS_EXTRA = {
     micDenied: 'माइक्रोफ़ोन की अनुमति अस्वीकृत। ब्राउज़र सेटिंग्स में अनुमति दें।',
     micUnavailable: 'माइक्रोफ़ोन उपलब्ध नहीं है।',
     typingMiron: 'मिरोन लिख रहा है', typingOksana: 'ओक्साना लिख रही है',
+    errorTryAgain: 'कोई त्रुटि हुई। कृपया पुनः प्रयास करें।',
+    bookingFailed: 'बुकिंग विफल रही।',
   },
 };
 

@@ -5,6 +5,7 @@ export default function ChatInputArea({
   input, setInput, loading, voiceChosen,
   isListening, isSupported, showRunningText, runningText,
   onSend, onMicClick, onCameraClick, onKeyDown, placeholder,
+  unsupportedTitle = '',
 }) {
   return (
     <div className="xc-chat-input-area" data-testid="chat-input-form">
@@ -61,7 +62,7 @@ export default function ChatInputArea({
         onClick={onMicClick}
         disabled={loading || !isSupported}
         aria-label={isListening ? "Stop recording" : "Start recording"}
-        title={!isSupported ? "Браузер не поддерживает распознавание речи" : ""}
+        title={!isSupported ? unsupportedTitle : ""}
       >
         <Mic size={20} strokeWidth={1.5} />
       </button>

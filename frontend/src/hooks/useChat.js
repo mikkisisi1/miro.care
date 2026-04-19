@@ -1,7 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import apiClient from '@/lib/apiClient';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function useChat(user, lang, refreshUser, onAIMessage, activeVoice) {
+  const { t } = useLanguage();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [historyLoaded, setHistoryLoaded] = useState(false);
@@ -113,13 +115,13 @@ export default function useChat(user, lang, refreshUser, onAIMessage, activeVoic
       }
       setMessages(prev => [...prev, {
         role: 'ai',
-        content: 'Произошла ошибка. Попробуйте ещё раз.',
+        content: t('errorTryAgain'),
         id: `err_${Date.now()}`,
       }]);
     } finally {
       setLoading(false);
     }
-  }, [user?.selected_problem, user?.selected_voice, lang, activeVoice]);
+  }, [user?.selected_problem, user?.selected_voice, lang, activeVoice, t]);
 
   const startNewSession = useCallback(() => {
     sessionIdRef.current = `session_${Date.now()}`;

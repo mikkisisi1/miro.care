@@ -1,7 +1,9 @@
 import { useState, useCallback, useRef } from 'react';
 import apiClient from '@/lib/apiClient';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function useImageUpload({ sessionId, lang, user, messages, setMessages, refreshUser, ttsEnabled, playTTS, loading }) {
+  const { t } = useLanguage();
   const [selectedImage, setSelectedImage] = useState(null);
 
   // Use refs for values that change frequently but shouldn't trigger re-creation
@@ -61,14 +63,14 @@ export default function useImageUpload({ sessionId, lang, user, messages, setMes
       }
       await refreshUser();
     } catch (err) {
-      const errMsg = err.response?.data?.detail || 'Error analyzing image';
+      const errMsg = err.response?.data?.detail || t('errorTryAgain');
       setMessages(prev => [...prev, {
         role: 'ai',
-        content: typeof errMsg === 'string' ? errMsg : 'Error analyzing image',
+        content: typeof errMsg === 'string' ? errMsg : t('errorTryAgain'),
         id: `err_img_${Date.now()}`,
       }]);
     }
-  }, [selectedImage, loading, setMessages, refreshUser, playTTS]);
+  }, [selectedImage, loading, setMessages, refreshUser, playTTS, t]);
 
   return { selectedImage, setSelectedImage, handleImageSelect, sendImageMessage };
 }

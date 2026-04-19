@@ -62,7 +62,7 @@ export default function ChatPage() {
     }
   }, [historyLoaded, messages.length, voiceChosen, user?.selected_voice]);
 
-  // Pre-cache greeting TTS audio for both voices
+  // Pre-cache greeting TTS audio for both voices — для текущего языка интерфейса
   useEffect(() => {
     if (voiceChosen) return;
     let cancelled = false;
@@ -70,13 +70,14 @@ export default function ChatPage() {
     const preloadGreeting = async (voice) => {
       try {
         const token = getToken();
+        const text = getGreeting(lang, voice) || GREETINGS[voice];
         const response = await fetch(`${API_BASE}/tts`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
-          body: JSON.stringify({ text: GREETINGS[voice], voice }),
+          body: JSON.stringify({ text, voice }),
         });
         if (response.ok && !cancelled) {
           const blob = await response.blob();
@@ -89,8 +90,12 @@ export default function ChatPage() {
     preloadGreeting('male');
     preloadGreeting('female');
 
-    return () => { cancelled = true; };
-  }, [voiceChosen]);
+    return () => {
+      cancelled = true;
+      // Invalidate cache when lang changes before voice is chosen
+      greetingCacheRef.current = { male: null, female: null };
+    };
+  }, [voiceChosen, lang]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -212,7 +217,7 @@ export default function ChatPage() {
   // handleMicClick — ТОЧНАЯ КОПИЯ из Xicon.online
   const handleMicClick = useCallback(() => {
     if (!isSupported) {
-      alert('Браузер не поддерживает распознавание речи. Используйте Chrome или Safari.');
+      alert(t('browserNoSpeech'));
       return;
     }
     if (isListening) {
@@ -220,7 +225,7 @@ export default function ChatPage() {
     } else {
       startListening();
     }
-  }, [isSupported, isListening, startListening, stopListening]);
+  }, [isSupported, isListening, startListening, stopListening, t]);
 
   // Image upload
   const { selectedImage, setSelectedImage, handleImageSelect, sendImageMessage } = useImageUpload({

@@ -1,0 +1,71 @@
+{
+  "summary": "Iteration 18 validated the i18n cleanup for Miro.Care. Backend regression passed (health, admin login, TTS male+en/female+en, translations keys). i18n frontend testing PASSED for /booking (ru/en/zh/ar — localized legend, weekdays, price unit, TZ label), /payment-success fallback (en/zh/ar — localized paymentError copy, no Russian leak), and RTL (document.documentElement.dir correctly 'rtl' for ar). One bug found & fixed by tester: Chinese translation block was missing errorTryAgain/bookingFailed keys. One CRITICAL blocker: /api/chat returns HTTP 500 because OpenRouter account has insufficient credits (402) — breaks chat/greeting/image-analysis end-to-end. Cannot validate chat-greeting language or mid-chat agent switching until credits restored. No code bug in chat.py — this is a billing/infra issue.",
+  "backend_issues": {
+    "critical": [
+      {"endpoint": "/api/chat", "issue": "Returns 500 — upstream OpenRouter responds 402 'Insufficient credits. Add more using https://openrouter.ai/settings/credits'. Blocks chat, greeting generation, and image analysis.", "priority": "CRITICAL"}
+    ],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "translations-extra.js (zh block)", "issue": "Missing keys errorTryAgain and bookingFailed for Chinese — fallback would leak Russian. Tester added them.", "selector": "translations-extra.js line ~103", "priority": "MEDIUM (fixed)"}
+    ],
+    "integration_issues": [
+      {"flow": "Chat greeting pre-cache in selected language", "issue": "Cannot verify end-to-end because /api/chat is down (OpenRouter 402). Frontend code is correct (pre-cache uses current lang), but functional validation is blocked.", "affected_selectors": ["ChatPage.jsx L65-95"]}
+    ],
+    "design_issues": [
+      {"screen": "/booking", "issues": ["In zh UI, price strip label 'Advance: 50% ($100)' remains in English — pre-existing partial-localization (not in iter18 scope, flag for backlog)."]},
+      {"screen": "Landing page", "issues": ["Miron's bio block ('Диетолог, нутрициолог…') is hardcoded Russian and does not change with language. App.css is LOCKED per instructions; flagging as known limitation only."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration18_i18n.py",
+    "/app/test_reports/pytest/pytest_results_iter18.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Top up OpenRouter credits or rotate OPENROUTER_API_KEY / switch model. /api/chat 500s block the whole AI flow and all its regression tests.",
+    "After chat is restored, re-run end-to-end frontend tests for: greeting shown in selected language, mid-chat agent switch → fresh greeting in selected language, localized error bubble when API fails (t('errorTryAgain')).",
+    "Consider localizing 'Advance:' prefix on BookingCalendar price strip (currently English-only)."
+  ],
+  "critical_code_review_comments": [
+    "translations-extra.js: Chinese (zh) block omitted errorTryAgain + bookingFailed that were added for the other 7 languages — classic copy-paste miss. Fixed by tester. Recommend a unit test or TS type that enforces all 8 langs have identical key sets.",
+    "PaymentSuccess.jsx fallbacks correctly use t('paymentError')/t('goToChat') — verified visually in en/zh/ar.",
+    "BookingCalendar.jsx getMonthName / getWeekdayLabels correctly switch by lang — verified (MON/TUE/… in en, 周一/周二/… in zh, RTL weekdays in ar).",
+    "useChat.js t('errorTryAgain') path not exercised live because /api/chat is 500; only string-level wiring verified."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration18_i18n.py",
+    "/app/frontend/src/contexts/translations-extra.js (added zh.errorTryAgain + zh.bookingFailed)"
+  ],
+  "success_rate": {
+    "backend": "89% (8/9 — chat blocked by OpenRouter 402, not a code bug)",
+    "frontend": "100% for i18n scope (booking ru/en/zh/ar, payment-success en/zh/ar, RTL toggle) — zero console errors"
+  },
+  "test_credentials": {
+    "admin": "admin@miro.care / MiroCare2026! (verified working)",
+    "guest": "POST /api/auth/guest (verified working)"
+  },
+  "seed_data_creation": "None — test inserted a single chat_messages row with TEST_iter18_* session_id and cleaned up (never reached assertions due to chat 500).",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "mocked_apis": {
+    "openrouter_llm": "LIVE but OUT OF CREDITS (402)",
+    "fish_audio_tts": "LIVE (male+en, female+en verified MP3)",
+    "stripe": "MOCKED (sk_test_emergent)"
+  },
+  "context_for_next_testing_agent": "Iteration 18 i18n fixes verified via DOM inspection on /booking and /payment-success across ru/en/zh/ar — all target keys render, no Russian leak, dir='rtl' for ar. A zh-block omission (errorTryAgain + bookingFailed) was found and patched. Backend blocker: OpenRouter out of credits → /api/chat 500; once restored, re-verify (a) greeting pre-cache uses selected lang, (b) useChat fallback bubble shows localized errorTryAgain, (c) useImageUpload error path. The TTS MSE postMessage frontend warning from iter17 is still present but non-blocking. Landing page uses hardcoded Russian for Miron's bio — App.css/landing is LOCKED per instructions.",
+  "features_tested": {
+    "1_landing_loads": "PASS (200, title correct, testids present)",
+    "2_booking_legend_zh_en_ar": "PASS (Available/Booked/Yours + hr + MON/TUE… or zh/ar equivalents — zero RU leak)",
+    "3_payment_success_fallback_en_zh_ar": "PASS (paymentError localized, no RU leak)",
+    "4_rtl_for_arabic": "PASS (document.documentElement.dir === 'rtl' when lang=ar; booking layout flips correctly)",
+    "5_translations_keys_completeness": "FAIL -> FIXED (zh missing errorTryAgain/bookingFailed; patched)",
+    "6_backend_health": "PASS",
+    "7_admin_login": "PASS",
+    "8_public_catalog": "PASS (problems, tariffs, specialists)",
+    "9_tts_male_en_female_en": "PASS (both return valid MP3)",
+    "10_chat_and_encryption_e2e": "BLOCKED — OpenRouter 402",
+    "11_console_errors_during_i18n_flow": "PASS (0 errors during booking/payment/RTL navigation)"
+  },
+  "rca_of_blocker": "POST /api/chat returns {'detail':\"Chat error: Error code: 402 - {'error': {'message': 'Insufficient credits. Add more using https://openrouter.ai/settings/credits', 'code': 402}}\"}. Root cause: OPENROUTER_API_KEY account balance exhausted. Mitigation: (a) top up credits at openrouter.ai, or (b) swap to EMERGENT_LLM_KEY-backed provider for chat, or (c) rotate key. No code change required."
+}
