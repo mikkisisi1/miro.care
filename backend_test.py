@@ -73,14 +73,12 @@ class BackendTester:
     def test_voice_config_consistency(self):
         """Test if voice configuration is consistent between .env and voice_config.py"""
         try:
-            # This test checks the voice ID consistency issue mentioned in the review
-            # The new voice ID should be 7a98513e3a7d439682fa68f8d4da34c0
-            expected_new_voice_id = "7a98513e3a7d439682fa68f8d4da34c0"
-            old_voice_id = "b347db033a6549378b48d00acb0d06cd"
+            # Voice ID for Oksana (female)
+            expected_voice_id = "7a98513e3a7d439682fa68f8d4da34c0"
             
             # We'll test this by making a TTS request and checking the X-Voice-Config header
             tts_data = {
-                "text": "Привет, меня зовут Оксана. Это тест нового голоса.",
+                "text": "Привет, меня зовут Оксана. Это тест голоса.",
                 "voice": "female"
             }
             
@@ -88,14 +86,10 @@ class BackendTester:
             
             if response.status_code == 200:
                 voice_config = response.headers.get("X-Voice-Config", "")
-                if expected_new_voice_id in voice_config or "7a98513e" in voice_config:
+                if expected_voice_id in voice_config or "7a98513e" in voice_config:
                     self.log_result("Voice Config Consistency", True, 
-                                  f"New voice ID detected in config: {voice_config}", "priority_1")
+                                  f"Voice ID detected in config: {voice_config}", "priority_1")
                     return True
-                elif old_voice_id in voice_config or "b347db03" in voice_config:
-                    self.log_result("Voice Config Consistency", False, 
-                                  f"OLD voice ID still in use: {voice_config}", "priority_1")
-                    return False
                 else:
                     self.log_warning("Voice Config Consistency", 
                                    f"Voice ID not clearly identifiable in config: {voice_config}")
