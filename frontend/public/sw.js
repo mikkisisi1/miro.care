@@ -2,8 +2,8 @@
  * Enables installability + offline fallback for the app shell.
  * Heavy payload (chat, TTS) is always network-first to avoid stale data.
  */
-const CACHE = 'miro-shell-v2';
-const SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/icon-maskable-192.png', '/icon-maskable-512.png', '/favicon.ico'];
+const CACHE = 'miro-shell-v1';
+const SHELL = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/favicon.ico'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => null));
