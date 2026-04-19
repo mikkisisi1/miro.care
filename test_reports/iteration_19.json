@@ -1,0 +1,78 @@
+{
+  "summary": "Iteration 19 full regression PASSED. Backend: 17/17 pytest green (health, guest+admin JWT, /auth/me, chat RU+EN long-reply ends on sentence punctuation (not mid-word), AES encryption at rest ENC1:: prefix + history decrypt, TTS male+female valid MP3, agent-switch session isolation, /bookings/slots, /tariffs, PUT /user/voice persists, PWA manifest.json + sw.js + icon-192/512 served). Frontend: Landing + CTA Психолог → /problems → /chat flow complete, 'Мирон печатает' typing indicator visible, AI responded in RU ('Привет! Спасибо что спросил...'), clicking Оксана avatar produced new session with new greeting ('Меня зовут Оксана'). PWA install prompt renders ~12s after load with all 5 data-testids (install-prompt/title/subtitle/btn/close-btn/icon), close-btn sets miro_install_dismissed_until in localStorage (7-day cooldown), reload does NOT re-show it. i18n verified across ru/en/ar/zh: Landing hero + install banner fully translated (title/subtitle/cta), dir='rtl' for Arabic and install close-btn flips to left side. /payment-success?session_id=invalid in EN shows no Russian leak. /booking in EN shows fully localized (Book a psychologist, April 2026, $200/hr, Available/Booked/Yours, MON-FRI, Time: Moscow UTC+3). OpenRouter confirmed live.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "BookingCalendar price strip (EN)", "issues": ["'Advance: 50% ($100)' prefix is hardcoded English (pre-existing, flagged in iter18 backlog — not a regression)."]},
+      {"screen": "LandingPage expert bio", "issues": ["Miron Shakira bio still in Russian for all languages — confirmed intentional per instructions (App.css + bio block are LOCKED)."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration19_full_regression.py",
+    "/app/test_reports/pytest/pytest_results_iter19.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routes/chat.py _truncate_to_sentence works correctly — RU and EN long replies both end with '.' / '?' / '!', never mid-word (verified).",
+    "crypto_utils ENC1:: round-trip is solid — raw Mongo doc encrypted, /api/chat/history/:id decrypts cleanly with zero ENC1:: leak in serialized response.",
+    "Agent-switch isolation is correct at backend level: two session_ids with different voices coexist; history of session A does not leak content from session B.",
+    "PWA: manifest.json, /sw.js, /icon-192.png, /icon-512.png all served with correct MIME; InstallPrompt uses localStorage key 'miro_install_dismissed_until' (7-day cooldown), honored on reload.",
+    "i18n: localStorage key is 'miro_language' (NOT 'appLang'); translations-extra.js install keys present in all 8 langs including zh (fix from iter18 still in place)."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration19_full_regression.py"
+  ],
+  "success_rate": {
+    "backend": "100% (17/17)",
+    "frontend": "100% of in-scope flows (landing, PWA install + cooldown + reload, lang switch ru/en/ar/zh, RTL, guest E2E chat with typing indicator, agent switch, payment-success EN fallback, booking EN)"
+  },
+  "test_credentials": {
+    "admin": "admin@miro.care / MiroCare2026! (verified)",
+    "guest": "POST /api/auth/guest (verified)"
+  },
+  "seed_data_creation": "Ephemeral chat_messages rows with session_id prefix 'TEST_iter19_*' — all cleaned up at end of each test via col.delete_many.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "mocked_apis": {
+    "openrouter_llm": "LIVE — fresh key returns Claude Sonnet 4.5 replies in RU+EN (confirmed)",
+    "fish_audio_tts": "LIVE — both male and female voices return valid MP3",
+    "stripe": "TEST MODE (sk_test_emergent)"
+  },
+  "context_for_next_testing_agent": "Full iter19 regression is green. If a future iteration changes chat/tts/encryption, rerun test_iteration19_full_regression.py first. For PWA install prompt testing, remember to clear localStorage.miro_install_dismissed_until before expecting the banner (12s delay). Language key is 'miro_language' (not 'appLang'); also set 'miro_lang_v2'='1' to skip migration. Landing page has an intentionally Russian expert bio — don't flag.",
+  "features_tested": {
+    "backend_health": "PASS",
+    "auth_guest_jwt": "PASS",
+    "auth_admin_jwt": "PASS",
+    "auth_me_admin": "PASS",
+    "chat_ru_long_reply_sentence_terminated": "PASS",
+    "chat_en_long_reply_sentence_terminated": "PASS",
+    "encryption_at_rest_ENC1_prefix": "PASS",
+    "chat_history_decrypt": "PASS",
+    "tts_male_mp3": "PASS",
+    "tts_female_mp3": "PASS",
+    "agent_switch_session_isolation": "PASS",
+    "bookings_slots_endpoint": "PASS",
+    "tariffs_endpoint": "PASS",
+    "put_user_voice_persistence": "PASS",
+    "pwa_manifest_served": "PASS",
+    "pwa_sw_served": "PASS",
+    "pwa_icons_served": "PASS",
+    "fe_landing_cta": "PASS",
+    "fe_pwa_install_prompt_12s_delay": "PASS",
+    "fe_pwa_install_close_cooldown_7d": "PASS",
+    "fe_pwa_install_reload_suppressed": "PASS",
+    "fe_i18n_ru_en_ar_zh": "PASS",
+    "fe_rtl_for_arabic_install_close_on_left": "PASS",
+    "fe_guest_flow_landing_to_chat": "PASS",
+    "fe_typing_indicator_мирон_печатает": "PASS",
+    "fe_agent_switch_miron_to_oksana_new_greeting": "PASS",
+    "fe_payment_success_en_no_ru_leak": "PASS",
+    "fe_booking_calendar_en_full_localization": "PASS"
+  },
+  "rca_of_issue": "N/A — all tests passed. Previous iter18 blocker (OpenRouter 402) is resolved: the rotated OPENROUTER_API_KEY in backend/.env now returns 200 from Claude Sonnet 4.5 for both RU and EN payloads."
+}
