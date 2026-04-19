@@ -158,7 +158,7 @@ async def load_personal_context(user_id: Optional[str]) -> str:
     try:
         user_doc = await db.users.find_one(
             {"_id": ObjectId(user_id)},
-            {"user_display_name": 1, "session_notes": 1}
+            {"user_display_name": 1, "session_notes": 1, "current_homework": 1, "current_homework_at": 1}
         )
         if not user_doc:
             return ""
@@ -169,6 +169,10 @@ async def load_personal_context(user_id: Optional[str]) -> str:
         notes = user_doc.get("session_notes")
         if notes:
             parts.append(f"\n\nКонтекст из прошлых сессий: {notes}")
+        homework = user_doc.get("current_homework")
+        if homework:
+            hw_date = user_doc.get("current_homework_at", "")
+            parts.append(f"\n\n[АКТУАЛЬНОЕ ДОМАШНЕЕ ЗАДАНИЕ пользователя (задано {hw_date}): {homework}]\nЕсли это новая сессия — мягко спроси, получилось ли выполнить. Не навязывай, если пользователь пришёл с новой темой.")
         return "".join(parts)
     except Exception:
         return ""
@@ -383,6 +387,38 @@ async def update_session_notes(user_id: str, session_id: str) -> None:
         logger.warning(f"Session notes update failed for user {user_id}: {e}")
 
 
+# ---------- HOMEWORK EXTRACTION ----------
+# Паттерн: «📝 На эту неделю:...», «📝 Задание:...», «📝 Домашнее задание:...»
+HOMEWORK_RE = re.compile(r"📝\s*(?:на\s+эту\s+неделю|задание|домашнее\s*задание)\s*[:—-]?\s*(.+)", re.IGNORECASE | re.DOTALL)
+
+
+def extract_homework(ai_response: str) -> Optional[str]:
+    """Извлекает домашнее задание из ответа ИИ по маркеру 📝."""
+    if not ai_response or "📝" not in ai_response:
+        return None
+    m = HOMEWORK_RE.search(ai_response)
+    if not m:
+        return None
+    hw = m.group(1).strip()
+    # Обрезаем слишком длинные (больше 400 символов — это не задание, а монолог)
+    return hw[:400] if hw else None
+
+
+async def save_homework(user_id: str, homework: str) -> None:
+    """Сохраняет домашнее задание в профиле пользователя."""
+    try:
+        await db.users.update_one(
+            {"_id": ObjectId(user_id)},
+            {"$set": {
+                "current_homework": homework,
+                "current_homework_at": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+            }},
+        )
+        logger.info(f"Homework saved for user {user_id}: {homework[:60]}")
+    except Exception as e:
+        logger.warning(f"save_homework failed for user {user_id}: {e}")
+
+
 def check_user_access(user: dict) -> tuple:
     free_count = user.get("free_messages_count", 0)
     has_minutes = (user.get("minutes_left", 0) or 0) > 0
@@ -472,6 +508,11 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             user_msg_count = sum(1 for m in chat_histories.get(session_id, []) if m.get("role") == "user")
             if user_msg_count > 0 and user_msg_count % 6 == 0:
                 asyncio.create_task(update_session_notes(user_id, req.session_id))
+
+            # Извлекаем и сохраняем домашнее задание, если ИИ его предложил.
+            homework = extract_homework(ai_response)
+            if homework:
+                asyncio.create_task(save_homework(user_id, homework))
 
         # Determine fresh minutes_left for response (post-update value)
         if is_free_phase:
