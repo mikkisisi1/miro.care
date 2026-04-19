@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Send, Mic, Camera } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getGreeting, getSwitchGreeting } from '@/contexts/translations-extra';
+import { getGreeting } from '@/contexts/translations-extra';
 import BurgerMenu from '@/components/BurgerMenu';
 import ChatHeader from '@/components/chat/ChatHeader';
 import MessageList from '@/components/chat/MessageList';
@@ -52,7 +52,7 @@ export default function ChatPage() {
     }
   }, [ttsEnabled, playTTS, activeVoice]);
 
-  const { messages, sendMessage, loading, sessionId, setMessages, historyLoaded } = useChat(user, lang, refreshUser, handleAIMessage, activeVoice);
+  const { messages, sendMessage, loading, sessionId, setMessages, historyLoaded, startNewSession } = useChat(user, lang, refreshUser, handleAIMessage, activeVoice);
 
   // If history loaded with messages, skip voice selection
   useEffect(() => {
@@ -101,7 +101,8 @@ export default function ChatPage() {
     return () => clearTimeout(timer);
   }, [messages, loading]);
 
-  // Voice selection handler — первый выбор ИЛИ переключение агента посреди диалога.
+  // Voice selection handler — первый выбор ИЛИ переключение агента.
+  // При переключении стартуем новый диалог с нуля: новый session_id, полное приветствие.
   const handleVoiceSelect = async (voice) => {
     // Клик по уже активному агенту — ничего не делаем.
     if (voice === activeVoice) return;
@@ -117,37 +118,29 @@ export default function ChatPage() {
       if (process.env.NODE_ENV === 'development') console.error('Voice save failed:', err.message);
     }
 
-    // Текст приветствия: при первом выборе — полный, при переключении — короткий «продолжим».
-    const greetingText = isSwitch
-      ? getSwitchGreeting(lang, voice)
-      : (getGreeting(lang, voice) || GREETINGS[voice]);
-
-    // Остановить текущую озвучку предыдущего агента, если играет.
+    // Остановить текущую озвучку предыдущего агента.
     stopTTS();
 
+    // При переключении стартуем новую сессию — чистая история на сервере и в UI.
     if (isSwitch) {
-      // Добавляем приветствие нового агента к существующей истории — диалог продолжается.
-      setMessages(prev => [
-        ...prev,
-        { role: 'ai', content: greetingText, id: `switch_${voice}_${Date.now()}` },
-      ]);
-    } else {
-      setMessages([{
-        role: 'ai',
-        content: greetingText,
-        id: `greeting_${Date.now()}`,
-      }]);
+      startNewSession();
     }
 
-    // Проигрываем приветствие новым голосом.
-    // При переключении используем live TTS (кэш в greetingCacheRef закэширован под полный текст первого приветствия).
+    const greetingText = getGreeting(lang, voice) || GREETINGS[voice];
+    setMessages([{
+      role: 'ai',
+      content: greetingText,
+      id: `greeting_${voice}_${Date.now()}`,
+    }]);
+
+    // Приветствие озвучиваем: при первом выборе — из кэша, при переключении — live (кэш устарел по языку).
     const cachedUrl = !isSwitch ? greetingCacheRef.current[voice] : null;
     if (cachedUrl && audioElementRef.current) {
       const audio = audioElementRef.current;
       audio.src = cachedUrl;
       audio.play().catch(() => {});
     } else if (ttsEnabled) {
-      setTimeout(() => playTTS(greetingText, isSwitch ? messages.length : 0, voice), 100);
+      setTimeout(() => playTTS(greetingText, 0, voice), 100);
     }
   };
 
