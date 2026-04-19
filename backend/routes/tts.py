@@ -112,7 +112,9 @@ async def text_to_speech(req: TTSRequestModel, request: Request):
     # 🔒 Валидация voice ID
     voice_id = validate_voice_id(req.voice or "male")
 
-    logger.info(f"TTS Request | Voice: {req.voice} | Text length: {len(text)} | Backend: {FISH_BACKEND} | Latency: {FISH_LATENCY} | Speed: {PROSODY_CONFIG['speed']}")
+    logger.info(f"TTS Request | Voice: {req.voice} | VoiceID: {voice_id[:8]}… | Text length: {len(text)} | Backend: {FISH_BACKEND} | Latency: {FISH_LATENCY} | Speed: {PROSODY_CONFIG['speed']}")
+    if req.voice not in ("male", "female"):
+        logger.warning(f"TTS Request with UNKNOWN voice='{req.voice}' — fell back to Miron (male). Frontend bug?")
 
     def generate_audio():
         """
