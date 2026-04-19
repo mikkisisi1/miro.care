@@ -15,6 +15,7 @@ import AboutPage from '@/pages/AboutPage';
 import ProfilePage from '@/pages/ProfilePage';
 import MiroRadio from '@/pages/MiroRadio';
 import BookingCalendar from '@/pages/BookingCalendar';
+import InstallPrompt from '@/components/InstallPrompt';
 import '@/App.css';
 
 function WaitForAuth({ children }) {
@@ -51,6 +52,7 @@ function App() {
           <BrowserRouter>
             <div className="app-root" data-testid="app-root">
               <AppRoutes />
+              <InstallPrompt />
             </div>
           </BrowserRouter>
         </AuthProvider>

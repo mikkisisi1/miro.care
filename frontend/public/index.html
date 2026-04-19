@@ -2,28 +2,38 @@
 <html lang="en">
     <head>
         <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="theme-color" content="#000000" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#0a1929" />
         <meta name="description" content="Miro.Care — AI Psychology Platform" />
         <meta name="google" content="notranslate" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Miro.Care" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+        <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/icon-180.png" />
         <meta http-equiv="Content-Language" content="ru" />
         <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
         <meta http-equiv="Pragma" content="no-cache" />
         <meta http-equiv="Expires" content="0" />
         <script>
-            // Force cache bust v2
-            if (!sessionStorage.getItem('cache_v2')) {
-                sessionStorage.setItem('cache_v2', '1');
+            // Force cache bust v3 — clears HTTP caches only, leaves SW registration intact so PWA install works
+            if (!sessionStorage.getItem('cache_v3')) {
+                sessionStorage.setItem('cache_v3', '1');
                 if ('caches' in window) {
                     caches.keys().then(function(names) {
-                        names.forEach(function(name) { caches.delete(name); });
+                        names.forEach(function(name) {
+                            if (name !== 'miro-shell-v1') caches.delete(name);
+                        });
                     });
                 }
-                if (navigator.serviceWorker) {
-                    navigator.serviceWorker.getRegistrations().then(function(regs) {
-                        regs.forEach(function(r) { r.unregister(); });
-                    });
-                }
+            }
+            // Register PWA service worker
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                    navigator.serviceWorker.register('/sw.js').catch(function() {});
+                });
             }
         </script>
         <link rel="preconnect" href="https://fonts.googleapis.com" />

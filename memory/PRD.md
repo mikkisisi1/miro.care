@@ -34,6 +34,7 @@ Hybrid AI-psychologist platform (React + FastAPI + MongoDB) with Fish Audio S2-P
 - 2026-04-19: **TTS stability** — rewrote `useAudioStream.js` with clean MSE→blob fallback, handlers cleanup, silenced benign `AbortError`/`DataCloneError` from CRA HMR. Also reduced cyclomatic complexity.
 - 2026-04-19: **Landing CSS lock** — wrapped lines 70–240 in explicit 🔒 LOCKED SECTION banner
 - 2026-04-19: **i18n pass #2** — fixed hardcoded Russian strings: ChatPage alert & greeting pre-cache (now uses current `lang`), useChat error message, useSpeechRecognition alerts (3 places), PaymentSuccess fallback strings, BookingCalendar (legend/tz/price unit/month/weekday names). Added translation keys: `errorTryAgain`, `bookingFailed`, `advance` across 8 languages. `ChatInputArea` now accepts `unsupportedTitle` prop. Iter-18 verified OK; zh missing keys patched by tester.
+- 2026-04-19: **PWA install flow** — added `manifest.json` (Miro.Care icons 192/512 + maskable), minimal service worker (`sw.js`) with shell cache + network-first for /api/. Replaced v2 SW-unregister script with v3 that keeps SW alive. Added `InstallPrompt` component: appears 12s after landing load (unless `display-mode: standalone` or dismissed), uses `beforeinstallprompt` + `appinstalled` native API, has install spinner + progress bar + success checkmark, 7-day dismiss cooldown. Localized in 8 languages (`installTitle`, `installSubtitle`, `installCta`, `installing`, `installed`, `installRetry`, `close`). RTL-aware close button.
 
 ## Testing Status
 - Iteration 17 (backend+frontend): **100% pass** — 12/12 scenarios including 8 languages, gender switching, encryption, TTS, UI flows
@@ -50,7 +51,7 @@ Hybrid AI-psychologist platform (React + FastAPI + MongoDB) with Fish Audio S2-P
 - RAG / embeddings for `session_notes`
 - Email/push notifications 24h before consultation
 - YuKassa / Telegram Stars payments
-- PWA support
+- ~~PWA support~~ (done 2026-04-19)
 - Admin panel
 - Refactor: move API routes to `/app/backend/routes`, models to `/app/backend/models`, tests to `/app/backend/tests`
 
