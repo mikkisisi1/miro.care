@@ -67,6 +67,13 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   box-shadow: var(--glass-shadow);
 }
 
+/* ╔══════════════════════════════════════════════════════════════════════╗
+ * ║  🔒 LOCKED SECTION — LANDING PAGE (rows 70–233)                        ║
+ * ║  Approved by product owner. DO NOT MODIFY any rule below without      ║
+ * ║  an explicit user request referencing this lock.                      ║
+ * ║  Any change here requires visual regression review.                   ║
+ * ║  Scope of lock: .landing, .landing-*, .cred-*, @keyframes ctaBreathe  ║
+ * ╚══════════════════════════════════════════════════════════════════════╝ */
 /* ===== LANDING PAGE ===== */
 /* DESIGN LOCKED — DO NOT MODIFY WITHOUT EXPLICIT USER REQUEST */
 .landing {
@@ -230,6 +237,7 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   .landing-panel-divider { width: 100%; height: 1px; }
   .landing-panel-media { flex-direction: row; padding: 14px 20px; }
 }
+/* 🔒 END LOCKED SECTION — LANDING PAGE */
 
 /* ===== LOADING ===== */
 .loading-screen {
@@ -806,6 +814,38 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
   40% { transform: scale(1); opacity: 1; }
 }
+
+/* Typing indicator: avatar + dots + label */
+.xc-typing-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 10px 0;
+  animation: xcTypingFadeIn 260ms ease-out;
+}
+.xc-typing-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: 1px solid rgba(60, 140, 255, 0.35);
+}
+.xc-typing-wrap .xc-chat-message.typing {
+  margin: 0;
+  padding: 10px 14px;
+}
+.xc-typing-label {
+  font-size: 0.75rem;
+  color: var(--text-muted, rgba(255,255,255,0.55));
+  font-family: var(--font-body);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+@keyframes xcTypingFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+[dir="rtl"] .xc-typing-wrap { flex-direction: row-reverse; }
 
 /* Tariff button */
 .xc-tariff-btn {

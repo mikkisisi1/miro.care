@@ -71,6 +71,7 @@ export const TRANSLATIONS_EXTRA = {
     browserNoSpeech: 'Браузер не поддерживает распознавание речи. Используйте Chrome или Safari.',
     micDenied: 'Доступ к микрофону запрещён. Разрешите в настройках браузера.',
     micUnavailable: 'Микрофон недоступен.',
+    typingMiron: 'Мирон печатает', typingOksana: 'Оксана печатает',
   },
   en: {
     available: 'Available', booked: 'Booked', yours: 'Yours',
@@ -82,6 +83,7 @@ export const TRANSLATIONS_EXTRA = {
     browserNoSpeech: 'Your browser does not support speech recognition. Please use Chrome or Safari.',
     micDenied: 'Microphone access denied. Please allow it in browser settings.',
     micUnavailable: 'Microphone unavailable.',
+    typingMiron: 'Miron is typing', typingOksana: 'Oksana is typing',
   },
   zh: {
     available: '可预约', booked: '已预约', yours: '您的',
@@ -93,6 +95,7 @@ export const TRANSLATIONS_EXTRA = {
     browserNoSpeech: '浏览器不支持语音识别，请使用 Chrome 或 Safari。',
     micDenied: '麦克风访问被拒绝，请在浏览器设置中允许。',
     micUnavailable: '麦克风不可用。',
+    typingMiron: '米伦正在输入', typingOksana: '奥克萨娜正在输入',
   },
   es: {
     available: 'Disponible', booked: 'Reservado', yours: 'Tuyo',
@@ -104,6 +107,7 @@ export const TRANSLATIONS_EXTRA = {
     browserNoSpeech: 'Tu navegador no admite reconocimiento de voz. Usa Chrome o Safari.',
     micDenied: 'Acceso al micrófono denegado. Permítelo en la configuración del navegador.',
     micUnavailable: 'Micrófono no disponible.',
+    typingMiron: 'Mirón está escribiendo', typingOksana: 'Oksana está escribiendo',
   },
   ar: {
     available: 'متاح', booked: 'محجوز', yours: 'حجزك',
@@ -115,6 +119,7 @@ export const TRANSLATIONS_EXTRA = {
     browserNoSpeech: 'المتصفح لا يدعم التعرف على الصوت. استخدم Chrome أو Safari.',
     micDenied: 'تمَّ رفض الوصول إلى الميكروفون. اسمح به من إعدادات المتصفح.',
     micUnavailable: 'الميكروفون غير متاح.',
+    typingMiron: 'ميرون يكتب', typingOksana: 'أوكسانا تكتب',
   },
   fr: {
     available: 'Disponible', booked: 'Réservé', yours: 'À vous',
@@ -126,6 +131,7 @@ export const TRANSLATIONS_EXTRA = {
     browserNoSpeech: "Votre navigateur ne prend pas en charge la reconnaissance vocale. Utilisez Chrome ou Safari.",
     micDenied: "Accès au microphone refusé. Autorisez-le dans les paramètres du navigateur.",
     micUnavailable: 'Microphone indisponible.',
+    typingMiron: 'Miron est en train d\'écrire', typingOksana: 'Oksana est en train d\'écrire',
   },
   de: {
     available: 'Frei', booked: 'Belegt', yours: 'Ihr Termin',
@@ -137,6 +143,7 @@ export const TRANSLATIONS_EXTRA = {
     browserNoSpeech: 'Ihr Browser unterstützt keine Spracherkennung. Bitte verwenden Sie Chrome oder Safari.',
     micDenied: 'Mikrofonzugriff verweigert. Bitte in den Browser-Einstellungen erlauben.',
     micUnavailable: 'Mikrofon nicht verfügbar.',
+    typingMiron: 'Miron schreibt', typingOksana: 'Oksana schreibt',
   },
   hi: {
     available: 'उपलब्ध', booked: 'बुक्ड', yours: 'आपका',
@@ -148,6 +155,7 @@ export const TRANSLATIONS_EXTRA = {
     browserNoSpeech: 'ब्राउज़र वाक् पहचान का समर्थन नहीं करता। कृपया Chrome या Safari का उपयोग करें।',
     micDenied: 'माइक्रोफ़ोन की अनुमति अस्वीकृत। ब्राउज़र सेटिंग्स में अनुमति दें।',
     micUnavailable: 'माइक्रोफ़ोन उपलब्ध नहीं है।',
+    typingMiron: 'मिरोन लिख रहा है', typingOksana: 'ओक्साना लिख रही है',
   },
 };
 

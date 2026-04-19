@@ -3,9 +3,12 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-export default function MessageList({ messages, loading, playingTTS, playTTS, stopTTS, messagesEndRef }) {
+export default function MessageList({ messages, loading, playingTTS, playTTS, stopTTS, messagesEndRef, activeVoice }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  const typingLabel = activeVoice === 'female' ? t('typingOksana') : t('typingMiron');
+  const typingAvatar = activeVoice === 'female' ? '/oksana-avatar.jpg' : '/miron-avatar.jpg';
 
   return (
     <>
@@ -39,8 +42,12 @@ export default function MessageList({ messages, loading, playingTTS, playTTS, st
         </React.Fragment>
       ))}
       {loading && (
-        <div className="xc-chat-message assistant typing" data-testid="chat-loading">
-          <span className="dot" /><span className="dot" /><span className="dot" />
+        <div className="xc-typing-wrap" data-testid="chat-loading">
+          <img src={typingAvatar} alt="" className="xc-typing-avatar" />
+          <div className="xc-chat-message assistant typing">
+            <span className="dot" /><span className="dot" /><span className="dot" />
+          </div>
+          <span className="xc-typing-label" data-testid="typing-label">{typingLabel}…</span>
         </div>
       )}
       <div ref={messagesEndRef} />

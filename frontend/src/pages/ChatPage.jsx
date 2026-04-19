@@ -279,6 +279,7 @@ export default function ChatPage() {
             playTTS={playTTS}
             stopTTS={stopTTS}
             messagesEndRef={messagesEndRef}
+            activeVoice={activeVoice}
           />
         </div>
 
