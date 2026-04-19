@@ -18,6 +18,7 @@ from database import db
 from auth_utils import get_current_user
 from config import SYSTEM_PROMPT, PROBLEMS
 from problem_prompts import get_problem_prompt
+from crypto_utils import encrypt_text, decrypt_text
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +168,7 @@ async def load_personal_context(user_id: Optional[str]) -> str:
         name = user_doc.get("user_display_name")
         if name:
             parts.append(f"\n\nИмя пользователя: {name}. Обращайся по имени.")
-        notes = user_doc.get("session_notes")
+        notes = decrypt_text(user_doc.get("session_notes"))
         if notes:
             parts.append(f"\n\nКонтекст из прошлых сессий: {notes}")
         homework = user_doc.get("current_homework")
@@ -374,10 +375,12 @@ async def update_session_notes(user_id: str, session_id: str) -> None:
         msgs.reverse()
         dialogue_lines = []
         for m in msgs:
-            if m.get("user_message") and m["user_message"] != "[image]":
-                dialogue_lines.append(f"Пользователь: {m['user_message']}")
-            if m.get("ai_response"):
-                dialogue_lines.append(f"Ассистент: {m['ai_response'][:300]}")
+            user_msg = decrypt_text(m.get("user_message"))
+            ai_resp = decrypt_text(m.get("ai_response"))
+            if user_msg and user_msg != "[image]":
+                dialogue_lines.append(f"Пользователь: {user_msg}")
+            if ai_resp:
+                dialogue_lines.append(f"Ассистент: {ai_resp[:300]}")
 
         if not dialogue_lines:
             return
@@ -386,7 +389,7 @@ async def update_session_notes(user_id: str, session_id: str) -> None:
         today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
         user_doc = await db.users.find_one({"_id": ObjectId(user_id)}, {"session_notes": 1})
-        prev_notes = (user_doc or {}).get("session_notes") or ""
+        prev_notes = decrypt_text((user_doc or {}).get("session_notes")) or ""
 
         summarise_messages = [
             {"role": "system", "content": NOTES_SUMMARY_PROMPT},
@@ -407,7 +410,7 @@ async def update_session_notes(user_id: str, session_id: str) -> None:
         await db.users.update_one(
             {"_id": ObjectId(user_id)},
             {"$set": {
-                "session_notes": new_notes,
+                "session_notes": encrypt_text(new_notes),
                 "session_notes_updated_at": datetime.now(timezone.utc).isoformat(),
             }},
         )
@@ -521,8 +524,8 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             await db.chat_messages.insert_one({
                 "user_id": user_id,
                 "session_id": req.session_id,
-                "user_message": req.message,
-                "ai_response": ai_response,
+                "user_message": encrypt_text(req.message),
+                "ai_response": encrypt_text(ai_response),
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "problem": req.problem or user.get("selected_problem"),
             })
@@ -621,7 +624,7 @@ async def chat_image_endpoint(req: ChatImageRequest, request: Request):
             "user_id": user_id,
             "session_id": req.session_id,
             "user_message": "[image]",
-            "ai_response": ai_text,
+            "ai_response": encrypt_text(ai_text),
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "problem": req.problem or user.get("selected_problem"),
         })
@@ -644,6 +647,12 @@ async def get_chat_history(session_id: str, request: Request):
         {"user_id": user["_id"], "session_id": session_id},
         {"_id": 0}
     ).sort("timestamp", 1).to_list(200)
+    # Расшифровываем контент диалога перед отдачей клиенту
+    for m in messages:
+        if "user_message" in m:
+            m["user_message"] = decrypt_text(m["user_message"])
+        if "ai_response" in m:
+            m["ai_response"] = decrypt_text(m["ai_response"])
     return {"messages": messages}
 
 
@@ -655,7 +664,7 @@ async def get_session_notes(request: Request):
         {"_id": 0, "session_notes": 1, "session_notes_updated_at": 1},
     )
     return {
-        "notes": (doc or {}).get("session_notes") or "",
+        "notes": decrypt_text((doc or {}).get("session_notes")) or "",
         "updated_at": (doc or {}).get("session_notes_updated_at") or None,
     }
 
@@ -690,7 +699,7 @@ async def get_chat_sessions(request: Request):
         {
             "session_id": s["_id"],
             "last_timestamp": s["last_timestamp"],
-            "preview": (s.get("last_message") or "")[:60],
+            "preview": (decrypt_text(s.get("last_message")) or "")[:60],
             "count": s["message_count"],
         }
         for s in sessions
