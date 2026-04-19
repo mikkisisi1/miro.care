@@ -1,23 +1,23 @@
 <analysis>**original_problem_statement**: 
-PRODUCT REQUIREMENTS: Lock voice settings, lock landing page CSS styles, add thinking/replying UI indicator, ensure full multi-language and responsive support. Make dialog data confidential. Fix AI response text getting cut off mid-word. Allow users to switch between agents (Miron/Oksana) mid-session and start a fresh dialogue.
+PRODUCT REQUIREMENTS: Lock voice settings, lock landing page CSS styles, add thinking/replying UI indicator, ensure full multi-language and responsive support. Make dialog data confidential. Fix AI response text getting cut off mid-word. Allow users to switch between agents (Miron/Oksana) mid-session and start a fresh dialogue. Add PWA (Progressive Web App) support with a custom install prompt and icon.
 
 **User's preferred language**: Russian
 *INSTRUCT NEXT AGENT: You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in the user's preferred language only.* (The user is communicating in Russian, so all AI responses must be in Russian).
 
 **what currently exists?** 
-A production-ready React + FastAPI/MongoDB AI psychologist platform. It features blazing-fast cold starts, Fish Audio S2-Pro chunked streaming, OpenRouter Anthropic Prompt Caching, and multimodal therapy toolkits. In this session, critical UI/UX and backend enhancements were completed: AES-128 encryption for all chat data at rest, intelligent token truncation to prevent mid-word response cuts, localized typing indicators across 8 languages, and seamless mid-session agent switching that resets the dialogue context.
+A production-ready React + FastAPI/MongoDB AI psychologist platform. It features blazing-fast cold starts, Fish Audio S2-Pro chunked streaming, OpenRouter Anthropic Prompt Caching, and multimodal therapy toolkits. It has AES-128 encryption for all chat data at rest, intelligent token truncation, localized typing indicators across 8 languages, and seamless mid-session agent switching. In this session, full PWA capabilities (manifest, service worker, custom localized install prompt) were added, all remaining hardcoded Russian strings were externalized to the i18n system, and a 402 API quota error for OpenRouter was resolved with a new user key.
 
 **Last working item**: 
-    - Last item agent was working: Implementing the localized typing/thinking indicator, locking the landing page CSS styles, and updating the PRD. 
-    - Status: USER VERIFICATION PENDING
+    - Last item agent was working: Advising the user on alternative production deployment options (Vercel/Railway) because of the recurring Cloudflare 520 wrapper timeout error, and awaiting their decision on the next backlog tasks.
+    - Status: BLOCKED (On infrastructure, dev work is fully COMPLETED).
     - Agent Testing Done: Y
-    - Which testing method agent to use? NA (Testing is fully completed using  for the final UI checks, and  for the feature batch earlier).
+    - Which testing method agent to use? NA (Testing is fully completed using  for the final UI checks and backend regression).
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:  
-  Issue 1: Production Deployment Failure (Cloudflare 520 Error / 120s Wrapper Timeout) - P0 (BLOCKED)
-     - Attempted fixes: Agent previously optimized backend cold-start from 33s to 0.32s. 
-     - Next debug checklist: DO NOT attempt to fix this via code. This is definitively an Emergent pod/wrapper infrastructure bug. Wait for user to confirm support has resolved the platform issue.
+  Issue 1: Production Deployment Failure (Cloudflare 520 Error / 120s Wrapper Timeout) - P0
+     - Attempted fixes: Investigated with .
+     - Next debug checklist: DO NOT attempt to fix this via code. This is definitively an Emergent pod/wrapper infrastructure bug. Advise the user to deploy via Vercel (Frontend) and Railway/Render (Backend) or wait for platform support.
      - Why fix this issue and what will be achieved with the fix? Allows the app to go live.
      - Status: BLOCKED
      - Is recurring issue? Y
@@ -29,114 +29,115 @@ A production-ready React + FastAPI/MongoDB AI psychologist platform. It features
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
-    - Task 1: Ensure full multi-language and responsive support across all remaining unverified edge cases (Priority: P1)
+    - Task 1: Migrate JWT from  to  cookie for enhanced security (Priority: P1)
+    - Task 2: Backend Directory Refactoring (move routes to , models to ) (Priority: P1)
     
     Future Tasks:
-    - Task 2: Streaming Claude text -> streaming TTS via SSE/WebSockets + User Barge-in support (Priority: P2)
-    - Task 3: Crisis-escalation logic (suicide risk detection) (Priority: P2)
-    - Task 4: RAG / Embeddings for  (Priority: P2)
-    - Task 5: Email/push-notifications 24h before consultation (Priority: P2)
-    - Task 6: YuKassa / Telegram Stars payments (Priority: P2)
-    - Task 7: PWA support & Admin panel (Priority: P2)
+    - Task 3: Streaming Claude text -> streaming TTS via SSE/WebSockets + User Barge-in support (Priority: P2)
+    - Task 4: Crisis-escalation logic (suicide risk detection) (Priority: P2)
+    - Task 5: RAG / Embeddings for  (Priority: P2)
+    - Task 6: Email/push-notifications 24h before consultation (Priority: P2)
+    - Task 7: YuKassa / Telegram Stars payments (Priority: P2)
+    - Task 8: Admin panel creation (Priority: P2)
 
 **Completed work in this session**
-- Fixed AI mid-word cutoff () by increasing token limits and truncating responses to the last completed sentence (DONE)
-- Implemented AES-GCM encryption for chat history (, ) and  using a Fernet key () (DONE)
-- Implemented mid-session agent switching that stops current TTS, starts a new , and resets chat history (, , ) (DONE)
-- Fixed MSE fallback race condition  error in  (DONE)
-- Added localized typing indicators (e.g., Оксана печатает...) for 8 languages (, , ) (DONE)
-- Locked Landing Page CSS in  and  with explicit comments (DONE)
-- Ran full  covering 12/12 test scenarios with 100% success (DONE)
+- Full i18n pass: Replaced all hardcoded Russian strings in , , , , , and  with translation keys (DONE)
+- Resolved OpenRouter 402 Error by updating  in backend  (DONE)
+- Implemented Progressive Web App (PWA) support with , , and generated app icons (DONE)
+- Built a custom  with a 12s delay, 7-day dismissal cooldown, and full 8-language localization including RTL support for Arabic (DONE)
+- Ran full regression testing via  (iteration_19.json) with 100% success across 17 backend endpoints and all frontend flows (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-   Issue 1: Automated Code Review Findings (Technical Debt)
-   - Debug checklist: Fix missing hook dependencies across React files (, , , ) and insecure token storage (move away from  in  /  if possible).
-   - Why to solve this issue and what will be achieved with this? Prevents stale closures in React, fixes security vulnerabilities, and reduces technical debt.
+   Issue 1: JWT Storage Security
+   - Debug checklist: Migrate authentication tokens away from  in  /  into secure  cookies.
+   - Why to solve this issue and what will be achieved with this? Prevents XSS attacks from stealing session tokens.
    - Should Test frontend/backend/both after fix: Both
    - Is recurring issue? N
 
 **Known issue recurrence from previous fork**
   - Issue recurrence in previous fork: Production Deployment Cloudflare 520 / 120s timeout.
-  - Recurrence count: 5+
+  - Recurrence count: 6+
   - Status: BLOCKED (Escalated to Emergent support. Do not attempt code fixes for this).
 
 **Code Architecture**
 - 
   -  (FastAPI entry with lazy imports)
-  -  (Master SYSTEM_PROMPT with therapy modes and confidentiality rules)
+  -  (Master SYSTEM_PROMPT)
   -  (Fish Audio S2-Pro config, LOCKED)
   -  (Fernet symmetric encryption handlers)
   -  (Encryption applied here before DB writes; AI text truncation logic)
   -  (Fish Audio streaming)
 - 
+  -  &  (PWA setup)
   -  (Landing page styles are LOCKED)
-  -  (Typing indicator logic)
+  -  (Custom PWA install banner)
+  -  &  (i18n state and dictionaries)
   -  (Main chat UI & agent switching)
-  -  & 
 
 **Key Technical Concepts**
-React, FastAPI, MongoDB, Fernet Symmetric Encryption (AES-128) via , OpenRouter (Claude Sonnet 4.5), Fish Audio S2-Pro (Streaming chunked MP3).
+React, FastAPI, MongoDB, Progressive Web App (PWA) Service Workers, Fernet Symmetric Encryption (AES-128) via , OpenRouter (Claude Sonnet 4.5), Fish Audio S2-Pro (Streaming chunked MP3).
 
 **key DB schema**
   - : {, , ,  (ENCRYPTED),  (ENCRYPTED)}
   - : {...,  (ENCRYPTED)}
 
 **changes in tech stack**
-  - Added  library to backend () for AES encryption.
+  - Added PWA Manifest and Service Workers to the frontend.
 
 **All files of reference** 
-  -  (Token limits, sentence truncation, encryption integration)
-  -  (Created for encryption/decryption logic)
-  -  (System prompt updated with confidentiality reassurance)
-  -  (Refactored to remove postMessage error)
-  -  (Locked landing CSS and added typing indicator animations)
-  - ,  (Agent switching logic)
-  -  (Translations for typing indicators)
+  -  (Created for PWA metadata)
+  -  (Created for offline caching & service worker)
+  -  (Created for localized app install UI)
+  -  &  (Updated for strict i18n support without hardcoded strings)
+  -  (Updated OpenRouter API key)
 
 **Areas that need refactoring**: 
-React Hook dependency arrays across several files as noted in technical debt.
+- Backend codebase structure: move routes to  and models to .
+- Frontend JWT handling: refactor from  to  cookies.
 
 **key api endpoints**
   -  (Returns decrypted history, writes encrypted messages)
   -  (Returns decrypted payloads)
 
 **Critical Info for New Agent** 
-1. **ENCRYPTION AT REST**: , , and  are encrypted in MongoDB using a Fernet key ( in ). The API handles encryption/decryption automatically, so the frontend only receives plaintext. Do not break this encryption pipeline. Old unencrypted records are supported via a fallback (checks for  prefix).
-2. **AGENT SWITCHING LOGIC**: If a user clicks the *other* agent's avatar during an active chat, the current TTS stops, a new  is generated, and the dialogue starts from a clean slate.
+1. **PWA IMPLEMENTED**: A Progressive Web App feature is now active. If making changes to caching or public assets, ensure  and  are respected.
+2. **ENCRYPTION AT REST**: , , and  are encrypted in MongoDB using a Fernet key. Old unencrypted records are supported via a fallback (checks for  prefix).
 3. **LOCKED FILES**: The Landing Page CSS inside  and the voice settings in  are explicitly marked as . Do not modify them unless explicitly requested by the user.
-4. **AI RESPONSE TRUNCATION**: Backend  intercepts  limits and truncates Claude's response up to the last valid punctuation mark (, , , , ) to prevent the agent from cutting off mid-word.
+4. **CLOUDFLARE 520 ERROR**: The application encounters a 520 error ONLY upon production deployment via Emergent wrapper. The preview environment works perfectly. Do not attempt to fix this error via code edits. 
 
 **documents and test reports created in this job** 
   - 
   - 
+  - 
+  - 
 
 **Last 10 User Messages and any pending HUMAN messages** 
- - User: все работает ок. посмотри почему оборвался ответ агента на середине -> Fixed AI token limit cutoff (Completed)
- - User: как сделать данные диалога клиента конфиденциально? -> Proposed privacy solutions (Completed)
- - User: клиент и так входит через личный кабинет... не усложняй -> Added DB encryption + system prompt adjustment (Completed)
- - User: клиент выбрал агента и пообщался с ним... нажимает на второй аватар ,слышит новое приветствие и продолжает диалог -> Implemented agent switching mid-chat (Completed)
- - User: не нужно сохранить контекст. новый агент,новый диалог -> Updated agent switching to start a new, clean session (Completed)
- - User: запусти полный тест,языки, качество ответов и голоса, -> Ran full testing agent, all passed (Completed)
- - User: почини (referring to a minor console error in  reported by the test agent) -> Refactored audio hook and fixed (Completed)
- - User: да прожолжай -> Implemented typing indicators and locked landing CSS (Completed)
- - *Pending:* None. The agent successfully finished the P1 batch.
+ - User: делай по очереди -> Fixed hardcoded i18n strings (Completed)
+ - User: делай по очереди -> Continued fixing i18n strings (Completed)
+ - User: [API KEY PROVIDED] -> Updated OpenRouter API key to resolve 402 error (Completed)
+ - User: создай приложение. это иконка. всплывает маленькое окно с текстом: в приложении удобнее. кнопка загрузки и индикатор. -> Created PWA and localized InstallPrompt (Completed)
+ - User: 1b 2a 3c 4c 5a -> Proceeded with instructions (Completed)
+ - User: бэк и фронт полный тест -> Executed full regression with testing_agent_v3_fork, 100% success (Completed)
+ - User: ждём эмергент суппорт? -> Consulted support_agent and advised the user to deploy on Vercel/Railway due to the Emergent platform bug (Completed)
+ - *Pending:* None. Await user's decision on whether to proceed with backlog tasks or Github export.
 
 **Project Health Check:**
-- Broken: K8s Deployment (Platform Bug - Do not attempt code fixes for this)
+- Broken: K8s Production Deployment (Platform Bug - Do not attempt code fixes for this)
 - Mocked: None
 
 **3rd Party Integrations** 
- - OpenRouter (Claude Sonnet 4.5) — requires User API Key
+ - OpenRouter (Claude Sonnet 4.5) — requires User API Key (Key was updated in this session)
  - Fish Audio (S2-Pro Voice Synthesis) — requires User API Key
+ - Stripe (Payments) - requires Test Key
 
 **Testing status**
-  - Testing agent used after significant changes: YES ( generated  with 100% pass rate)
+  - Testing agent used after significant changes: YES ( generated with 100% pass rate)
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: None
+  - Test files created: 
   - Known regressions: None
 
 **Credentials to test flow:**
 Check .
 
 **What agent forgot to execute**
-All tasks were executed fully and successfully. None were missed.</analysis>
+All user instructions were fully executed.</analysis>
