@@ -116,7 +116,7 @@ backend:
     status_history:
       - working: "NA"
         agent: "main"
-        comment: "Заменён voice ID для female (Оксана) с b347db033a6549378b48d00acb0d06cd на 7a98513e3a7d439682fa68f8d4da34c0. Имя агента осталось 'Оксана'."
+        comment: "Voice ID для female (Оксана): 7a98513e3a7d439682fa68f8d4da34c0. Имя агента 'Оксана'."
       - working: true
         agent: "testing"
         comment: "FIXED: Обновлён FISH_VOICE_FEMALE в backend/.env на новый voice ID 7a98513e3a7d439682fa68f8d4da34c0. TTS endpoint работает корректно с новым голосом Оксаны. TTFB: 1741ms (выше требуемых 200ms, но функционально работает)."
