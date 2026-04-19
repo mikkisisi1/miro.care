@@ -122,8 +122,9 @@ LENGTH_PROFILES = {
     "long":   "РАЗВЁРНУТО — 4-6 предложений. Валидация + размышление + вопрос-маяк. Используй ТОЛЬКО когда пользователь раскрыл большую/сложную тему, требующую глубины.",
 }
 
-# Лимиты токенов под каждый режим — жёстко ограничиваем длину на уровне модели.
-LENGTH_TOKEN_LIMITS = {"short": 80, "medium": 220, "long": 600}
+# Лимиты токенов под каждый режим — с запасом, чтобы модель не обрывала фразу посреди слова,
+# если она чуть превысила ориентир длины. Реальная длина всё равно ограничена директивой в промпте.
+LENGTH_TOKEN_LIMITS = {"short": 160, "medium": 400, "long": 900}
 
 
 def pick_length_mode(user_message: str) -> str:
@@ -224,7 +225,14 @@ async def call_openrouter(messages: list, model: str = "anthropic/claude-sonnet-
         response = await client.chat.completions.create(
             model=model, messages=cached_messages, max_tokens=max_tokens, temperature=0.7,
         )
-        return response.choices[0].message.content
+        choice = response.choices[0]
+        text = choice.message.content or ""
+        finish_reason = getattr(choice, "finish_reason", None)
+        # Если модель упёрлась в max_tokens и оборвала предложение посреди слова —
+        # аккуратно обрезаем текст до последнего законченного предложения.
+        if finish_reason == "length":
+            text = _truncate_to_sentence(text)
+        return text
     except Exception as e:
         if model == "anthropic/claude-sonnet-4.5":
             logger.warning(f"Claude Sonnet error, falling back to Mistral: {e}")
@@ -233,8 +241,29 @@ async def call_openrouter(messages: list, model: str = "anthropic/claude-sonnet-
                 model="mistralai/mistral-small-3.1-24b-instruct",
                 messages=messages, max_tokens=max_tokens, temperature=0.7,
             )
-            return response.choices[0].message.content
+            choice = response.choices[0]
+            text = choice.message.content or ""
+            if getattr(choice, "finish_reason", None) == "length":
+                text = _truncate_to_sentence(text)
+            return text
         raise
+
+
+def _truncate_to_sentence(text: str) -> str:
+    """Если ответ был обрезан по max_tokens, откусываем «висящий» хвост до последнего
+    завершающего знака (.!?…). Если такого знака нет — ставим многоточие в конце,
+    чтобы не оставлять пользователя с половиной слова."""
+    if not text:
+        return text
+    # Ищем последний терминальный знак препинания.
+    last_end = max(text.rfind("."), text.rfind("!"), text.rfind("?"), text.rfind("…"))
+    if last_end >= max(40, int(len(text) * 0.5)):
+        return text[: last_end + 1].rstrip()
+    # Иначе — обрезаем последнее незаконченное слово и ставим многоточие.
+    trimmed = re.sub(r"\s+\S*$", "", text).rstrip(" ,;:-—")
+    if trimmed and not trimmed.endswith(("…", ".", "!", "?")):
+        trimmed += "…"
+    return trimmed or text
 
 
 def _trim_messages(messages: list, max_len: int = 31) -> list:

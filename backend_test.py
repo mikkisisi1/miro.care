@@ -15,7 +15,7 @@ import requests
 from typing import Dict, Any, Optional
 
 # Backend URL from frontend/.env
-BACKEND_URL = "https://therapy-chat-app-2.preview.emergentagent.com/api"
+BACKEND_URL = "https://mind-care-app-3.preview.emergentagent.com/api"
 
 # Test credentials from /app/memory/test_credentials.md
 ADMIN_EMAIL = "admin@miro.care"

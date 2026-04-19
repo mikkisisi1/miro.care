@@ -1,61 +1,22 @@
-<analysis><handoff summary>
-**original_problem_statement**: 
-PRODUCT REQUIREMENTS: Lock voice settings, lock landing page CSS styles, add thinking/replying UI indicator, ensure full multi-language and responsive support. Replace Oksana's voice ID with a new 'Girl' voice from Fish Audio. 
-*(Note: Scope expanded significantly in this session towards advanced LLM therapy behavior, Fish Audio S2-Pro optimization, and extensive debugging of a platform-level K8s deployment timeout).*
+<analysis>**original_problem_statement**: 
+PRODUCT REQUIREMENTS: Lock voice settings, lock landing page CSS styles, add thinking/replying UI indicator, ensure full multi-language and responsive support. Replace Oksana's voice ID with a new 'Girl' voice from Fish Audio () while keeping her name as Oksana in the UI.
 
 **User's preferred language**: Russian
 *INSTRUCT NEXT AGENT: You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in the user's preferred language only.*
 
 **what currently exists?** 
-A highly optimized, production-ready React + FastAPI/MongoDB AI psychologist platform. It features blazing-fast cold starts (0.32s), Fish Audio S2-Pro chunked streaming, OpenRouter Anthropic Prompt Caching for cost reduction, and advanced psychological logic (multimodal therapy toolkits, homework extraction, problem-specific prompts, and randomized conversational response lengths). The production deployment is currently failing due to a confirmed Emergent infrastructure bug (K8s wrapper timeout), which has been formally escalated to support by the user.
+A production-ready React + FastAPI/MongoDB AI psychologist platform. It features blazing-fast cold starts, Fish Audio S2-Pro chunked streaming, OpenRouter Anthropic Prompt Caching, and multimodal therapy toolkits. In this session, Oksana's voice ID was successfully updated to a new model and rigorously tested across both backend and frontend. The production deployment is still blocked due to a confirmed Emergent infrastructure bug (K8s wrapper timeout) handled by Emergent Support.
 
 **Last working item**: 
-    - Last item agent was working: Enhancing the AI Psychologist LLM logic by implementing Multimodal therapy techniques (CBT, ACT, EFT, etc.) in the System Prompt and adding an automated Homework assignment extraction/saving pipeline in .
-    - Status: COMPLETED
+    - Last item agent was working: Replacing the voice ID for Oksana to a new ID from Fish Audio () in the backend while ensuring her name remains Oksana in the frontend, followed by full backend and frontend E2E testing using testing subagents.
+    - Status: USER VERIFICATION PENDING
     - Agent Testing Done: Y
-    - Which testing method agent to use? manual testing by bash/python -c
+    - Which testing method agent to use? NA (Testing is fully completed using  and . Both passed 100%).
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:  
   Issue 1: Production Deployment Failure (Cloudflare 520 Error / 120s Wrapper Timeout) - P0 (BLOCKED)
-     - Attempted fixes: Agent optimized backend cold-start from 33 seconds down to 0.32s by implementing lazy imports for heavy libraries (, , usage: openai [-h] [-v] [-b API_BASE] [-k API_KEY] [-p PROXY [PROXY ...]]
-              [-o ORGANIZATION] [-t {openai,azure}]
-              [--api-version API_VERSION] [--azure-endpoint AZURE_ENDPOINT]
-              [--azure-ad-token AZURE_AD_TOKEN] [-V]
-              {api,tools,migrate,grit} ...
-
-positional arguments:
-  {api,tools,migrate,grit}
-    api                 Direct API calls
-    tools               Client side tools for convenience
-
-options:
-  -h, --help            show this help message and exit
-  -v, --verbose         Set verbosity.
-  -b API_BASE, --api-base API_BASE
-                        What API base url to use.
-  -k API_KEY, --api-key API_KEY
-                        What API key to use.
-  -p PROXY [PROXY ...], --proxy PROXY [PROXY ...]
-                        What proxy to use.
-  -o ORGANIZATION, --organization ORGANIZATION
-                        Which organization to run as (will use your default
-                        organization if not specified)
-  -t {openai,azure}, --api-type {openai,azure}
-                        The backend API to call, must be `openai` or `azure`
-  --api-version API_VERSION
-                        The Azure API version, e.g.
-                        'https://learn.microsoft.com/en-us/azure/ai-
-                        services/openai/reference#rest-api-versioning'
-  --azure-endpoint AZURE_ENDPOINT
-                        The Azure endpoint, e.g.
-                        'https://endpoint.openai.azure.com'
-  --azure-ad-token AZURE_AD_TOKEN
-                        A token from Azure Active Directory,
-                        https://www.microsoft.com/en-
-                        us/security/business/identity-access/microsoft-entra-
-                        id
-  -V, --version         show program's version number and exit). All 9 health endpoints return 200 OK instantly. 
+     - Attempted fixes: Agent previously optimized backend cold-start from 33s to 0.32s. 
      - Next debug checklist: DO NOT attempt to fix this via code. This is definitively an Emergent pod/wrapper infrastructure bug. Wait for user to confirm support has resolved the platform issue.
      - Why fix this issue and what will be achieved with the fix? Allows the app to go live.
      - Status: BLOCKED
@@ -80,33 +41,28 @@ options:
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
-    - Task 1: Add thinking/replying UI indicator in Chat (Priority: P1)
-    - Task 2: Ensure full multi-language and responsive support (Priority: P1)
+    - Task 1: Lock voice settings (Priority: P1)
+    - Task 2: Lock landing page CSS styles (Priority: P1)
+    - Task 3: Add thinking/replying UI indicator in Chat (Priority: P1)
+    - Task 4: Ensure full multi-language and responsive support (Priority: P1)
     
     Future Tasks:
-    - Task 3: Streaming Claude text -> streaming TTS via SSE/WebSockets + User Barge-in support (Priority: P2)
-    - Task 4: Crisis-escalation logic (suicide risk detection) (Priority: P2)
-    - Task 5: RAG / Embeddings for  (Priority: P2)
-    - Task 6: Email/push-notifications 24h before consultation (Priority: P2)
-    - Task 7: YuKassa / Telegram Stars payments (Priority: P2)
-    - Task 8: PWA support & Admin panel (Priority: P2)
+    - Task 5: Streaming Claude text -> streaming TTS via SSE/WebSockets + User Barge-in support (Priority: P2)
+    - Task 6: Crisis-escalation logic (suicide risk detection) (Priority: P2)
+    - Task 7: RAG / Embeddings for  (Priority: P2)
+    - Task 8: Email/push-notifications 24h before consultation (Priority: P2)
+    - Task 9: YuKassa / Telegram Stars payments (Priority: P2)
+    - Task 10: PWA support & Admin panel (Priority: P2)
 
 **Completed work in this session**
-- Lazy-loaded backend dependencies in , ,  reducing cold start to 0.3s (DONE)
-- Fixed AI gender pronoun bug (Miron speaking as female) by routing  selection from frontend to  in backend (DONE)
-- Fixed React navigation bug where  parameter mismatch broke the  ->  transition (DONE)
-- Upgraded Fish Audio to flagship  model, utilizing bracket syntax  (DONE)
-- Replaced Female voice ID with 'Selene' () (DONE)
-- Implemented randomized conversational response lengths (strict token caps: short 40%, medium 45%, long 15%) (DONE)
-- Created  and disabled  in Fish Audio to enforce accurate Russian pronunciation (ударения) (DONE)
-- Created  to append specific therapeutic approaches based on user's selected issue (DONE)
-- Enabled Anthropic Prompt Caching () via OpenRouter saving ~90% system prompt tokens (DONE)
-- Accelerated TTS TTFB to 40-100ms by lowering Fish Audio  to 100 (DONE)
-- Implemented Multimodal therapy toolkit & automated Homework extraction/saving in LLM pipeline (DONE)
+- Replaced Fish Audio female voice ID with  in  (DONE)
+- Reverted erroneous renaming of Oksana to Девушка across React UI files and System Prompts based on user correction (DONE)
+- Ran full  ensuring new TTS voice ID works seamlessly (DONE)
+- Ran full  ensuring Chat flows, Voice Select logic, and translations remain intact with Oksana's correct name (DONE)
 
 **Earlier issues found/mentioned but not fixed**
    Issue 1: Code Review Hooks & Secrets
-   - Debug checklist: Review the automated code quality report (Message 75). Hardcoded secrets in tests, missing React dependencies, and extreme cyclomatic complexity in .
+   - Debug checklist: Review the automated code quality report. Hardcoded secrets in tests, missing React dependencies, and extreme cyclomatic complexity in .
    - Why to solve this issue and what will be achieved with this? Stability and security.
    - Should Test frontend/backend/both after fix: Both
    - Is recurring issue? N
@@ -114,79 +70,75 @@ options:
 **Known issue recurrence from previous fork**
   - Issue recurrence in previous fork: Production Deployment Cloudflare 520 / 120s timeout.
   - Recurrence count: 5+
-  - Status: BLOCKED (Customer escalated to support@emergent.sh, confirmed as platform-level infrastructure bug. Do not attempt code fixes for this).
+  - Status: BLOCKED (Escalated to Emergent support. Do not attempt code fixes for this).
 
 **Code Architecture**
 - 
   -  (FastAPI entry with lazy imports)
   -  (Master SYSTEM_PROMPT with therapy modes and homework logic)
-  -  (NEW: contextual instructions for anxiety, depression, etc.)
-  -  (NEW: dictionary for Russian accentuation)
-  -  (Fish Audio S2-Pro config, Bracket syntax)
-  -  (OpenRouter API, prompt caching, homework extraction, token capping)
-  -  (Fish Audio streaming, normalize=False)
+  -  (Fish Audio S2-Pro config, contains Voice IDs mapped to roles)
+  -  (OpenRouter API, prompt caching, homework extraction)
+  -  (Fish Audio streaming)
 - 
-  -  (Manages chat state, now correctly passes )
+  -  (Voice selection UI)
+  -  (Main chat UI)
+  - 
 
 **Key Technical Concepts**
-React, FastAPI, MongoDB (Motor async), OpenRouter (Claude Sonnet 4.5), Anthropic Prompt Caching, Fish Audio S2-Pro (Streaming chunked MP3), Regex Data Extraction.
+React, FastAPI, MongoDB, OpenRouter (Claude Sonnet 4.5), Anthropic Prompt Caching, Fish Audio S2-Pro (Streaming chunked MP3).
 
 **key DB schema**
   - : {..., , , , }
 
 **changes in tech stack**
-- Transitioned Fish Audio usage from  model (parenthesis syntax) to  model (bracket syntax).
+  - None in this session.
 
 **All files of reference** 
-  - 
-  -  
-  -  
-  - 
-  -  (created)
-  -  (created)
+  -  (Updated to reflect new Fish Audio Voice ID)
   - 
   - 
   - 
 
 **Areas that need refactoring**: 
- (Cyclomatic complexity of 49, flagged by code review).  is also highly complex but currently functioning well with prompt caching and homework parsing.
+ (Cyclomatic complexity of 49, flagged by code review).
 
 **key api endpoints**
-  -  (and 8 other variants for K8s)
-  -  (Anthropic prompt caching active)
-  -  (S2-Pro chunked streaming)
+  - 
+  - 
+  - 
 
 **Critical Info for New Agent** 
-1. **DEPLOYMENT 520 ERROR**: The app starts in 0.3s and runs perfectly. The deployment wrapper failing is an Emergent bug. Do not edit  or  trying to fix deployment. Wait for user instruction.
-2. **PROMPT CACHING**:  uses  in OpenRouter payloads. DO NOT remove this, it saves the user 90% of token costs.
-3. **FISH AUDIO S2-PRO**:  now uses the flagship  model. Emotional tags MUST be in brackets (e.g., ), NOT parentheses .
-4. **RUSSIAN STRESS MARKS**:  has  to preserve Unicode acute accents (). DO NOT turn normalize back to True, or the Russian pronunciation dictionary () will break.
-5. **USER DEMEANOR**: User is a paying customer who was highly frustrated by the deployment platform bug. Keep responses highly empathetic, professional, and entirely in Russian.
+1. **OKSANA'S IDENTITY**: The user explicitly instructed: I asked to change the voice, not the agents name Oksana. redo it. dont touch the name. only the voice. The voice ID is updated in , but you MUST ensure the agent is still called Oksana in all UI, translation, and system prompt text.
+2. **DEPLOYMENT 520 ERROR**: The K8s deployment wrapper timeout is an Emergent platform bug. Do not edit  trying to fix deployment. 
+3. **PROMPT CACHING**:  uses  in OpenRouter payloads. DO NOT remove this.
+4. **FISH AUDIO S2-PRO**: Uses bracket syntax (e.g., ).  has  to preserve Russian stress marks.
 
 **documents and test reports created in this job** 
-  - 
-  - 
+  -  (Updated with testing results for Backend and Frontend E2E tests)
 
 **Last 10 User Messages and any pending HUMAN messages** 
- - User: теперь 1 и 3 сделать (Make improvements 1 and 3: Multimodal therapy and Homework assignments) -> COMPLETED.
+ - User: Provided Fish Audio link with Voice ID. (Completed)
+ - User: Я просил поменять голос а не имя агента Оксана. переделай. не трогай имя. только голос -> Corrected agent's mistake of changing Oksana's name to Девушка. (Completed)
+ - User: сделай общий тестировщик всего проекта -> Triggered backend testing subagent. (Completed)
+ - User: да запускаем -> Triggered frontend testing subagent. (Completed)
+ - *Pending:* Agent provided final confirmation that the testing was 100% successful and asked the user if they should finish the task or if there is anything else to refine.
 
 **Project Health Check:**
-Broken: K8s Deployment (Platform Bug)
-Mocked: None
+- Broken: K8s Deployment (Platform Bug)
+- Mocked: None
 
 **3rd Party Integrations** 
  - OpenRouter (Claude Sonnet 4.5) — requires User API Key
  - Fish Audio (S2-Pro Voice Synthesis) — requires User API Key
 
 **Testing status**
-  - Testing agent used after significant changes: NO (Used extensive bash curl and UI screenshots)
-  - Troubleshoot agent used after agent stuck in loop: YES (To debug deployment)
+  - Testing agent used after significant changes: YES (Both  and  executed with 100% success)
+  - Troubleshoot agent used after agent stuck in loop: NO
   - Test files created: None
-  - Known regressions: None in codebase. 
+  - Known regressions: None
 
 **Credentials to test flow:**
 Check .
 
 **What agent forgot to execute**
-The agent did not address the Automated Code Review findings (Message 75) regarding React hook dependency arrays, insecure , or hardcoded secrets in the  file. These should be tackled as technical debt.
-</handoff summary></analysis>
+The agent successfully resolved the voice change and completed all rigorous testing, but has not yet started on the other items in the original problem statement: Lock voice settings, lock landing page CSS styles, add thinking/replying UI indicator. These remain in the Upcoming Tasks queue.</analysis>
