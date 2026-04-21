@@ -1,0 +1,40 @@
+{
+  "summary": "Iteration 21 PASSED. Backend regression after SYSTEM_PROMPT extension (4 new blocks: intake-data-processing, active-profile-use, conversation-context, ban-closed-replies) is fully green: 10/10 pytest cases pass in /app/backend/tests/test_iteration21_prompt_blocks.py. /api/health, /api/problems, /api/tariffs, /api/specialists -> 200. /api/chat returns Russian, never ends with forbidden closed sentences (Понятно./Ясно./Хорошо./Окей./Принято.) across single-turn, 3-turn multi-turn, and post-[АНКЕТА] flows; bot does NOT re-ask intake questions (имя/возраст/вес) after the [АНКЕТА] summary is pushed and remembers them on the next turn in the same session_id; 6 consecutive guest messages succeed without 402/403 (needs_tariff stays false). /api/tts streams audio/mpeg for both voices — Miron male (5cfccfb8…) and Oksana female (7a98513e…). Frontend smoke (mobile 390x844): Landing 'Психолог' CTA → /chat, voice picker visible (avatar-miron-btn / avatar-oksana-btn), Oksana greeting bubble renders ('Я Оксана, ваш личный консультант по снижению веса.'), typing 'Алексей' + Enter triggers INTRO ('Приятно познакомиться, Алексей!') and IntakeCard q2 ('Вы хотите снизить вес для себя или помочь кому-то из близких?') with pill options. Only console errors are non-blocking 'TTS greeting cache miss: Failed to fetch' for the static greeting MP3 (pre-existing — runtime TTS via /api/tts works fine).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "ChatPage mobile", "issues": ["PWA InstallPrompt overlays the bottom of the chat on mobile (covers the input area until dismissed). Pre-existing from iter18-20, not a regression."]},
+      {"screen": "ChatPage greeting", "issues": ["GET /static/greetings/oksana_ru.mp3 returns 404 → console 'TTS greeting cache miss: Failed to fetch'. Frontend correctly falls back to runtime TTS, but the noisy console error should be silenced or the static file shipped."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration21_prompt_blocks.py",
+    "/app/test_reports/pytest/pytest_results_iter21.xml"
+  ],
+  "action_items": [
+    "(Optional/cosmetic) Add /static/greetings/oksana_ru.mp3 and miron_ru.mp3 OR remove the cache-miss console.error to keep the console clean.",
+    "(Optional/cosmetic, carry-over from iter20) Hide the [АНКЕТА] summary user bubble — it's a priming message, currently visible in chat."
+  ],
+  "critical_code_review_comments": [
+    "config.py SYSTEM_PROMPT now has the 4 new blocks (ОБРАБОТКА ДАННЫХ АНКЕТЫ, АКТИВНОЕ ИСПОЛЬЗОВАНИЕ ПРОФИЛЯ, КОНТЕКСТ РАЗГОВОРА, ЗАПРЕТ ЗАКРЫТЫХ ОТВЕТОВ) inserted between Mode-2 definition and 'ЛОГИКА ВЕДЕНИЯ ДИАЛОГА'. Live testing confirms Claude Sonnet 4.5 follows them: no closed endings observed in 5 distinct chat calls; intake recall verified across two consecutive turns.",
+    "routes/chat.py check_user_access() still hard-returns (True, True, free_count); 6-msg unlimited test confirms no paywall regression. Dead branch lines 480-485 still present — could be removed for clarity but harmless.",
+    "routes/tts.py voice routing still correct: 'VoiceID: 5cfccfb8…' for male and '7a98513e…' for female (validated via audio/mpeg streaming response).",
+    "voice_config.py: VOICE_IDS unchanged (Miron 5cfccfb8aae14938be283ea6400b4a8a, Oksana 7a98513e3a7d439682fa68f8d4da34c0) — matches problem statement spec.",
+    "ChatPage.jsx flow validated end-to-end up to IntakeCard render; data-testids present: app-root, chat-page, chat-input, send-btn, intake-q2…"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration21_prompt_blocks.py",
+    "/app/test_reports/pytest/pytest_results_iter21.xml",
+    "/app/test_reports/iteration_21.json"
+  ],
+  "success_rate": {"backend": "100% (10/10)", "frontend": "100% of in-scope smoke (landing → /chat, voice select, greeting, name → intake intro + IntakeCard q2 render, no blocking console errors)"},
+  "test_credentials": {"guest": "anonymous flow (no auth required)"},
+  "seed_data_creation": "Ephemeral chat sessions with session_id prefix 'TEST_iter21_*' (no DB persistence for anonymous users).",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "mocked_apis": {"openrouter_llm": "LIVE (Claude Sonnet 4.5)", "fish_audio_tts": "LIVE (s2-pro, both voices)"},
+  "context_for_next_testing_agent": "Iter21 SYSTEM_PROMPT extension regression is green. Re-run /app/backend/tests/test_iteration21_prompt_blocks.py if config.py SYSTEM_PROMPT, routes/chat.py, routes/tts.py, or voice_config.py change. The closed-ending check is implemented as: extract last sentence, lowercase, strip → must NOT exactly match one of {'понятно.','ясно.','хорошо.','окей.','принято.'}. The intake-no-repeat check sends a [АНКЕТА] block and asserts the next reply does NOT contain 'сколько вам лет', 'ваш возраст', 'сколько вы весите', 'какой у вас вес', 'как вас зовут'. Frontend chat input uses [data-testid=chat-input] + [data-testid=send-btn] (NOT chat-send-btn — note for next iteration). Voice picker uses [data-testid=avatar-miron-btn] / [data-testid=avatar-oksana-btn]. Static greeting MP3 (oksana_ru.mp3 / miron_ru.mp3) returns 404 — runtime TTS fallback works.",
+  "rca_of_issue": "N/A — no failures observed."
+}

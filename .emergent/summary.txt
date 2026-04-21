@@ -1,58 +1,62 @@
 <analysis>**original_problem_statement**: 
-PRODUCT REQUIREMENTS: Lock voice settings, lock landing page CSS styles, add thinking/replying UI indicator, ensure full multi-language and responsive support. Make dialog data confidential. Fix AI response text getting cut off mid-word. Allow users to switch between agents (Miron/Oksana) mid-session and start a fresh dialogue. Add PWA (Progressive Web App) support with a custom install prompt and icon.
+PRODUCT REQUIREMENTS: Build a hybrid AI-psychologist platform focusing specifically on **Weight Loss**. The app should feature an interactive intake questionnaire (В2-В14) embedded in the chat, use a highly detailed weight-loss specific system prompt, and offer completely unlimited free usage (no paywalls, no minutes left countdown). Ensure PWA is configured as always-fresh (network-first strategy) so users do not get stuck with cached audio files. Lock voice IDs for Miron (male) and Oksana (female). Do not change landing page CSS. 
 
 **User's preferred language**: Russian
 *INSTRUCT NEXT AGENT: You MUST automatically detect the user's primary language from their messages inside the <trajectory> tag and INSTRUCT next agent to respond in the user's preferred language only.* (The user is communicating in Russian, so all AI responses must be in Russian).
 
 **what currently exists?** 
-A production-ready React + FastAPI/MongoDB AI psychologist platform. It features blazing-fast cold starts, Fish Audio S2-Pro chunked streaming, OpenRouter Anthropic Prompt Caching, and multimodal therapy toolkits. It has AES-128 encryption for all chat data at rest, intelligent token truncation, localized typing indicators across 8 languages, and seamless mid-session agent switching. In this session, full PWA capabilities (manifest, service worker, custom localized install prompt) were added, all remaining hardcoded Russian strings were externalized to the i18n system, and a 402 API quota error for OpenRouter was resolved with a new user key.
+A React + FastAPI + MongoDB AI Weight-Loss Consultant. The app has a seamless flow: Landing Page -> direct to Chat -> Bot Greeting -> User enters name -> Interactive Intake Form (IntakeCard) appears in-chat -> User fills form -> Form summary is silently passed to the LLM -> Free Chat begins. The application has no subscription limits or timers. PWA uses a strict network-first caching strategy (v3) with auto-reload to prevent stale TTS audio. Voice synthesis is powered by Fish Audio S2-Pro (streaming chunked MP3).
 
 **Last working item**: 
-    - Last item agent was working: Advising the user on alternative production deployment options (Vercel/Railway) because of the recurring Cloudflare 520 wrapper timeout error, and awaiting their decision on the next backlog tasks.
-    - Status: BLOCKED (On infrastructure, dev work is fully COMPLETED).
+    - Last item agent was working: Removing all subscription/tariff limits, enabling unlimited free use, and thoroughly testing the new weight loss intake flow.
+    - Status: USER VERIFICATION PENDING
     - Agent Testing Done: Y
-    - Which testing method agent to use? NA (Testing is fully completed using  for the final UI checks and backend regression).
+    - Which testing method agent to use? NA (Testing is fully completed using  for the final UI checks and backend regression - 100% pass in iteration 20).
     - User Testing Done: N
 
 **All Pending/In progress Issue list**:  
   Issue 1: Production Deployment Failure (Cloudflare 520 Error / 120s Wrapper Timeout) - P0
-     - Attempted fixes: Investigated with .
-     - Next debug checklist: DO NOT attempt to fix this via code. This is definitively an Emergent pod/wrapper infrastructure bug. Advise the user to deploy via Vercel (Frontend) and Railway/Render (Backend) or wait for platform support.
-     - Why fix this issue and what will be achieved with the fix? Allows the app to go live.
+     - Attempted fixes: Discussed with user and Emergent Support. Cloudflare 520 is caused by streaming endpoints exceeding platform timeouts. 
+     - Next debug checklist: DO NOT attempt to fix this via code. This is an Emergent pod/wrapper infrastructure limitation. Wait for platform support or advise user to deploy on Vercel/Railway.
+     - Why fix this issue and what will be achieved with the fix? Allows the app to be deployed reliably to production.
      - Status: BLOCKED
      - Is recurring issue? Y
      - Should Test frontend/backend/both after fix? Both
      - Blocked on other issue: Emergent DevOps Support Ticket
+
+  Issue 2: JWT Storage Security - P1
+     - Attempted fixes: None yet.
+     - Next debug checklist: Migrate authentication tokens away from  in  /  into secure  cookies.
+     - Why fix this issue and what will be achieved with the fix? Prevents XSS attacks from stealing session tokens.
+     - Status: NOT STARTED
+     - Is recurring issue? N
+     - Should Test frontend/backend/both after fix? Both
+     - Blocked on other issue: None
 
 **In progress Task List**: 
   None
 
 **Upcoming and Future Tasks**
     Upcoming Tasks:
-    - Task 1: Migrate JWT from  to  cookie for enhanced security (Priority: P1)
-    - Task 2: Backend Directory Refactoring (move routes to , models to ) (Priority: P1)
+    - Task 1: Backend Directory Refactoring (move routes to , models to ) (Priority: P1)
     
     Future Tasks:
-    - Task 3: Streaming Claude text -> streaming TTS via SSE/WebSockets + User Barge-in support (Priority: P2)
-    - Task 4: Crisis-escalation logic (suicide risk detection) (Priority: P2)
-    - Task 5: RAG / Embeddings for  (Priority: P2)
-    - Task 6: Email/push-notifications 24h before consultation (Priority: P2)
-    - Task 7: YuKassa / Telegram Stars payments (Priority: P2)
-    - Task 8: Admin panel creation (Priority: P2)
+    - Task 2: Streaming Claude text -> streaming TTS via SSE/WebSockets + User Barge-in support (Priority: P2)
+    - Task 3: RAG / Embeddings for  (Priority: P2)
+    - Task 4: Email/push-notifications 24h before consultation (Priority: P2)
+    - Task 5: Admin panel creation (Priority: P2)
 
 **Completed work in this session**
-- Full i18n pass: Replaced all hardcoded Russian strings in , , , , , and  with translation keys (DONE)
-- Resolved OpenRouter 402 Error by updating  in backend  (DONE)
-- Implemented Progressive Web App (PWA) support with , , and generated app icons (DONE)
-- Built a custom  with a 12s delay, 7-day dismissal cooldown, and full 8-language localization including RTL support for Arabic (DONE)
-- Ran full regression testing via  (iteration_19.json) with 100% success across 17 backend endpoints and all frontend flows (DONE)
+- Unified Oksana's voice ID across the entire codebase to  and Miron's to  (DONE)
+- Re-wrote Service Worker () to version 3 using a strictly  strategy for HTML/JS/CSS to prevent stale audio caches on the PWA, plus auto-reload logic in  (DONE)
+- Removed  page and all its routes; Landing page Psychologist button now goes directly to  (DONE)
+- Completely replaced  in  with a robust 25-source Weight-Loss logic, ensuring the bot behaves as a weight-loss consultant (DONE)
+- Implemented an interactive Intake Questionnaire (, ) that renders inside the chat, gathers user metrics/history, calculates BMI, and silently feeds the summary to the LLM (DONE)
+- Stripped all tariff limitations, countdown timers, and minutes left restrictions from frontend and backend, making the app fully unlimited (DONE)
+- Validated flow with  yielding a 100% pass rate (DONE)
 
 **Earlier issues found/mentioned but not fixed**
-   Issue 1: JWT Storage Security
-   - Debug checklist: Migrate authentication tokens away from  in  /  into secure  cookies.
-   - Why to solve this issue and what will be achieved with this? Prevents XSS attacks from stealing session tokens.
-   - Should Test frontend/backend/both after fix: Both
-   - Is recurring issue? N
+   None.
 
 **Known issue recurrence from previous fork**
   - Issue recurrence in previous fork: Production Deployment Cloudflare 520 / 120s timeout.
@@ -62,82 +66,78 @@ A production-ready React + FastAPI/MongoDB AI psychologist platform. It features
 **Code Architecture**
 - 
   -  (FastAPI entry with lazy imports)
-  -  (Master SYSTEM_PROMPT)
-  -  (Fish Audio S2-Pro config, LOCKED)
-  -  (Fernet symmetric encryption handlers)
-  -  (Encryption applied here before DB writes; AI text truncation logic)
+  -  (Master SYSTEM_PROMPT for Weight Loss, Tariffs logic bypassed)
+  -  (Fish Audio S2-Pro config, LOCKED Voice IDs)
+  -  (Unlimited access logic, receives Intake summary)
   -  (Fish Audio streaming)
 - 
-  -  &  (PWA setup)
-  -  (Landing page styles are LOCKED)
-  -  (Custom PWA install banner)
-  -  &  (i18n state and dictionaries)
-  -  (Main chat UI & agent switching)
+  -  (PWA Service Worker - v3 network-first)
+  -  (Routing)
+  -  (New component for weight-loss survey)
+  -  (New file with the 14-question survey flow)
+  -  (Main chat UI, orchestrates intake form)
 
 **Key Technical Concepts**
-React, FastAPI, MongoDB, Progressive Web App (PWA) Service Workers, Fernet Symmetric Encryption (AES-128) via , OpenRouter (Claude Sonnet 4.5), Fish Audio S2-Pro (Streaming chunked MP3).
+React, FastAPI, MongoDB, PWA Service Workers (network-first strategy), OpenRouter (Claude Sonnet 3.5), Fish Audio S2-Pro (Streaming chunked MP3), Custom Interactive Chat Forms.
 
 **key DB schema**
   - : {, , ,  (ENCRYPTED),  (ENCRYPTED)}
   - : {...,  (ENCRYPTED)}
 
 **changes in tech stack**
-  - Added PWA Manifest and Service Workers to the frontend.
+  - None
 
 **All files of reference** 
-  -  (Created for PWA metadata)
-  -  (Created for offline caching & service worker)
-  -  (Created for localized app install UI)
-  -  &  (Updated for strict i18n support without hardcoded strings)
-  -  (Updated OpenRouter API key)
+  -  &  (Updated for strict network-first caching)
+  -  (Created to store the questionnaire structure)
+  -  (Created for rendering the interactive form)
+  -  (Updated )
+  -  (Updated to remove tariff limits)
+  -  (Updated with strict project rules: Always-fresh PWA, Fixed Voice IDs, Locked Landing CSS)
 
 **Areas that need refactoring**: 
-- Backend codebase structure: move routes to  and models to .
-- Frontend JWT handling: refactor from  to  cookies.
+-  was deleted; check if there are any orphaned backend endpoints that were serving this logic.
 
 **key api endpoints**
-  -  (Returns decrypted history, writes encrypted messages)
-  -  (Returns decrypted payloads)
+  -  (Returns decrypted history, no longer checks  or )
+  -  (Streams Fish Audio chunked mp3)
 
 **Critical Info for New Agent** 
-1. **PWA IMPLEMENTED**: A Progressive Web App feature is now active. If making changes to caching or public assets, ensure  and  are respected.
-2. **ENCRYPTION AT REST**: , , and  are encrypted in MongoDB using a Fernet key. Old unencrypted records are supported via a fallback (checks for  prefix).
-3. **LOCKED FILES**: The Landing Page CSS inside  and the voice settings in  are explicitly marked as . Do not modify them unless explicitly requested by the user.
-4. **CLOUDFLARE 520 ERROR**: The application encounters a 520 error ONLY upon production deployment via Emergent wrapper. The preview environment works perfectly. Do not attempt to fix this error via code edits. 
+1. **PERMANENT RULES RECORDED IN PRD.MD**: 
+   - **Always-fresh PWA**: Service worker must remain network-first. Never cache API/TTS calls. 
+   - **Fixed Voice IDs**: Miron () and Oksana (). Do NOT alter.
+   - **Locked Landing CSS**: Never touch  or landing styles without explicit demand.
+2. **PWA CACHE BUG**: The user repeatedly complained about the female voice changing mid-session. This was proven to be their device's PWA cache serving stale TTS audio files. We deployed SW v3 to fix this. If the user complains about voice caching again, remind them they MUST refresh/reinstall the PWA to pull the v3 Service Worker.
+3. **NO PAYWALLS**: The app is now 100% free and unlimited. Do not reintroduce tariff checks.
 
 **documents and test reports created in this job** 
   - 
   - 
-  - 
-  - 
 
 **Last 10 User Messages and any pending HUMAN messages** 
- - User: делай по очереди -> Fixed hardcoded i18n strings (Completed)
- - User: делай по очереди -> Continued fixing i18n strings (Completed)
- - User: [API KEY PROVIDED] -> Updated OpenRouter API key to resolve 402 error (Completed)
- - User: создай приложение. это иконка. всплывает маленькое окно с текстом: в приложении удобнее. кнопка загрузки и индикатор. -> Created PWA and localized InstallPrompt (Completed)
- - User: 1b 2a 3c 4c 5a -> Proceeded with instructions (Completed)
- - User: бэк и фронт полный тест -> Executed full regression with testing_agent_v3_fork, 100% success (Completed)
- - User: ждём эмергент суппорт? -> Consulted support_agent and advised the user to deploy on Vercel/Railway due to the Emergent platform bug (Completed)
- - *Pending:* None. Await user's decision on whether to proceed with backlog tasks or Github export.
+ - User: работаем в режиме экономии кредитов... (Requested removing  page and routing directly to ) -> Implemented (Completed)
+ - User: (Provided massive new  for a Weight Loss Consultant with an intake questionnaire) -> Implemented (Completed)
+ - Agent: Asked how to render the intake questionnaire (buttons in chat vs. overlay wizard).
+ - User: как здесь сделай (Uploaded screenshot of in-chat buttons) -> Implemented  in-chat (Completed)
+ - User: убираем все ограничения и уведомления о подписке... включи стриминг поток фишаудио. потом тест... (Requested removing all limits, making it free, verifying FishAudio streaming, and running tests) -> Removed all limits, verified MSE streaming, ran testing agent (Completed)
+ - *Pending:* None. Await user's confirmation on the new unlimited weight-loss flow.
 
 **Project Health Check:**
-- Broken: K8s Production Deployment (Platform Bug - Do not attempt code fixes for this)
+- Broken: Cloudflare 520 timeout on Emergent Production deployment (Infrastructure issue).
 - Mocked: None
 
 **3rd Party Integrations** 
- - OpenRouter (Claude Sonnet 4.5) — requires User API Key (Key was updated in this session)
+ - OpenRouter (Claude Sonnet) — requires User API Key
  - Fish Audio (S2-Pro Voice Synthesis) — requires User API Key
- - Stripe (Payments) - requires Test Key
 
 **Testing status**
   - Testing agent used after significant changes: YES ( generated with 100% pass rate)
   - Troubleshoot agent used after agent stuck in loop: NO
-  - Test files created: 
+  - Test files created: Handled by testing subagent
   - Known regressions: None
 
 **Credentials to test flow:**
 Check .
 
 **What agent forgot to execute**
-All user instructions were fully executed.</analysis>
+Nothing. All requests in the current phase were fully executed and verified by the subagent.</analysis>
