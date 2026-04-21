@@ -13,7 +13,6 @@ import useAudioStream from '@/hooks/useAudioStream';
 import useChat from '@/hooks/useChat';
 import useSpeechRecognition from '@/hooks/useSpeechRecognition';
 import useImageUpload from '@/hooks/useImageUpload';
-import useCountdown from '@/hooks/useCountdown';
 import apiClient, { API_BASE, getToken } from '@/lib/apiClient';
 import { INTAKE_QUESTIONS, INTAKE_INTRO, INTAKE_OUTRO, nextIntakeStep, buildIntakeSummary } from '@/config/intakeQuestions';
 
@@ -302,10 +301,11 @@ export default function ChatPage() {
     sessionId, lang, user, messages, setMessages, refreshUser, ttsEnabled, playTTS, loading,
   });
 
-  const minutesLeft = user?.minutes_left || 0;
-  const isFreePhase = (user?.free_messages_count || 0) < 12;
-  const hasMinutes = minutesLeft > 0;
-  const countdownSeconds = useCountdown(minutesLeft, hasMinutes, isFreePhase);
+  // 🔓 Безлимит: ограничения отключены
+  const minutesLeft = 999;
+  const isFreePhase = true;
+  const hasMinutes = true;
+  const countdownSeconds = null;
   const formatTime = (mins) => {
     if (mins >= 60) return `${Math.floor(mins / 60)}${t('hours')} ${mins % 60}${t('min')}`;
     return `${mins} ${t('min')}`;

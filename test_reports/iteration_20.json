@@ -1,0 +1,43 @@
+{
+  "summary": "Iteration 20 PASSED end-to-end. Backend (6/6 pytest green): /api/chat returns needs_tariff=false + is_free_phase=true on basic call, on 3-msg session, and on [АНКЕТА] summary push (AI replies in-niche about weight/food/Алексей). /api/tts voice=female streams audio/mpeg with Transfer-Encoding: chunked, log confirms 'VoiceID: 7a98513e…' (Oksana), TTFB ~1-2s on preview. /api/tts voice=male returns valid MP3. /api/static/greetings/oksana_ru.mp3 not present (skipped — frontend uses runtime TTS, OK). Frontend (mobile 430x900): Landing 'Психолог' CTA → /chat directly (no /problems). Oksana avatar selectable via [data-testid=avatar-oksana-btn], greeting renders with 'Оксана' + 'консультант'. Type 'Алексей' + send → INTAKE_INTRO 'Приятно познакомиться, Алексей!' visible + Q2 pill-button card appears. Full Q2→Q14 traversal verified: Q5 'Никогда не пробовал(а)' correctly SKIPS Q6 → goes to Q7; Q8 'Нет' correctly SKIPS Q9+Q10 → goes to Q11. After Q14 the OUTRO 'Спасибо, Алексей. Картина понятна...' renders, [АНКЕТА] summary is sent to backend, and AI responds in weight-loss niche ('Расскажите своими словами — что сейчас происходит с весом...'). No tariff prompt, no countdown timer, no 'minutes left' badge anywhere during the flow.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "ChatPage after Q14", "issues": ["The [АНКЕТА] summary is rendered as a visible user bubble in chat (code comment in ChatPage.jsx:198 says 'Silently push intake context to backend (invisible priming message)' but sendMessage() always appends to messages). Cosmetic only — backend receives it correctly. Consider adding a hidden=true flag on that user message, or push directly to chat_histories without UI append."]},
+      {"screen": "ChatPage mobile", "issues": ["PWA InstallPrompt overlays the chat bottom area on mobile after ~12s (pre-existing from iter18/19, not a regression)."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration20_unlimited_intake.py",
+    "/app/test_reports/pytest/pytest_results_iter20.xml"
+  ],
+  "action_items": [
+    "(Cosmetic, optional) Hide the [АНКЕТА] user bubble — it's a priming message, not user-authored content. Either add a 'hidden' flag in setMessages append within sendMessage when text starts with '[АНКЕТА]', or skip UI append for that one call from ChatPage handleIntakeAnswer."
+  ],
+  "critical_code_review_comments": [
+    "routes/chat.py check_user_access() now hard-returns (True, True, free_count) and build_counter_updates() no longer decrements counters — correctly neuters all tariff/limit logic. The dead branch at lines 480-485 (if not is_free_phase and not has_minutes) can never fire and could be removed for clarity.",
+    "routes/tts.py logs 'VoiceID: 7a98513e…' for voice=female — voice routing to Oksana confirmed via live backend logs.",
+    "voice_config.py FISH_BACKEND='s2-pro' + FISH_LATENCY='balanced' + chunk_length=100 in tts.py give a fast streaming TTFB (~1-2s observed).",
+    "ChatPage.jsx intake state machine (intakeStep -1 → 0..N → -2) is clean and correctly drives skipIf logic via nextIntakeStep. Verified Q5→Q7 (skip Q6) and Q8(Нет)→Q11 (skip Q9+Q10) at runtime.",
+    "intakeQuestions.js buildIntakeSummary correctly computes BMI from q4_weight/q4_height and includes [АНКЕТА] header.",
+    "The visible [АНКЕТА] bubble (see frontend_issues.design_issues) — minor UX leak of the priming context."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration20_unlimited_intake.py",
+    "/app/test_reports/pytest/pytest_results_iter20.xml",
+    "/app/test_reports/iteration_20.json"
+  ],
+  "success_rate": {"backend": "100% (6/6)", "frontend": "100% of in-scope flows (CTA→/chat, voice select, name→intake intro, Q2-Q14 with both skipIf branches, outro, [АНКЕТА] sent to backend, AI in-niche response, no tariff prompt)"},
+  "test_credentials": {"guest": "anonymous flow used — no auth needed"},
+  "seed_data_creation": "Ephemeral chat sessions with session_id prefix 'TEST_iter20_*'.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "mocked_apis": {"openrouter_llm": "LIVE (Claude Sonnet 4.5 in-niche RU replies)", "fish_audio_tts": "LIVE (s2-pro, both voices)", "stripe": "TEST mode (not exercised this iteration)"},
+  "context_for_next_testing_agent": "Iter20 unlimited+intake regression is green. Re-run /app/backend/tests/test_iteration20_unlimited_intake.py if chat.py, tts.py, or voice_config.py change. The frontend intake flow uses [data-testid=intake-q{N}] for the question card and [data-testid=intake-q{N}-opt-{first 10 chars}] for option pill buttons; for single_custom/multi/data questions there's an [data-testid=intake-q{N}-submit] button to confirm. Q4 numeric fields are [data-testid=intake-q4-age|weight|height]. The first user message after voice select is captured as userName and triggers startIntake — DO NOT skip typing a name. Voice ID for Oksana is 7a98513e3a7d439682fa68f8d4da34c0; backend log line 'VoiceID: 7a98513e…' confirms routing.",
+  "rca_of_issue": "N/A — no failures."
+}

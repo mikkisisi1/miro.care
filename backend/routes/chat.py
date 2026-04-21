@@ -452,21 +452,14 @@ async def save_homework(user_id: str, homework: str) -> None:
 
 
 def check_user_access(user: dict) -> tuple:
+    # 🔓 Безлимит: все пользователи без ограничений
     free_count = user.get("free_messages_count", 0)
-    has_minutes = (user.get("minutes_left", 0) or 0) > 0
-    is_free_phase = free_count < 12
-    return is_free_phase, has_minutes, free_count
+    return True, True, free_count
 
 
 def build_counter_updates(user: dict, is_free_phase: bool, free_count: int, ai_response: str) -> dict:
+    # 🔓 Безлимит: счётчики не инкрементируем, только сохраняем план если есть
     update_fields = {}
-    if is_free_phase:
-        update_fields["free_messages_count"] = free_count + 2
-    else:
-        new_used = (user.get("minutes_used", 0) or 0) + 1
-        new_left = max(0, (user.get("minutes_left", 0) or 0) - 1)
-        update_fields["minutes_used"] = new_used
-        update_fields["minutes_left"] = new_left
     if "ПЛАН РАБОТЫ" in ai_response or "PLAN" in ai_response.upper():
         update_fields["last_plan"] = ai_response
     return update_fields
@@ -546,18 +539,12 @@ async def chat_endpoint(req: ChatRequest, request: Request):
             if homework:
                 asyncio.create_task(save_homework(user_id, homework))
 
-        # Determine fresh minutes_left for response (post-update value)
-        if is_free_phase:
-            minutes_left_out = None
-        else:
-            minutes_left_out = max(0, (user.get("minutes_left", 0) or 0) - 1)
-
         return {
             "message": ai_response,
             "type": "ai_response",
-            "needs_tariff": free_count + 2 >= 12 and not has_minutes,
-            "minutes_left": minutes_left_out,
-            "is_free_phase": is_free_phase,
+            "needs_tariff": False,
+            "minutes_left": None,
+            "is_free_phase": True,
         }
     except Exception as e:
         logger.error(f"Chat error: {e}")
@@ -636,7 +623,7 @@ async def chat_image_endpoint(req: ChatImageRequest, request: Request):
     return {
         "response": ai_text,
         "type": "ai_response",
-        "needs_tariff": free_count + 2 >= 12 and not has_minutes,
+        "needs_tariff": False,
     }
 
 
