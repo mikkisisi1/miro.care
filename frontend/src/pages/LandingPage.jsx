@@ -41,7 +41,7 @@ export default function LandingPage() {
         <p className="landing-glass-desc">{t('missionText')}</p>
         <button
           data-testid="landing-start-btn"
-          onClick={() => navigate('/problems')}
+          onClick={() => navigate('/chat')}
           className="landing-glass-cta"
         >
           <span className="landing-cta-glow" />

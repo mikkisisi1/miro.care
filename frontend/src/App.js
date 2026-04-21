@@ -5,7 +5,6 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import LandingPage from '@/pages/LandingPage';
 import AuthPage from '@/pages/AuthPage';
-import ProblemSelection from '@/pages/ProblemSelection';
 import VoiceSelect from '@/pages/VoiceSelect';
 import ChatPage from '@/pages/ChatPage';
 import TariffPage from '@/pages/TariffPage';
@@ -29,7 +28,6 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<WaitForAuth><LandingPage /></WaitForAuth>} />
       <Route path="/auth" element={<WaitForAuth><AuthPage /></WaitForAuth>} />
-      <Route path="/problems" element={<WaitForAuth><ProblemSelection /></WaitForAuth>} />
       <Route path="/voice-select" element={<WaitForAuth><VoiceSelect /></WaitForAuth>} />
       <Route path="/chat" element={<WaitForAuth><ChatPage /></WaitForAuth>} />
       <Route path="/tariffs" element={<WaitForAuth><TariffPage /></WaitForAuth>} />

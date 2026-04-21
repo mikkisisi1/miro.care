@@ -26,7 +26,7 @@ export default function BurgerMenu({ open, onClose }) {
   const handleLogout = async () => {
     onClose();
     await logout();
-    navigate('/problems');
+    navigate('/');
   };
 
   return (

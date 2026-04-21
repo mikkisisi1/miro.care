@@ -263,7 +263,7 @@ export default function ChatPage() {
         hasMinutes={hasMinutes}
         minutesLeft={minutesLeft}
         formatTime={formatTime}
-        onBack={() => navigate('/problems')}
+        onBack={() => navigate('/')}
         onMenuOpen={() => setMenuOpen(true)}
         freeSessionLabel={t('freeSession')}
         countdownSeconds={countdownSeconds}

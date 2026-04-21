@@ -27,7 +27,7 @@ export default function AuthPage() {
       } else {
         await register(email, password, name);
       }
-      navigate('/problems');
+      navigate('/chat');
     } catch (err) {
       const detail = err.response?.data?.detail;
       if (typeof detail === 'string') setError(detail);
@@ -39,7 +39,7 @@ export default function AuthPage() {
   };
 
   const handleSkip = () => {
-    navigate('/problems');
+    navigate('/chat');
   };
 
   return (
