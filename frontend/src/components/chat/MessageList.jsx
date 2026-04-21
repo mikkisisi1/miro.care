@@ -2,8 +2,9 @@ import React from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import IntakeCard from '@/components/chat/IntakeCard';
 
-export default function MessageList({ messages, loading, playingTTS, playTTS, stopTTS, messagesEndRef, activeVoice }) {
+export default function MessageList({ messages, loading, playingTTS, playTTS, stopTTS, messagesEndRef, activeVoice, onIntakeAnswer }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
@@ -24,7 +25,10 @@ export default function MessageList({ messages, loading, playingTTS, playTTS, st
             {msg.content && msg.content.split('\n').map((line, j) => (
               <p key={`${msg.id}-line-${j}`}>{line}</p>
             ))}
-            {msg.role === 'ai' && !msg.isTariffPrompt && (
+            {msg.intakeQuestion && !msg.intakeAnswered && (
+              <IntakeCard question={msg.intakeQuestion} onAnswer={onIntakeAnswer} />
+            )}
+            {msg.role === 'ai' && !msg.isTariffPrompt && !msg.intakeQuestion && (
               <button
                 data-testid={`tts-play-${i}`}
                 onClick={() => playingTTS === i ? stopTTS() : playTTS(msg.content, i)}

@@ -15,6 +15,7 @@ import useSpeechRecognition from '@/hooks/useSpeechRecognition';
 import useImageUpload from '@/hooks/useImageUpload';
 import useCountdown from '@/hooks/useCountdown';
 import apiClient, { API_BASE, getToken } from '@/lib/apiClient';
+import { INTAKE_QUESTIONS, INTAKE_INTRO, INTAKE_OUTRO, nextIntakeStep, buildIntakeSummary } from '@/config/intakeQuestions';
 
 const GREETINGS = {
   male: 'Здравствуйте, я Мирон — ваш личный консультант.\nРасскажите в двух словах, что вас беспокоит, и мы вместе попробуем разобраться.\nКак мне к вам обращаться?',
@@ -34,6 +35,10 @@ export default function ChatPage() {
   const [activeVoice, setActiveVoice] = useState(null);
   const [showRunningText, setShowRunningText] = useState(false);
   const [runningText, setRunningText] = useState('');
+  // Intake flow state
+  const [intakeStep, setIntakeStep] = useState(-1); // -1 = not started, 0..N = Qi, -2 = done
+  const [intakeAnswers, setIntakeAnswers] = useState({});
+  const [userName, setUserName] = useState('');
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
@@ -150,12 +155,77 @@ export default function ChatPage() {
   };
 
   // Text sending
+  const startIntake = useCallback((name) => {
+    const introMsg = {
+      role: 'ai',
+      content: INTAKE_INTRO(name),
+      id: `intake_intro_${Date.now()}`,
+    };
+    const firstQ = INTAKE_QUESTIONS[0];
+    const qMsg = {
+      role: 'ai',
+      content: '',
+      id: `intake_${firstQ.id}_${Date.now()}`,
+      intakeQuestion: firstQ,
+      intakeAnswered: false,
+    };
+    setMessages((prev) => [...prev, introMsg, qMsg]);
+    setIntakeStep(0);
+  }, [setMessages]);
+
+  const handleIntakeAnswer = useCallback((qId, answerText, extraFields) => {
+    // Mark the current question message as answered and append user's answer.
+    setMessages((prev) => {
+      const updated = prev.map((m) =>
+        m.intakeQuestion && m.intakeQuestion.id === qId ? { ...m, intakeAnswered: true } : m
+      );
+      return [...updated, { role: 'user', content: answerText, id: `ans_${qId}_${Date.now()}` }];
+    });
+
+    const newAnswers = { ...intakeAnswers, [qId]: answerText, ...(extraFields || {}) };
+    setIntakeAnswers(newAnswers);
+
+    const nextIdx = nextIntakeStep(newAnswers, INTAKE_QUESTIONS.findIndex((q) => q.id === qId));
+    if (nextIdx === -1) {
+      // Intake done — send consolidated summary to backend as a single user message.
+      const summary = buildIntakeSummary(userName, newAnswers);
+      setIntakeStep(-2);
+      setMessages((prev) => [...prev, {
+        role: 'ai',
+        content: INTAKE_OUTRO(userName),
+        id: `intake_outro_${Date.now()}`,
+      }]);
+      // Silently push intake context to backend (invisible priming message).
+      setTimeout(() => sendMessage(summary), 300);
+    } else {
+      const nextQ = INTAKE_QUESTIONS[nextIdx];
+      setMessages((prev) => [...prev, {
+        role: 'ai',
+        content: '',
+        id: `intake_${nextQ.id}_${Date.now()}`,
+        intakeQuestion: nextQ,
+        intakeAnswered: false,
+      }]);
+      setIntakeStep(nextIdx);
+    }
+  }, [intakeAnswers, userName, setMessages, sendMessage]);
+
   const handleSend = useCallback((text) => {
     const msg = text || input;
     if (!msg || !msg.trim() || loading) return;
-    sendMessage(msg.trim());
+    const trimmed = msg.trim();
+    // Before intake starts: first user message = name → trigger intake, do NOT hit backend.
+    if (voiceChosen && intakeStep === -1 && !userName) {
+      const nameOnly = trimmed.replace(/^(меня зовут|я|это)\s+/i, '').split(/[.,!?\s]/)[0] || trimmed;
+      setUserName(nameOnly);
+      setMessages((prev) => [...prev, { role: 'user', content: trimmed, id: `user_name_${Date.now()}` }]);
+      setInput('');
+      startIntake(nameOnly);
+      return;
+    }
+    sendMessage(trimmed);
     setInput('');
-  }, [input, loading, sendMessage]);
+  }, [input, loading, sendMessage, voiceChosen, intakeStep, userName, setMessages, startIntake]);
 
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -285,6 +355,7 @@ export default function ChatPage() {
             stopTTS={stopTTS}
             messagesEndRef={messagesEndRef}
             activeVoice={activeVoice}
+            onIntakeAnswer={handleIntakeAnswer}
           />
         </div>
 
