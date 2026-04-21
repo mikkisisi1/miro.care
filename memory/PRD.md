@@ -40,6 +40,12 @@ Hybrid AI-psychologist platform (React + FastAPI + MongoDB) with Fish Audio S2-P
 - 2026-04-19: **Landing CSS lock** — wrapped lines 70–240 in explicit 🔒 LOCKED SECTION banner
 - 2026-04-19: **i18n pass #2** — fixed hardcoded Russian strings: ChatPage alert & greeting pre-cache (now uses current `lang`), useChat error message, useSpeechRecognition alerts (3 places), PaymentSuccess fallback strings, BookingCalendar (legend/tz/price unit/month/weekday names). Added translation keys: `errorTryAgain`, `bookingFailed`, `advance` across 8 languages. `ChatInputArea` now accepts `unsupportedTitle` prop. Iter-18 verified OK; zh missing keys patched by tester.
 - 2026-04-19: **PWA install flow** — added `manifest.json` (Miro.Care icons 192/512 + maskable), minimal service worker (`sw.js`) with shell cache + network-first for /api/. Replaced v2 SW-unregister script with v3 that keeps SW alive. Added `InstallPrompt` component: appears 12s after landing load (unless `display-mode: standalone` or dismissed), uses `beforeinstallprompt` + `appinstalled` native API, has install spinner + progress bar + success checkmark, 7-day dismiss cooldown. Localized in 8 languages (`installTitle`, `installSubtitle`, `installCta`, `installing`, `installed`, `installRetry`, `close`). RTL-aware close button.
+- 2026-02-xx (iter21): **SYSTEM_PROMPT extended** — добавлены 4 новых блока между определением Mode 2 и «ЛОГИКА ВЕДЕНИЯ ДИАЛОГА» в `/app/backend/config.py`:
+  1. **ОБРАБОТКА ДАННЫХ АНКЕТЫ** — молчаливое построение профиля клиента (ИМТ по формуле, цель 0.5–1 кг/нед, главный паттерн, триггер из В10, время из В9, риск из В13, мотивация из В14).
+  2. **АКТИВНОЕ ИСПОЛЬЗОВАНИЕ ПРОФИЛЯ** — поведение триггеров (Стресс / Усталость / Скука), времени (Вечер / Ночь), истории неудачных попыток, ИМТ 35+, уровней мотивации 1-3 и 9-10, ограничений здоровья.
+  3. **КОНТЕКСТ РАЗГОВОРА** — запрет повторять вопросы, использование уже сказанного.
+  4. **ЗАПРЕТ ЗАКРЫТЫХ ОТВЕТОВ** — «Понятно./Ясно./Хорошо./Окей./Принято.» запрещены как финал; каждый ответ заканчивается вопросом / отражением / новым углом.
+  Регрессия iteration_21: backend 10/10 pytest, frontend smoke 100%, Claude Sonnet 4.5 соблюдает все 4 правила (проверено на 5 живых вызовах + intake-recall на двух последовательных ходах той же сессии).
 
 ## Testing Status
 - Iteration 17 (backend+frontend): **100% pass** — 12/12 scenarios including 8 languages, gender switching, encryption, TTS, UI flows
