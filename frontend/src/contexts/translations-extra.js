@@ -81,6 +81,8 @@ export const TRANSLATIONS_EXTRA = {
     installed: 'Установлено',
     installRetry: 'Попробовать ещё раз',
     close: 'Закрыть',
+    photoSent: 'Фото отправлено',
+    photoPrivacy: 'Фото используется только в рамках этого диалога и не сохраняется',
   },
   en: {
     available: 'Available', booked: 'Booked', yours: 'Yours',
@@ -102,6 +104,8 @@ export const TRANSLATIONS_EXTRA = {
     installed: 'Installed',
     installRetry: 'Try again',
     close: 'Close',
+    photoSent: 'Photo sent',
+    photoPrivacy: 'This photo is used only within this conversation and is not stored',
   },
   zh: {
     available: '可预约', booked: '已预约', yours: '您的',

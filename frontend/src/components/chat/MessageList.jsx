@@ -20,7 +20,10 @@ export default function MessageList({ messages, loading, playingTTS, playTTS, st
             data-testid={`chat-message-${i}`}
           >
             {msg.image && (
-              <img src={msg.image} alt="Sent" className="xc-chat-message-image" />
+              <>
+                <img src={msg.image} alt="Sent" className="xc-chat-message-image" />
+                <p className="xc-chat-message-image-caption" data-testid={`photo-sent-caption-${i}`}>{t('photoSent')}</p>
+              </>
             )}
             {msg.content && msg.content.split('\n').map((line, j) => (
               <p key={`${msg.id}-line-${j}`}>{line}</p>

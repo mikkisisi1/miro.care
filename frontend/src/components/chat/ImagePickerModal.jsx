@@ -24,6 +24,7 @@ export default function ImagePickerModal({ onClose, onCamera, onGallery }) {
           <ImageIcon size={20} strokeWidth={1.5} />
           {t('gallery') || 'Gallery'}
         </button>
+        <p className="xc-image-picker-privacy" data-testid="photo-privacy-note">{t('photoPrivacy')}</p>
       </div>
     </div>
   );

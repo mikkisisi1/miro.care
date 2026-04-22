@@ -45,6 +45,8 @@ def get_openrouter_client():
 # ---------- IN-MEMORY SESSION HISTORIES (LRU-capped) ----------
 MAX_SESSIONS = 500
 chat_histories: "OrderedDict[str, list]" = OrderedDict()
+# Счётчик фото в сессии — чтобы агент знал: это 1-е/2-е/3+ фото для сравнения
+session_photo_count: "OrderedDict[str, int]" = OrderedDict()
 
 
 def _touch_session(session_id: str) -> None:
@@ -577,11 +579,47 @@ async def chat_image_endpoint(req: ChatImageRequest, request: Request):
     await _init_session(session_id, req.problem or user.get("selected_problem"), lang, user_id, user.get("selected_voice") or "male")
     chat_histories[session_id].append({"role": "user", "content": "[Пользователь отправил фото]"})
 
+    # Счётчик фото в этой сессии (1-е / 2-е / 3+ — агент подстраивает анализ)
+    photo_count = session_photo_count.get(session_id, 0) + 1
+    session_photo_count[session_id] = photo_count
+    # LRU-eviction для счётчика фото
+    while len(session_photo_count) > MAX_SESSIONS:
+        session_photo_count.popitem(last=False)
+
+    if photo_count == 1:
+        photo_directive = (
+            "Это ПЕРВОЕ фото клиента в этой сессии. "
+            "Действуй по блоку «АНАЛИЗ ФОТО → ОДНО ФОТО»: "
+            "оцени общее телосложение, зоны накопления жира, осанку, связь с анкетой. "
+            "Ответ без осуждения, без медицинских терминов, конкретно. "
+            "В конце мягко спроси: «Есть фото где вес был заметно другим? Если да — пришлите, интересно посмотреть на динамику.»"
+        )
+    elif photo_count == 2:
+        photo_directive = (
+            "Это ВТОРОЕ фото в этой сессии. "
+            "Действуй по блоку «АНАЛИЗ ФОТО → ВТОРОЕ ФОТО (сравнение)»: "
+            "сравни с тем что уже видел, отметь позитивные изменения первыми, "
+            "не акцентируй на негативе. В конце дай один конкретный шаг под выявленную зону."
+        )
+    else:
+        photo_directive = (
+            f"Это УЖЕ {photo_count}-е фото в этой сессии. "
+            "Действуй по блоку «АНАЛИЗ ФОТО → ТРИ И БОЛЬШЕ ФОТО»: "
+            "выбери два наиболее контрастных фото из увиденных и сравни их, как со «вторым фото»."
+        )
+
     vision_msg = {
         "role": "user",
         "content": [
             {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{req.image}"}},
-            {"type": "text", "text": f"Пользователь отправил фото. Опиши что видишь и дай психологический комментарий. Отвечай на языке: {lang}"},
+            {
+                "type": "text",
+                "text": (
+                    f"Клиент прислал фото. Проанализируй согласно инструкции. {photo_directive} "
+                    f"Отвечай на языке: {lang}. "
+                    "Не комментируй одежду и фон. Если фото нечёткое — попроси прислать другое."
+                ),
+            },
         ],
     }
 

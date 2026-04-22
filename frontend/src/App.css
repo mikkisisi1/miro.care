@@ -916,10 +916,10 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
   z-index: 1000; padding-bottom: 100px;
 }
 .xc-image-picker-modal {
-  background: rgba(26, 26, 31, 0.8);
+  background: rgba(26, 26, 31, 0.85);
   backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  border-radius: 16px; padding: 12px;
-  width: 128px; height: 128px;
+  border-radius: 16px; padding: 14px 14px 12px;
+  width: 180px; min-height: 140px;
   display: flex; flex-direction: column; justify-content: center;
   gap: 6px; border: 0.5px solid var(--accent);
 }
@@ -933,6 +933,14 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 }
 .xc-image-picker-option:hover { background: rgba(60, 140, 255, 0.15); }
 .xc-image-picker-option svg { color: var(--accent); }
+.xc-image-picker-privacy {
+  margin: 8px 4px 0;
+  font-size: 0.62rem;
+  line-height: 1.3;
+  color: rgba(255, 255, 255, 0.55);
+  text-align: center;
+  font-family: var(--font-body);
+}
 
 /* Selected image preview */
 .xc-selected-image-preview {
@@ -968,6 +976,12 @@ h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 .xc-chat-message-image {
   width: 100%; max-width: 200px;
   border-radius: 12px; display: block;
+}
+.xc-chat-message-image-caption {
+  margin: 4px 6px 2px;
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: var(--font-body);
 }
 
 /* Mic button */
