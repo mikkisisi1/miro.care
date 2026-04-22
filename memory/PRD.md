@@ -46,6 +46,14 @@ Hybrid AI-psychologist platform (React + FastAPI + MongoDB) with Fish Audio S2-P
   3. **КОНТЕКСТ РАЗГОВОРА** — запрет повторять вопросы, использование уже сказанного.
   4. **ЗАПРЕТ ЗАКРЫТЫХ ОТВЕТОВ** — «Понятно./Ясно./Хорошо./Окей./Принято.» запрещены как финал; каждый ответ заканчивается вопросом / отражением / новым углом.
   Регрессия iteration_21: backend 10/10 pytest, frontend smoke 100%, Claude Sonnet 4.5 соблюдает все 4 правила (проверено на 5 живых вызовах + intake-recall на двух последовательных ходах той же сессии).
+- 2026-02-xx (iter22): **Photo feature** — фото клиента в чат (функция была частично заложена ранее, доведена до спек-TZ):
+  1. `SYSTEM_PROMPT` получил блок **АНАЛИЗ ФОТО** (ОДНО / ВТОРОЕ / ТРИ+ фото, «ЧЕГО НЕ ДЕЛАЕШЬ», «КОГДА САМ ПРОСИШЬ ФОТО», ПРИВАТНОСТЬ).
+  2. `/app/backend/routes/chat.py`: введён `session_photo_count: OrderedDict` (LRU MAX_SESSIONS=500), и в `/chat/image` инжектится photo-directive в vision-prompt в зависимости от количества (1-е / 2-е / 3+).
+  3. `ImagePickerModal.jsx`: добавлена надпись приватности с testid `photo-privacy-note`.
+  4. `MessageList.jsx`: под каждым пузырьком с фото показывается подпись `t('photoSent')` (testid `photo-sent-caption-<i>`).
+  5. i18n-ключи `photoSent` и `photoPrivacy` добавлены на все 8 языков (ru/en/zh/es/ar/fr/de/hi).
+  6. CSS: расширил `.xc-image-picker-modal` (180×140), добавил `.xc-image-picker-privacy` + `.xc-chat-message-image-caption` — лендинг CSS (строки 70–240) не тронут.
+  Регрессия iteration_22: backend 10/10 pytest, frontend smoke 100%. Claude Sonnet 4.5 Vision: 2-й ответ в той же сессии отличается от 1-го (comparison-mode работает), и AI не использует «ожирение / диагноз / идеал» (запреты соблюдаются).
 
 ## Testing Status
 - Iteration 17 (backend+frontend): **100% pass** — 12/12 scenarios including 8 languages, gender switching, encryption, TTS, UI flows

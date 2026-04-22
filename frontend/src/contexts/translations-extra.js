@@ -127,6 +127,8 @@ export const TRANSLATIONS_EXTRA = {
     installed: '已安装',
     installRetry: '重试',
     close: '关闭',
+    photoSent: '照片已发送',
+    photoPrivacy: '照片仅在本次对话中使用，不会被保存',
   },
   es: {
     available: 'Disponible', booked: 'Reservado', yours: 'Tuyo',
@@ -148,6 +150,8 @@ export const TRANSLATIONS_EXTRA = {
     installed: 'Instalada',
     installRetry: 'Reintentar',
     close: 'Cerrar',
+    photoSent: 'Foto enviada',
+    photoPrivacy: 'La foto se usa solo en esta conversación y no se guarda',
   },
   ar: {
     available: 'متاح', booked: 'محجوز', yours: 'حجزك',
@@ -169,6 +173,8 @@ export const TRANSLATIONS_EXTRA = {
     installed: 'تم التثبيت',
     installRetry: 'إعادة المحاولة',
     close: 'إغلاق',
+    photoSent: 'تم إرسال الصورة',
+    photoPrivacy: 'تُستخدم الصورة فقط ضمن هذه المحادثة ولا يتم حفظها',
   },
   fr: {
     available: 'Disponible', booked: 'Réservé', yours: 'À vous',
@@ -183,6 +189,8 @@ export const TRANSLATIONS_EXTRA = {
     typingMiron: 'Miron est en train d\'écrire', typingOksana: 'Oksana est en train d\'écrire',
     errorTryAgain: 'Une erreur est survenue. Veuillez réessayer.',
     bookingFailed: 'La réservation a échoué.',
+    photoSent: 'Photo envoyée',
+    photoPrivacy: 'La photo est utilisée uniquement dans cette conversation et n\'est pas conservée',
   },
   de: {
     available: 'Frei', booked: 'Belegt', yours: 'Ihr Termin',
@@ -197,6 +205,8 @@ export const TRANSLATIONS_EXTRA = {
     typingMiron: 'Miron schreibt', typingOksana: 'Oksana schreibt',
     errorTryAgain: 'Ein Fehler ist aufgetreten. Bitte erneut versuchen.',
     bookingFailed: 'Buchung fehlgeschlagen.',
+    photoSent: 'Foto gesendet',
+    photoPrivacy: 'Das Foto wird nur in diesem Gespräch verwendet und nicht gespeichert',
   },
   hi: {
     available: 'उपलब्ध', booked: 'बुक्ड', yours: 'आपका',
@@ -218,6 +228,8 @@ export const TRANSLATIONS_EXTRA = {
     installed: 'इंस्टॉल हो गया',
     installRetry: 'पुनः प्रयास करें',
     close: 'बंद करें',
+    photoSent: 'फ़ोटो भेजी गई',
+    photoPrivacy: 'फ़ोटो केवल इस बातचीत में उपयोग होती है और सहेजी नहीं जाती',
   },
 };
 
